@@ -1,0 +1,14 @@
+Source: raspi-config
+Section: unknown
+Priority: extra
+Maintainer: Alex Bradbury <asb@asbradbury.org>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.2
+Homepage: https://github.com/asb/raspi-config
+#Vcs-Git: git://git.debian.org/collab-maint/raspi-config.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/raspi-config.git;a=summary
+
+Package: raspi-config
+Architecture: all
+Depends: ${misc:Depends}, whiptail, parted
+Description: Simple configuration for Raspberry Pi
