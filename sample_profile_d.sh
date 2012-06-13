@@ -11,7 +11,7 @@
 # 1:2345:respawn:/bin/login -f root tty1 </dev/tty1 >/dev/tty1 2>&1 # RPICFG_TO_DISABLE
 
 if [ $(id -u) -ne 0 ]; then
-  printf "\nNOTICE: this Raspberry Pi has not been fully configured. Please run 'sudo raspi-config'\n\n"
+  printf "\nNOTICE: the software on this Raspberry Pi has not been fully configured. Please run 'sudo raspi-config'\n\n"
 else
   which raspi-config && exec raspi-config
 fi
