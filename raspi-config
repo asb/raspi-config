@@ -138,6 +138,10 @@ do_memory_split() {
 }
 
 do_ssh() {
+  if [ -e /var/log/regen_ssh_keys.log ] && ! grep -q "^finished"; then
+    whiptail --msgbox "Initial ssh key generation still running. Please wait and try again." 20 60 2
+    return 1
+  fi
   whiptail --yesno "Would you like the SSH server enabled or disabled?" 20 60 2 \
     --yes-button Enable --no-button Disable 
   RET=$?
