@@ -37,7 +37,7 @@ EOF
 
   # now set up an init.d script
 cat <<\EOF > /etc/init.d/resize2fs_once &&
-  #!/bin/sh
+#!/bin/sh
 ### BEGIN INIT INFO
 # Provides:          resize2fs_once
 # Required-Start:
@@ -179,7 +179,7 @@ while true; do
     "finish" "Finish config and don't start raspi-config at boot" \
     3>&1 1>&2 2>&3)
   if [ $? -ne 0 ]; then
-    exit 0;
+    exit 1;
   else
     "do_$FUN" || whiptail --msgbox "There was an error running do_$FUN" 20 60 1
   fi
