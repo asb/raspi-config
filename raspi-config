@@ -111,7 +111,7 @@ do_change_pass() {
 do_configure_keyboard() {
   dpkg-reconfigure keyboard-configuration &&
   printf "Reloading keymap. This may take a short while\n" &&
-  invoke-rc.d keyboard-configuration start
+  invoke-rc.d keyboard-setup start
 }
 
 do_change_locale() {
