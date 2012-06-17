@@ -109,7 +109,7 @@ do_change_pass() {
 }
 
 do_configure_keyboard() {
-  dpkg-reconfigure keyboard-setup &&
+  dpkg-reconfigure keyboard-configuration &&
   printf "Reloading keymap. This may take a short while\n" &&
   invoke-rc.d keyboard-setup start
 }
@@ -170,8 +170,8 @@ while true; do
     "info" "Information about this tool" \
     "expand_rootfs" "Expand root partition to fill SD card" \
     "overscan" "Change overscan" \
-    "change_pass" "Change password for 'pi' user" \
     "configure_keyboard" "Set keyboard layout" \
+    "change_pass" "Change password for 'pi' user" \
     "change_locale" "Set locale" \
     "change_timezone" "Set timezone" \
     "memory_split" "Change memory split" \
