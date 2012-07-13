@@ -154,6 +154,7 @@ do_memory_split() {
     3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
     cp -a /boot/arm${MEMSPLIT}_start.elf /boot/start.elf
+    sync
   fi
 }
 
