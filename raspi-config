@@ -10,10 +10,12 @@ if [ $(id -u) -ne 0 ]; then
 fi
 
 do_info() {
-  whiptail --msgbox "This tool provides a straight-forward way of doing 
-  initial configuration of the Raspberry Pi. Although it can be run at any 
-  time, some of the options may have difficulties if you have heavily 
-  customised your installation." 20 60 1
+  whiptail --msgbox "\
+This tool provides a straight-forward way of doing initial 
+configuration of the Raspberry Pi. Although it can be run 
+at any time, some of the options may have difficulties if 
+you have heavily customised your installation.\
+" 20 70 1
 }
 
 do_expand_rootfs() {
