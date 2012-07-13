@@ -10,5 +10,5 @@ Homepage: https://github.com/asb/raspi-config
 
 Package: raspi-config
 Architecture: all
-Depends: ${misc:Depends}, whiptail, parted
+Depends: ${misc:Depends}, whiptail, parted, lua5.1
 Description: Simple configuration for Raspberry Pi
