@@ -177,6 +177,19 @@ do_ssh() {
   fi
 }
 
+do_boot_behaviour() {
+  whiptail --yesno "Should we boot straight to desktop?" 20 60 2
+  RET=$?
+  if [ $RET -eq 0 ]; then # yes
+    update-rc.d lightdm enable 2
+    sed /etc/lightdm/lightdm.conf -i -e "s/^#autologin-user=.*/autologin-user=pi/"
+  elif [ $RET -eq 1 ]; then # no
+    update-rc.d lightdm disable 2
+  else # user hit escape
+    return 1
+  fi
+}
+
 do_finish() {
   if [ -e /etc/profile.d/raspi-config.sh ]; then
     rm -f /etc/profile.d/raspi-config.sh
@@ -190,7 +203,7 @@ do_finish() {
 }
 
 while true; do
-  FUN=$(whiptail --menu "Raspi-config" 20 80 10 --cancel-button Exit \
+  FUN=$(whiptail --menu "Raspi-config" 20 80 12 --cancel-button Exit \
     "info" "Information about this tool" \
     "expand_rootfs" "Expand root partition to fill SD card" \
     "overscan" "Change overscan" \
@@ -200,6 +213,7 @@ while true; do
     "change_timezone" "Set timezone" \
     "memory_split" "Change memory split" \
     "ssh" "Enable or disable ssh server" \
+    "boot_behaviour" "Start desktop on boot?" \
     "finish" "Finish config and don't start raspi-config at boot" \
     3>&1 1>&2 2>&3)
   if [ $? -ne 0 ]; then
@@ -208,4 +222,3 @@ while true; do
     "do_$FUN" || whiptail --msgbox "There was an error running do_$FUN" 20 60 1
   fi
 done
-
