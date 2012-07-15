@@ -198,6 +198,13 @@ do_boot_behaviour() {
   fi
 }
 
+do_update() {
+  apt-get update &&
+  apt-get install raspi-config &&
+  printf "To start raspi-config again, do 'sudo raspi-config'. Now exiting\n"
+  exit 0
+}
+
 do_finish() {
   if [ -e /etc/profile.d/raspi-config.sh ]; then
     rm -f /etc/profile.d/raspi-config.sh
@@ -228,6 +235,7 @@ while true; do
     "memory_split" "Change memory split" \
     "ssh" "Enable or disable ssh server" \
     "boot_behaviour" "Start desktop on boot?" \
+    "update" "Try to upgrade raspi-config" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
