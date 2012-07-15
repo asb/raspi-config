@@ -9,6 +9,8 @@ if [ $(id -u) -ne 0 ]; then
   exit 1
 fi
 
+ASK_TO_REBOOT=0
+
 do_info() {
   whiptail --msgbox "\
 This tool provides a straight-forward way of doing initial 
@@ -36,6 +38,7 @@ $PART_START
 p
 w
 EOF
+  ASK_TO_REBOOT=1
 
   # now set up an init.d script
 cat <<\EOF > /etc/init.d/resize2fs_once &&
@@ -116,6 +119,7 @@ do_overscan() {
     --yes-button Disable --no-button Enable 
   RET=$?
   if [ $RET -eq 0 ] || [ $RET -eq 1 ]; then
+    ASK_TO_REBOOT=1
     set_overscan $RET;
   else
     return 1
@@ -155,6 +159,7 @@ do_memory_split() {
   if [ $? -eq 0 ]; then
     cp -a /boot/arm${MEMSPLIT}_start.elf /boot/start.elf
     sync
+    ASK_TO_REBOOT=1
   fi
 }
 
@@ -184,8 +189,10 @@ do_boot_behaviour() {
   if [ $RET -eq 0 ]; then # yes
     update-rc.d lightdm enable 2
     sed /etc/lightdm/lightdm.conf -i -e "s/^#autologin-user=.*/autologin-user=pi/"
+    ASK_TO_REBOOT=1
   elif [ $RET -eq 1 ]; then # no
     update-rc.d lightdm disable 2
+    ASK_TO_REBOOT=1
   else # user hit escape
     return 1
   fi
@@ -199,12 +206,18 @@ do_finish() {
       -e "/#\s*RPICFG_TO_DISABLE/d"
     telinit q
   fi
-  whiptail --msgbox "Done" 20 60 1
+  if [ $ASK_TO_REBOOT -eq 1 ]; then
+    whiptail --yesno "Would you like to reboot now?" 20 60 2
+    if [ $? -eq 0 ]; then # yes
+      sync
+      reboot
+    fi
+  fi
   exit 0
 }
 
 while true; do
-  FUN=$(whiptail --menu "Raspi-config" 20 80 12 --cancel-button Exit \
+  FUN=$(whiptail --menu "Raspi-config" 20 80 12 --cancel-button Finish \
     "info" "Information about this tool" \
     "expand_rootfs" "Expand root partition to fill SD card" \
     "overscan" "Change overscan" \
@@ -215,11 +228,13 @@ while true; do
     "memory_split" "Change memory split" \
     "ssh" "Enable or disable ssh server" \
     "boot_behaviour" "Start desktop on boot?" \
-    "finish" "Finish config and don't start raspi-config at boot" \
     3>&1 1>&2 2>&3)
-  if [ $? -ne 0 ]; then
-    exit 1;
-  else
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    do_finish
+  elif [ $RET -eq 0 ]; then
     "do_$FUN" || whiptail --msgbox "There was an error running do_$FUN" 20 60 1
+  else
+    exit 1
   fi
 done
