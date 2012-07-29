@@ -151,10 +151,10 @@ do_memory_split() {
   if ! mountpoint -q /boot; then
     return 1
   fi
-  MEMSPLIT=$(whiptail --menu "Set memory split" 20 60 10 \
-    "224" "224MiB for ARM, 32MiB for VideoCore" \
-    "192" "192MiB for ARM, 64MiB for VideoCore" \
-    "128" "128MiB for ARM, 128MiB for VideoCore" \
+  MEMSPLIT=$(whiptail --menu "Set memory split" 20 78 10 \
+    "224" "224MiB for ARM, 32MiB for VideoCore (No video, No 3D)" \
+    "192" "192MiB for ARM, 64MiB for VideoCore (Video, Simple 3D)" \
+    "128" "128MiB for ARM, 128MiB for VideoCore (Video, Advanced 3D)" \
     3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
     cp -a /boot/arm${MEMSPLIT}_start.elf /boot/start.elf
