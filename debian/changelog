@@ -1,3 +1,9 @@
+raspi-config (20120815) unstable; urgency=low
+
+  * Various updates, recognise 240M memory split
+
+ -- Alex Bradbury <asb@asbradbury.org>  Wed, 15 Aug 2012 23:10:03 +0000
+
 raspi-config (20120715) unstable; urgency=low
 
   * Various updates
