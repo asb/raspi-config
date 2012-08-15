@@ -151,17 +151,16 @@ do_memory_split() {
   if ! mountpoint -q /boot; then
     return 1
   fi
-  local CURRENT_MEMSPLIT AVAILABLE_SPLITS
   AVAILABLE_SPLITS="128 192 224 240"
-  CURRENT_MEMSPLIT=$(
-    for SPLIT in $AVAILABLE_SPLITS;do
-      if cmp /boot/arm${SPLIT}_start.elf /boot/start.elf >/dev/null 2>&1;then
-        echo $SPLIT
-        exit 0
-      fi
-    done
-    )
-    MEMSPLIT=$(whiptail --menu "Set memory split.\nCurrent: ${CURRENT_MEMSPLIT}MiB for ARM, $((256 - $CURRENT_MEMSPLIT))MiB for VideoCore" 20 60 10 \
+  MEMSPLIT_DESCRIPTION=""
+  for SPLIT in $AVAILABLE_SPLITS;do
+    if [ -e /boot/arm${SPLIT}_start.elf ] && cmp /boot/arm${SPLIT}_start.elf /boot/start.elf >/dev/null 2>&1;then
+      CURRENT_MEMSPLIT=$SPLIT
+      MEMSPLIT_DESCRIPTION="Current: ${CURRENT_MEMSPLIT}MiB for ARM, $((256 - $CURRENT_MEMSPLIT))MiB for VideoCore"
+      break
+    fi
+  done
+  MEMSPLIT=$(whiptail --menu "Set memory split.\n$MEMSPLIT_DESCRIPTION" 20 60 10 \
     "240" "240MiB for ARM, 16MiB for VideoCore" \
     "224" "224MiB for ARM, 32MiB for VideoCore" \
     "192" "192MiB for ARM, 64MiB for VideoCore" \
