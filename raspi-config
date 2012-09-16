@@ -213,8 +213,9 @@ do_boot_behaviour() {
 do_update() {
   apt-get update &&
   apt-get install raspi-config &&
-  printf "To start raspi-config again, do 'sudo raspi-config'. Now exiting\n"
-  exit 0
+  printf "Sleeping 5 seconds before reloading raspi-config\n" &&
+  sleep 5 &&
+  exec raspi-config
 }
 
 do_finish() {
