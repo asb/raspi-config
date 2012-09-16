@@ -3,12 +3,6 @@
 #
 # See LICENSE file for copyright and license details
 
-
-if [ $(id -u) -ne 0 ]; then
-  printf "Script must be run as root. Try 'sudo raspi-config'\n"
-  exit 1
-fi
-
 ASK_TO_REBOOT=0
 
 do_info() {
@@ -147,6 +141,20 @@ do_change_timezone() {
 }
 
 do_memory_split() {
+  get_current_memory_split
+  MEMSPLIT=$(whiptail --menu "Set memory split.\n$MEMSPLIT_DESCRIPTION" 20 60 10 \
+    "240" "240MiB for ARM, 16MiB for VideoCore" \
+    "224" "224MiB for ARM, 32MiB for VideoCore" \
+    "192" "192MiB for ARM, 64MiB for VideoCore" \
+    "128" "128MiB for ARM, 128MiB for VideoCore" \
+    3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_memory_split ${MEMSPLIT}
+    ASK_TO_REBOOT=1
+  fi
+}
+
+get_current_memory_split() {
   # Stop if /boot is not a mountpoint
   if ! mountpoint -q /boot; then
     return 1
@@ -160,17 +168,11 @@ do_memory_split() {
       break
     fi
   done
-  MEMSPLIT=$(whiptail --menu "Set memory split.\n$MEMSPLIT_DESCRIPTION" 20 60 10 \
-    "240" "240MiB for ARM, 16MiB for VideoCore" \
-    "224" "224MiB for ARM, 32MiB for VideoCore" \
-    "192" "192MiB for ARM, 64MiB for VideoCore" \
-    "128" "128MiB for ARM, 128MiB for VideoCore" \
-    3>&1 1>&2 2>&3)
-  if [ $? -eq 0 ]; then
-    cp -a /boot/arm${MEMSPLIT}_start.elf /boot/start.elf
-    sync
-    ASK_TO_REBOOT=1
-  fi
+}
+
+set_memory_split() {
+  cp -a /boot/arm${1}_start.elf /boot/start.elf
+  sync
 }
 
 do_ssh() {
@@ -233,6 +235,46 @@ do_finish() {
   exit 0
 }
 
+#
+# Command line options for non-interactive use
+#
+for i in $*
+do
+  case $i in
+  --memory-split)
+    OPT_MEMORY_SPLIT=GET
+    ;;
+  --memory-split=*)
+    OPT_MEMORY_SPLIT=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+    ;;
+  *)
+    # unknown option
+    ;;
+  esac
+done
+
+if [ "GET" = "${OPT_MEMORY_SPLIT:-}" ]; then
+  set -u # Fail on unset variables
+  get_current_memory_split
+  echo $CURRENT_MEMSPLIT
+  exit 0
+fi
+
+# Everything else needs to be run as root
+if [ $(id -u) -ne 0 ]; then
+  printf "Script must be run as root. Try 'sudo raspi-config'\n"
+  exit 1
+fi
+
+if [ -n "${OPT_MEMORY_SPLIT:-}" ]; then
+  set -e # Fail when a command errors
+  set_memory_split "${OPT_MEMORY_SPLIT}"
+  exit 0
+fi
+
+#
+# Interactive use loop
+#
 while true; do
   FUN=$(whiptail --menu "Raspi-config" 20 80 12 --cancel-button Finish --ok-button Select \
     "info" "Information about this tool" \
