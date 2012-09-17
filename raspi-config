@@ -175,6 +175,54 @@ set_memory_split() {
   sync
 }
 
+do_overclock() {
+  whiptail --msgbox "\
+Be aware that overclocking may reduce the lifetime of your
+Raspberry Pi. If overclocking at a certain level causes
+system instability, try a more modest overclock. See
+http://elinux.org/RPi_Overclocking for more information.\
+" 20 70 1
+  OVERCLOCK=$(whiptail --menu "Chose overclock preset" 20 60 10 \
+    "None" "700MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
+    "Modest" "800MHz ARM, 300MHz core, 400MHz SDRAM, 0 overvolt" \
+    "Medium" "900MHz ARM, 333MHz core, 450MHz SDRAM, 2 overvolt" \
+    "High" "950MHz ARM, 450MHz core, 450MHz SDRAM, 6 overvolt" \
+    "Turbo" "1000MHz ARM, 500MHz core, 500MHz SDRAM, 6 overvolt" \
+    3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    case "$OVERCLOCK" in
+      None)
+        set_overclock None 700 250 400 0
+        ;;
+      Modest)
+        set_overclock Modest 800 300 400 0
+        ;;
+      Medium)
+        set_overclock Medium 900 333 450 2
+        ;;
+      High)
+        set_overclock High 950 450 450 6
+        ;;
+      Turbo)
+        set_overclock Turbo 1000 500 500 6
+        ;;
+      *)
+        whiptail --msgbox "Programmer error, unrecognised overclock preset" 20 60 2
+        return 1
+        ;;
+    esac
+    ASK_TO_REBOOT=1
+  fi
+}
+
+set_overclock() {
+  set_config_var arm_freq $2 /boot/config.txt &&
+  set_config_var core_freq $3 /boot/config.txt &&
+  set_config_var sdram_freq $4 /boot/config.txt &&
+  set_config_var over_voltage $5 /boot/config.txt &&
+  whiptail --msgbox "Set overclock to preset '$1'" 20 60 2
+}
+
 do_ssh() {
   if [ -e /var/log/regen_ssh_keys.log ] && ! grep -q "^finished" /var/log/regen_ssh_keys.log; then
     whiptail --msgbox "Initial ssh key generation still running. Please wait and try again." 20 60 2
@@ -286,6 +334,7 @@ while true; do
     "change_locale" "Set locale" \
     "change_timezone" "Set timezone" \
     "memory_split" "Change memory split" \
+    "overclock" "Configure overclocking" \
     "ssh" "Enable or disable ssh server" \
     "boot_behaviour" "Start desktop on boot?" \
     "update" "Try to upgrade raspi-config" \
