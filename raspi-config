@@ -370,9 +370,13 @@ do
   case $i in
   --memory-split)
     OPT_MEMORY_SPLIT=GET
+    printf "Not currently supported\n"
+    exit 1
     ;;
   --memory-split=*)
     OPT_MEMORY_SPLIT=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+    printf "Not currently supported\n"
+    exit 1
     ;;
   *)
     # unknown option
@@ -380,12 +384,12 @@ do
   esac
 done
 
-if [ "GET" = "${OPT_MEMORY_SPLIT:-}" ]; then
-  set -u # Fail on unset variables
-  get_current_memory_split
-  echo $CURRENT_MEMSPLIT
-  exit 0
-fi
+#if [ "GET" = "${OPT_MEMORY_SPLIT:-}" ]; then
+#  set -u # Fail on unset variables
+#  get_current_memory_split
+#  echo $CURRENT_MEMSPLIT
+#  exit 0
+#fi
 
 # Everything else needs to be run as root
 if [ $(id -u) -ne 0 ]; then
