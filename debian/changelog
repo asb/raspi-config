@@ -1,3 +1,11 @@
+raspi-config (20121028) unstable; urgency=low
+
+  * Update overclocking options
+  * Disable command-line options for non-interactive use
+  * Support new gpu_mem config option
+
+ -- Alex Bradbury <asb@asbradbury.org>  Sun, 28 Oct 2012 21:11:34 +0000
+
 raspi-config (20120918) unstable; urgency=low
 
   * Add overclocking options
