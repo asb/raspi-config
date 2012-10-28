@@ -317,16 +317,21 @@ do_ssh() {
 }
 
 do_boot_behaviour() {
-  whiptail --yesno "Should we boot straight to desktop?" 20 60 2
-  RET=$?
-  if [ $RET -eq 0 ]; then # yes
-    update-rc.d lightdm enable 2
-    sed /etc/lightdm/lightdm.conf -i -e "s/^#autologin-user=.*/autologin-user=pi/"
-    ASK_TO_REBOOT=1
-  elif [ $RET -eq 1 ]; then # no
-    update-rc.d lightdm disable 2
-    ASK_TO_REBOOT=1
-  else # user hit escape
+  if [ -e /etc/init.d/lightdm ]; then
+    whiptail --yesno "Should we boot straight to desktop?" 20 60 2
+    RET=$?
+    if [ $RET -eq 0 ]; then # yes
+      update-rc.d lightdm enable 2
+      sed /etc/lightdm/lightdm.conf -i -e "s/^#autologin-user=.*/autologin-user=pi/"
+      ASK_TO_REBOOT=1
+    elif [ $RET -eq 1 ]; then # no
+      update-rc.d lightdm disable 2
+      ASK_TO_REBOOT=1
+    else # user hit escape
+      return 1
+    fi
+  else
+    whiptail --msgbox "Do sudo apt-get install lightdm to allow configuration of boot to desktop" 20 60 2
     return 1
   fi
 }
