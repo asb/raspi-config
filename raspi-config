@@ -317,21 +317,34 @@ do_ssh() {
 }
 
 do_boot_behaviour() {
-  if [ -e /etc/init.d/lightdm ]; then
-    whiptail --yesno "Should we boot straight to desktop?" 20 60 2
+  if [ -e /usr/lib/systemd/system/lightdm.service ]; then
+    whiptail --yesno "Should we boot straight to desktop (lightdm)?" 20 60 2
     RET=$?
     if [ $RET -eq 0 ]; then # yes
-      update-rc.d lightdm enable 2
+      systemctl enable lightdm.service
       sed /etc/lightdm/lightdm.conf -i -e "s/^#autologin-user=.*/autologin-user=pi/"
       ASK_TO_REBOOT=1
     elif [ $RET -eq 1 ]; then # no
-      update-rc.d lightdm disable 2
+      systemctl disable lightdm.service
+      ASK_TO_REBOOT=1
+    else # user hit escape
+      return 1
+    fi
+  elif [ -e /usr/lib/systemd/system/lxdm.service ]; then
+    whiptail --yesno "Should we boot straight to desktop (lxdm)?" 20 60 2
+    RET=$?
+    if [ $RET -eq 0 ]; then # yes
+      systemctl enable lxdm.service
+      sed /etc/lxdm/lxdm.conf -i -e "s/^#\s*autologin=.*/autologin=pi/"
+      ASK_TO_REBOOT=1
+    elif [ $RET -eq 1 ]; then # no
+      systemctl disable lxdm.service
       ASK_TO_REBOOT=1
     else # user hit escape
       return 1
     fi
   else
-    whiptail --msgbox "Do sudo apt-get install lightdm to allow configuration of boot to desktop" 20 60 2
+    whiptail --msgbox "Do sudo pacman -S lightdm to allow configuration of boot to desktop" 20 60 2
     return 1
   fi
 }
