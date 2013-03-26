@@ -3,13 +3,14 @@
 #
 # See LICENSE file for copyright and license details
 
+INTERACTIVE=True
 ASK_TO_REBOOT=0
 
 do_info() {
   whiptail --msgbox "\
-This tool provides a straight-forward way of doing initial 
-configuration of the Raspberry Pi. Although it can be run 
-at any time, some of the options may have difficulties if 
+This tool provides a straight-forward way of doing initial
+configuration of the Raspberry Pi. Although it can be run
+at any time, some of the options may have difficulties if
 you have heavily customised your installation.\
 " 20 70 1
 }
@@ -18,7 +19,7 @@ do_expand_rootfs() {
   # Get the starting offset of the root partition
   PART_START=$(parted /dev/mmcblk0 -ms unit s p | grep "^2" | cut -f 2 -d:)
   [ "$PART_START" ] || return 1
-  # Return value will likely be error for fdisk as it fails to reload the 
+  # Return value will likely be error for fdisk as it fails to reload the
   # partition table because the root fs is mounted
   fdisk /dev/mmcblk0 <<EOF
 p
@@ -65,8 +66,9 @@ esac
 EOF
   chmod +x /etc/init.d/resize2fs_once &&
   update-rc.d resize2fs_once defaults &&
-  whiptail --msgbox "Root partition has been resized.\n\
-The filesystem will be enlarged upon the next reboot" 20 60 2
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "Root partition has been resized.\nThe filesystem will be enlarged upon the next reboot" 20 60 2
+  fi
 }
 
 set_config_var() {
@@ -125,7 +127,7 @@ set_overscan() {
 
 do_overscan() {
   whiptail --yesno "What would you like to do with overscan" 20 60 2 \
-    --yes-button Disable --no-button Enable 
+    --yes-button Disable --no-button Enable
   RET=$?
   if [ $RET -eq 0 ] || [ $RET -eq 1 ]; then
     ASK_TO_REBOOT=1
@@ -302,7 +304,7 @@ do_ssh() {
     return 1
   fi
   whiptail --yesno "Would you like the SSH server enabled or disabled?" 20 60 2 \
-    --yes-button Enable --no-button Disable 
+    --yes-button Enable --no-button Disable
   RET=$?
   if [ $RET -eq 0 ]; then
     update-rc.d ssh enable &&
@@ -377,6 +379,12 @@ do
     OPT_MEMORY_SPLIT=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
     printf "Not currently supported\n"
     exit 1
+    ;;
+  --expand-rootfs)
+    INTERACTIVE=False
+    do_expand_rootfs
+    printf "Please reboot\n"
+    exit 0
     ;;
   *)
     # unknown option
