@@ -337,10 +337,9 @@ do_boot_behaviour() {
 }
 
 do_rastrack() {
-	whiptail --inputbox "Username / Nickname For Rastrack Addition" 20 70
-	whiptail --inputbox "Email Address For Rastrack Addition" 20 70
-	
-	
+        UNAME=$(whiptail --inputbox "Username / Nickname For Rastrack Addition" 20 70 3>&1 1>&2 2>&3)
+        EMAIL=$(whiptail --inputbox "Email Address For Rastrack Addition" 20 70 3>&1 1>&2 2>&3)
+        curl --data "name=$UNAME&email=$EMAIL" http://rastrack.co.uk/api.php
 }
 
 do_update() {
