@@ -426,6 +426,7 @@ while true; do
     "overclock" "Configure overclocking" \
     "ssh" "Enable or disable ssh server" \
     "boot_behaviour" "Start desktop on boot?" \
+	"rastrack" "Add this Pi to the Raspberry Pi Map - Rastrack" \
     "update" "Try to upgrade raspi-config" \
     3>&1 1>&2 2>&3)
   RET=$?
