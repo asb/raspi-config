@@ -336,7 +336,7 @@ do_boot_behaviour() {
   fi
 }
 
-show_rastrackname() {
+do_rastrack() {
 	whiptail --inputbox "Username / Nickname For Rastrack Addition" 20 70
 	whiptail --inputbox "Email Address For Rastrack Addition" 20 70
 	
@@ -414,7 +414,7 @@ fi
 # Interactive use loop
 #
 while true; do
-  FUN=$(whiptail --menu "Raspi-config" 20 80 12 --cancel-button Finish --ok-button Select \
+  FUN=$(whiptail --menu "Raspi-config" 20 80 13 --cancel-button Finish --ok-button Select \
     "info" "Information about this tool" \
     "expand_rootfs" "Expand root partition to fill SD card" \
     "overscan" "Change overscan" \
