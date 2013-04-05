@@ -336,6 +336,13 @@ do_boot_behaviour() {
   fi
 }
 
+show_rastrackname() {
+	whiptail --inputbox "Username / Nickname For Rastrack Addition" 20 70
+	whiptail --inputbox "Email Address For Rastrack Addition" 20 70
+	
+	
+}
+
 do_update() {
   apt-get update &&
   apt-get install raspi-config &&
