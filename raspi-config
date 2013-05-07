@@ -357,9 +357,9 @@ do_boot_behaviour() {
 }
 
 do_rastrack() {
-        UNAME=$(whiptail --inputbox "Username / Nickname For Rastrack Addition" 20 70 3>&1 1>&2 2>&3)
-        EMAIL=$(whiptail --inputbox "Email Address For Rastrack Addition" 20 70 3>&1 1>&2 2>&3)
-        curl --data "name=$UNAME&email=$EMAIL" http://rastrack.co.uk/api.php
+  UNAME=$(whiptail --inputbox "Username / Nickname For Rastrack Addition" 20 70 3>&1 1>&2 2>&3)
+  EMAIL=$(whiptail --inputbox "Email Address For Rastrack Addition" 20 70 3>&1 1>&2 2>&3)
+  curl --data "name=$UNAME&email=$EMAIL" http://rastrack.co.uk/api.php
 }
 
 do_update() {
@@ -452,7 +452,7 @@ while true; do
     "overclock" "Configure overclocking" \
     "ssh" "Enable or disable ssh server" \
     "boot_behaviour" "Start desktop on boot?" \
-	"rastrack" "Add this Pi to the Raspberry Pi Map - Rastrack" \
+    "rastrack" "Add this Pi to the Raspberry Pi Map - Rastrack" \
     "update" "Try to upgrade raspi-config" \
     3>&1 1>&2 2>&3)
   RET=$?
