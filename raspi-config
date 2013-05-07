@@ -70,7 +70,7 @@ The filesystem will be enlarged upon the next reboot" 20 60 2
 }
 
 set_config_var() {
-  lua - "$1" "$2" "$3" <<EOF > "$3.bak"
+  lua - -- "$1" "$2" "$3" <<EOF > "$3.bak"
 local key=assert(arg[1])
 local value=assert(arg[2])
 local fn=assert(arg[3])
