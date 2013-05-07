@@ -155,6 +155,24 @@ do_change_timezone() {
   dpkg-reconfigure tzdata
 }
 
+do_change_hostname() {
+  whiptail --msgbox "\
+Please note: RFCs mandate that a hostname's labels \
+may contain only the ASCII letters 'a' through 'z' (case-insensitive), 
+the digits '0' through '9', and the hyphen.
+Hostname labels cannot begin or end with a hyphen. 
+No other symbols, punctuation characters, or blank spaces are permitted.\
+" 20 70 1
+
+  CURRENT_HOSTNAME=`cat /etc/hostname | tr -d " \t\n\r"`
+  NEW_HOSTNAME=$(whiptail --inputbox "Please enter a hostname" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    echo $NEW_HOSTNAME > /etc/hostname
+    sed -i "s/127.0.1.1.*$CURRENT_HOSTNAME/127.0.1.1\t$NEW_HOSTNAME/g" /etc/hosts
+    ASK_TO_REBOOT=1
+  fi
+}
+
 do_memory_split() {
   if [ -e /boot/start_cd.elf ]; then
     # New-style memory split setting
@@ -415,6 +433,7 @@ while true; do
     "change_pass" "Change password for 'pi' user" \
     "change_locale" "Set locale" \
     "change_timezone" "Set timezone" \
+    "change_hostname" "Set hostname" \
     "memory_split" "Change memory split" \
     "overclock" "Configure overclocking" \
     "ssh" "Enable or disable ssh server" \
