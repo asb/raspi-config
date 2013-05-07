@@ -354,6 +354,12 @@ do_boot_behaviour() {
   fi
 }
 
+do_rastrack() {
+        UNAME=$(whiptail --inputbox "Username / Nickname For Rastrack Addition" 20 70 3>&1 1>&2 2>&3)
+        EMAIL=$(whiptail --inputbox "Email Address For Rastrack Addition" 20 70 3>&1 1>&2 2>&3)
+        curl --data "name=$UNAME&email=$EMAIL" http://rastrack.co.uk/api.php
+}
+
 do_update() {
   apt-get update &&
   apt-get install raspi-config &&
@@ -425,7 +431,7 @@ fi
 # Interactive use loop
 #
 while true; do
-  FUN=$(whiptail --menu "Raspi-config" 20 80 12 --cancel-button Finish --ok-button Select \
+  FUN=$(whiptail --menu "Raspi-config" 20 80 13 --cancel-button Finish --ok-button Select \
     "info" "Information about this tool" \
     "expand_rootfs" "Expand root partition to fill SD card" \
     "overscan" "Change overscan" \
@@ -438,6 +444,7 @@ while true; do
     "overclock" "Configure overclocking" \
     "ssh" "Enable or disable ssh server" \
     "boot_behaviour" "Start desktop on boot?" \
+	"rastrack" "Add this Pi to the Raspberry Pi Map - Rastrack" \
     "update" "Try to upgrade raspi-config" \
     3>&1 1>&2 2>&3)
   RET=$?
