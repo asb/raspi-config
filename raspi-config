@@ -362,6 +362,37 @@ do_rastrack() {
   curl --data "name=$UNAME&email=$EMAIL" http://rastrack.co.uk/api.php
 }
 
+# $1 is 0 to disable camera, 1 to enable it
+set_camera() {
+  # Stop if /boot is not a mountpoint
+  if ! mountpoint -q /boot; then
+    return 1
+  fi
+
+  [ -e /boot/config.txt ] || touch /boot/config.txt
+
+  if [ "$1" -eq 0 ]; then # disable camera
+    set_config_var start_file start.elf /boot/config.txt
+    set_config_var fixup_file fixup.dat /boot/config.txt
+  else # enable camera
+    set_config_var start_file start_x.elf /boot/config.txt
+    set_config_var fixup_file fixup_x.dat /boot/config.txt
+    set_config_var gpu_mem 128 /boot/config.txt
+  fi
+}
+
+do_camera() {
+  whiptail --yesno "Enable support for Raspberry Pi camera?" 20 60 2 \
+    --yes-button Disable --no-button Enable
+  RET=$?
+  if [ $RET -eq 0 ] || [ $RET -eq 1 ]; then
+    ASK_TO_REBOOT=1
+    set_camera $RET;
+  else
+    return 1
+  fi
+}
+
 do_update() {
   apt-get update &&
   apt-get install raspi-config &&
@@ -452,6 +483,7 @@ while true; do
     "overclock" "Configure overclocking" \
     "ssh" "Enable or disable ssh server" \
     "boot_behaviour" "Start desktop on boot?" \
+    "camera" "Enable/Disable cammera addon support" \
     "rastrack" "Add this Pi to the Raspberry Pi Map - Rastrack" \
     "update" "Try to upgrade raspi-config" \
     3>&1 1>&2 2>&3)
