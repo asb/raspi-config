@@ -382,6 +382,10 @@ set_camera() {
 }
 
 do_camera() {
+  if [ ! -e /boot/start_x.elf ]; then
+    whiptail --msgbox "Your firmware appears to be out of date (no start_x.elf). Please update" 20 60 2
+    return 1
+  fi
   whiptail --yesno "Enable support for Raspberry Pi camera?" 20 60 2 \
     --yes-button Disable --no-button Enable
   RET=$?
@@ -483,7 +487,7 @@ while true; do
     "overclock" "Configure overclocking" \
     "ssh" "Enable or disable ssh server" \
     "boot_behaviour" "Start desktop on boot?" \
-    "camera" "Enable/Disable cammera addon support" \
+    "camera" "Enable/Disable camera addon support" \
     "rastrack" "Add this Pi to the Raspberry Pi Map - Rastrack" \
     "update" "Try to upgrade raspi-config" \
     3>&1 1>&2 2>&3)
