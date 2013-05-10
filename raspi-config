@@ -357,9 +357,27 @@ do_boot_behaviour() {
 }
 
 do_rastrack() {
+  whiptail --msgbox "\
+Rastrack (http://rastrack.co.uk) is a website run by Ryan Walmsley
+for tracking where people are using Raspberry Pis around the world.
+If you have an internet connection, you can add yourself directly
+using this tool. This is just a bit of fun, not any sort of official
+registration.\
+" 20 70 1
+  if [ $? -ne 0 ]; then
+    return 0;
+  fi
   UNAME=$(whiptail --inputbox "Username / Nickname For Rastrack Addition" 20 70 3>&1 1>&2 2>&3)
+  if [ $? -ne 0 ]; then
+    return 1;
+  fi
   EMAIL=$(whiptail --inputbox "Email Address For Rastrack Addition" 20 70 3>&1 1>&2 2>&3)
+  if [ $? -ne 0 ]; then
+    return 1;
+  fi
   curl --data "name=$UNAME&email=$EMAIL" http://rastrack.co.uk/api.php
+  printf "Hit enter to continue\n"
+  read TMP
 }
 
 # $1 is 0 to disable camera, 1 to enable it
