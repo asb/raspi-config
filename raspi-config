@@ -301,6 +301,7 @@ case "$1" in
     else
       SYS_CPUFREQ_GOVERNOR=/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
       [ -e $SYS_CPUFREQ_GOVERNOR ] && echo "ondemand" > $SYS_CPUFREQ_GOVERNOR
+      echo 70 > /sys/devices/system/cpu/cpufreq/ondemand/up_threshold
       printf " No. Switching to ondemand scaling governor"
       log_end_msg 0
     fi
