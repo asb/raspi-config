@@ -1,3 +1,9 @@
+raspi-config (20130515) unstable; urgency=low
+
+  * Lower cpufreq threshold when overclocking
+
+ -- Alex Bradbury <asb@asbradbury.org>  Wed, 15 May 2013 19:47:40 +0100
+
 raspi-config (20130510) unstable; urgency=low
 
   * Added support for registering on rastrack (thanks Ryan Walmsley)
