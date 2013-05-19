@@ -6,7 +6,7 @@
 INTERACTIVE=True
 ASK_TO_REBOOT=0
 
-do_info() {
+do_8() { # About
   whiptail --msgbox "\
 This tool provides a straight-forward way of doing initial
 configuration of the Raspberry Pi. Although it can be run
@@ -15,7 +15,7 @@ you have heavily customised your installation.\
 " 20 70 1
 }
 
-do_expand_rootfs() {
+do_1() { # Expand rootfs
   if ! [ -h /dev/root ]; then
     whiptail --msgbox "/dev/root does not exist or is not a symlink. Don't know how to expand" 20 60 2
     return 0
@@ -144,7 +144,7 @@ set_overscan() {
   fi
 }
 
-do_overscan() {
+do_A1() { # Overscan
   whiptail --yesno "What would you like to do with overscan" 20 60 2 \
     --yes-button Disable --no-button Enable
   RET=$?
@@ -156,27 +156,27 @@ do_overscan() {
   fi
 }
 
-do_change_pass() {
+do_2() { # Password
   whiptail --msgbox "You will now be asked to enter a new password for the pi user" 20 60 1
   passwd pi &&
   whiptail --msgbox "Password changed successfully" 20 60 1
 }
 
-do_configure_keyboard() {
+do_I3() { # Keyboard
   dpkg-reconfigure keyboard-configuration &&
   printf "Reloading keymap. This may take a short while\n" &&
   invoke-rc.d keyboard-setup start
 }
 
-do_change_locale() {
+do_I1() { # Locale
   dpkg-reconfigure locales
 }
 
-do_change_timezone() {
+do_I2() { # Timezone
   dpkg-reconfigure tzdata
 }
 
-do_change_hostname() {
+do_A2() { # Hostname
   whiptail --msgbox "\
 Please note: RFCs mandate that a hostname's labels \
 may contain only the ASCII letters 'a' through 'z' (case-insensitive), 
@@ -194,7 +194,7 @@ No other symbols, punctuation characters, or blank spaces are permitted.\
   fi
 }
 
-do_memory_split() {
+do_A3() { # Memory Split
   if [ -e /boot/start_cd.elf ]; then
     # New-style memory split setting
     if ! mountpoint -q /boot; then
@@ -246,7 +246,7 @@ set_memory_split() {
   sync
 }
 
-do_overclock() {
+do_A4() { # Overclock
   whiptail --msgbox "\
 Be aware that overclocking may reduce the lifetime of your
 Raspberry Pi. If overclocking at a certain level causes
@@ -336,7 +336,7 @@ EOF
   whiptail --msgbox "Set overclock to preset '$1'" 20 60 2
 }
 
-do_ssh() {
+do_A5() { # Enable/Disable SSH
   if [ -e /var/log/regen_ssh_keys.log ] && ! grep -q "^finished" /var/log/regen_ssh_keys.log; then
     whiptail --msgbox "Initial ssh key generation still running. Please wait and try again." 20 60 2
     return 1
@@ -356,7 +356,7 @@ do_ssh() {
   fi
 }
 
-do_boot_behaviour() {
+do_3() { # Boot Preference
   if [ -e /etc/init.d/lightdm ]; then
     whiptail --yesno "Should we boot straight to desktop?" 20 60 2
     RET=$?
@@ -376,7 +376,7 @@ do_boot_behaviour() {
   fi
 }
 
-do_rastrack() {
+do_6() { # Add to Rastrack 
   whiptail --msgbox "\
 Rastrack (http://rastrack.co.uk) is a website run by Ryan Walmsley
 for tracking where people are using Raspberry Pis around the world.
@@ -419,7 +419,7 @@ set_camera() {
   fi
 }
 
-do_camera() {
+do_5() { # Enable/Disable Camera
   if [ ! -e /boot/start_x.elf ]; then
     whiptail --msgbox "Your firmware appears to be out of date (no start_x.elf). Please update" 20 60 2
     return 1
@@ -435,7 +435,7 @@ do_camera() {
   fi
 }
 
-do_update() {
+do_A6() { # Update raspi-config
   apt-get update &&
   apt-get install raspi-config &&
   printf "Sleeping 5 seconds before reloading raspi-config\n" &&
@@ -479,7 +479,7 @@ do
     ;;
   --expand-rootfs)
     INTERACTIVE=False
-    do_expand_rootfs
+    do_1
     printf "Please reboot\n"
     exit 0
     ;;
@@ -508,33 +508,60 @@ if [ -n "${OPT_MEMORY_SPLIT:-}" ]; then
   exit 0
 fi
 
+do_4() {
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (Raspi-config)" --menu "Internationalisation Options" $LINES $COLUMNS $(($LINES-8)) --cancel-button Back --ok-button Select \
+        "I1 Change Locale" "Set up language and regional settings to match your location" \
+        "I2 Change Timezone" "Set up timezone to match your location" \
+        "I3 Change Keyboard Layout" "Set the keyboard layout to match your keyboard" \
+        3>&1 1>&2 2>&3)
+    RET=$?
+    if [ $RET -eq 1 ]; then
+        return 1
+    elif [ $RET -eq 0 ]; then
+        "do_$(echo $FUN | head -c 1)" || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+    fi
+}
+
+do_7() {
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (Raspi-config)" --menu "Advanced Options" $LINES $COLUMNS $(($LINES-8)) --cancel-button Back --o\
+k-button Select \
+        "A1 Overscan" "You may need to configure overscan if black bars are present on display" \
+	"A2 Hostname" "Set the visibile name for this Pi on a network" \ 
+	"A3 Memory Split" "Change the amount of memory made available to the GPU" \ 
+	"A4 Overclock" "Configure overclocking for your Pi" \ 
+	"A5 SSH" "Enable/Disable SSH server" \ 
+	"A6 Update" "Update this tool to the latest version" \ 
+	3>&1 1>&2 2>&3)
+    RET=$?
+    if [ $RET -eq 1 ]; then
+        return 1
+    elif [ $RET -eq 0 ]; then
+        "do_$(echo $FUN | head -c 1)" || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+    fi
+}
+
+
 #
 # Interactive use loop
 #
+eval `resize`
 while true; do
-  FUN=$(whiptail --menu "Raspi-config" 20 80 13 --cancel-button Finish --ok-button Select \
-    "info" "Information about this tool" \
-    "expand_rootfs" "Expand root partition to fill SD card" \
-    "overscan" "Change overscan" \
-    "configure_keyboard" "Set keyboard layout" \
-    "change_pass" "Change password for 'pi' user" \
-    "change_locale" "Set locale" \
-    "change_timezone" "Set timezone" \
-    "change_hostname" "Set hostname" \
-    "memory_split" "Change memory split" \
-    "overclock" "Configure overclocking" \
-    "ssh" "Enable or disable ssh server" \
-    "boot_behaviour" "Start desktop on boot?" \
-    "camera" "Enable/Disable camera addon support" \
-    "rastrack" "Add this Pi to the Raspberry Pi Map - Rastrack" \
-    "update" "Try to upgrade raspi-config" \
-    3>&1 1>&2 2>&3)
-  RET=$?
-  if [ $RET -eq 1 ]; then
-    do_finish
-  elif [ $RET -eq 0 ]; then
-    "do_$FUN" || whiptail --msgbox "There was an error running do_$FUN" 20 60 1
-  else
-    exit 1
-  fi
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Setup Options" $LINES $COLUMNS $(($LINES-8)) --cancel-button Finish --ok-button Select \
+	"1 Expand Filesystem" "Ensures that all of the SD card storage is available to the OS" \
+	"2 Change User Password" "Change password for the default username (pi)" \
+	"3 Enable Boot to Desktop" "Choose whether to boot into a desktop environment or the command-line" \
+	"4 Internationalisation Options" "Set up language and regional settings to match your location" \
+	"5 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
+	"6 Add to Rastrack" "Add this Pi to the online Raspberry Pi Map (Rastrack)" \
+	"7 Advanced Options" "Configure advanced settings" \
+	"8 About raspi-config" "Information about this configuration tool" \
+	3>&1 1>&2 2>&3)
+    RET=$?
+    if [ $RET -eq 1 ]; then
+	do_finish
+    elif [ $RET -eq 0 ]; then
+	"do_$(echo $FUN | head -c 1)" || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+    else
+	exit 1
+    fi
 done
