@@ -16,18 +16,37 @@ you have heavily customised your installation.\
 }
 
 do_expand_rootfs() {
+  if ! [ -h /dev/root ]; then
+    whiptail --msgbox "/dev/root does not exist or is not a symlink. Don't know how to expand" 20 60 2
+    return 0
+  fi
+
+  ROOT_PART=$(readlink /dev/root)
+  PART_NUM=${ROOT_PART#mmcblk0p}
+  if [ "$PART_NUM" = "$ROOT_PART" ]; then
+    whiptail --msgbox "/dev/root is not an SD card. Don't know how to expand" 20 60 2
+    return 0
+  fi
+
+  LAST_PART_NUM=$(parted /dev/mmcblk0 -ms unit s p | tail -n 1 | cut -f 1 -d:)
+
+  if [ "$LAST_PART_NUM" != "$PART_NUM" ]; then
+    whiptail --msgbox "/dev/root is not the last partition. Don't know how to expand" 20 60 2
+    return 0
+  fi
+
   # Get the starting offset of the root partition
-  PART_START=$(parted /dev/mmcblk0 -ms unit s p | grep "^2" | cut -f 2 -d:)
+  PART_START=$(parted /dev/mmcblk0 -ms unit s p | grep "^${PART_NUM}" | cut -f 2 -d:)
   [ "$PART_START" ] || return 1
   # Return value will likely be error for fdisk as it fails to reload the
   # partition table because the root fs is mounted
   fdisk /dev/mmcblk0 <<EOF
 p
 d
-2
+$PART_NUM
 n
 p
-2
+$PART_NUM
 $PART_START
 
 p
@@ -53,7 +72,7 @@ cat <<\EOF > /etc/init.d/resize2fs_once &&
 case "$1" in
   start)
     log_daemon_msg "Starting resize2fs_once" &&
-    resize2fs /dev/mmcblk0p2 &&
+    resize2fs /dev/root &&
     rm /etc/init.d/resize2fs_once &&
     update-rc.d resize2fs_once remove &&
     log_end_msg $?
