@@ -1,3 +1,9 @@
+raspi-config (20130520) unstable; urgency=low
+
+  * Make expand_rootfs work if /dev/root is not second partition
+
+ -- Alex Bradbury <asb@asbradbury.org>  Mon, 20 May 2013 19:48:02 +0100
+
 raspi-config (20130515) unstable; urgency=low
 
   * Lower cpufreq threshold when overclocking
