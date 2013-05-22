@@ -22,7 +22,7 @@ calc_wt_size() {
   WT_MENU_HEIGHT=$(($WT_HEIGHT-8))
 }
 
-do_8() { # About
+do_about() {
   whiptail --msgbox "\
 This tool provides a straight-forward way of doing initial
 configuration of the Raspberry Pi. Although it can be run
@@ -31,7 +31,7 @@ you have heavily customised your installation.\
 " 20 70 1
 }
 
-do_1() { # Expand rootfs
+do_expand_rootfs() {
   if ! [ -h /dev/root ]; then
     whiptail --msgbox "/dev/root does not exist or is not a symlink. Don't know how to expand" 20 60 2
     return 0
@@ -172,7 +172,7 @@ do_A1() { # Overscan
   fi
 }
 
-do_2() { # Password
+do_change_pass() {
   whiptail --msgbox "You will now be asked to enter a new password for the pi user" 20 60 1
   passwd pi &&
   whiptail --msgbox "Password changed successfully" 20 60 1
@@ -372,7 +372,7 @@ do_A5() { # Enable/Disable SSH
   fi
 }
 
-do_3() { # Boot Preference
+do_boot_behaviour() {
   if [ -e /etc/init.d/lightdm ]; then
     whiptail --yesno "Should we boot straight to desktop?" 20 60 2
     RET=$?
@@ -392,7 +392,7 @@ do_3() { # Boot Preference
   fi
 }
 
-do_6() { # Add to Rastrack 
+do_rastrack() {
   whiptail --msgbox "\
 Rastrack (http://rastrack.co.uk) is a website run by Ryan Walmsley
 for tracking where people are using Raspberry Pis around the world.
@@ -435,7 +435,7 @@ set_camera() {
   fi
 }
 
-do_5() { # Enable/Disable Camera
+do_camera() {
   if [ ! -e /boot/start_x.elf ]; then
     whiptail --msgbox "Your firmware appears to be out of date (no start_x.elf). Please update" 20 60 2
     return 1
@@ -495,7 +495,7 @@ do
     ;;
   --expand-rootfs)
     INTERACTIVE=False
-    do_1
+    do_expand_rootfs
     printf "Please reboot\n"
     exit 0
     ;;
@@ -524,7 +524,7 @@ if [ -n "${OPT_MEMORY_SPLIT:-}" ]; then
   exit 0
 fi
 
-do_4() {
+do_internationalisation_menu() {
   FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Internationalisation Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
         "I1 Change Locale" "Set up language and regional settings to match your location" \
         "I2 Change Timezone" "Set up timezone to match your location" \
@@ -538,7 +538,7 @@ do_4() {
   fi
 }
 
-do_7() {
+do_advanced_menu() {
   FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
 	"A1 Overscan" "You may need to configure overscan if black bars are present on display" \
 	"A2 Hostname" "Set the visible name for this Pi on a network" \
@@ -575,7 +575,17 @@ while true; do
     if [ $RET -eq 1 ]; then
       do_finish
     elif [ $RET -eq 0 ]; then
-      "do_$(echo $FUN | head -c 1)" || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+      case "$FUN" in
+        1\ *) do_expand_rootfs ;;
+        2\ *) do_change_pass ;;
+        3\ *) do_boot_behaviour ;;
+        4\ *) do_internationalisation_menu ;;
+        5\ *) do_camera ;;
+        6\ *) do_rastrack ;;
+        7\ *) do_advanced_menu ;;
+        8\ *) do_about ;;
+        *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+      esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else
       exit 1
     fi
