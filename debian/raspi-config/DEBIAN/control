@@ -1,0 +1,10 @@
+Package: raspi-config
+Version: 20130520
+Architecture: all
+Maintainer: Alex Bradbury <asb@asbradbury.org>
+Installed-Size: 56
+Depends: whiptail, parted, lua5.1, triggerhappy
+Section: unknown
+Priority: extra
+Homepage: https://github.com/asb/raspi-config
+Description: Simple configuration for Raspberry Pi
