@@ -1,3 +1,11 @@
+raspi-config (20130522) unstable; urgency=low
+
+  * Re-organise menus and give better explanations for options (thanks Rob 
+    Bishop)
+  * Refuse to expand_rootfs on NOOBS partition layouts.
+
+ -- Alex Bradbury <asb@asbradbury.org>  Wed, 22 May 2013 20:51:07 +0100
+
 raspi-config (20130520) unstable; urgency=low
 
   * Make expand_rootfs work if /dev/root is not second partition
