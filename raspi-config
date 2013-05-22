@@ -6,6 +6,22 @@
 INTERACTIVE=True
 ASK_TO_REBOOT=0
 
+calc_wt_size() {
+  # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
+  # output from tput. However in this case, tput detects neither stdout or 
+  # stderr is a tty and so only gives default 80, 24 values
+  WT_HEIGHT=$(tput lines)
+  WT_WIDTH=$(tput cols)
+
+  if [ -z "$WT_HEIGHT" ] || [ "$WT_HEIGHT" -lt 15 ]; then
+    WT_HEIGHT=20
+  fi
+  if [ -z "$WT_WIDTH" ] || [ "$WT_WIDTH" -lt 60 ]; then
+    WT_WIDTH=80
+  fi
+  WT_MENU_HEIGHT=$(($WT_HEIGHT-8))
+}
+
 do_8() { # About
   whiptail --msgbox "\
 This tool provides a straight-forward way of doing initial
@@ -509,7 +525,7 @@ if [ -n "${OPT_MEMORY_SPLIT:-}" ]; then
 fi
 
 do_4() {
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Internationalisation Options" $LINES $COLUMNS $(($LINES-8)) --cancel-button Back --ok-button Select \
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Internationalisation Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
         "I1 Change Locale" "Set up language and regional settings to match your location" \
         "I2 Change Timezone" "Set up timezone to match your location" \
         "I3 Change Keyboard Layout" "Set the keyboard layout to match your keyboard" \
@@ -523,7 +539,7 @@ do_4() {
 }
 
 do_7() {
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $LINES $COLUMNS $(($LINES-8)) --cancel-button Back --ok-button Select \
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
 	"A1 Overscan" "You may need to configure overscan if black bars are present on display" \
 	"A2 Hostname" "Set the visible name for this Pi on a network" \
 	"A3 Memory Split" "Change the amount of memory made available to the GPU" \
@@ -543,9 +559,9 @@ do_7() {
 #
 # Interactive use loop
 #
-eval `resize`
+calc_wt_size
 while true; do
-    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Setup Options" $LINES $COLUMNS $(($LINES-8)) --cancel-button Finish --ok-button Select \
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
 	"1 Expand Filesystem" "Ensures that all of the SD card storage is available to the OS" \
 	"2 Change User Password" "Change password for the default user (pi)" \
 	"3 Enable Boot to Desktop" "Choose whether to boot into a desktop environment or the command-line" \
