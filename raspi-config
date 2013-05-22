@@ -509,21 +509,21 @@ if [ -n "${OPT_MEMORY_SPLIT:-}" ]; then
 fi
 
 do_4() {
-    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Internationalisation Options" $LINES $COLUMNS $(($LINES-8)) --cancel-button Back --ok-button Select \
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Internationalisation Options" $LINES $COLUMNS $(($LINES-8)) --cancel-button Back --ok-button Select \
         "I1 Change Locale" "Set up language and regional settings to match your location" \
         "I2 Change Timezone" "Set up timezone to match your location" \
         "I3 Change Keyboard Layout" "Set the keyboard layout to match your keyboard" \
         3>&1 1>&2 2>&3)
-    RET=$?
-    if [ $RET -eq 1 ]; then
-        return 0
-    elif [ $RET -eq 0 ]; then
-        "do_$(echo $FUN | head -c 2)" || whiptail --msgbox "There was an error running option $FUN" 20 60 1
-    fi
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    "do_$(echo $FUN | head -c 2)" || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  fi
 }
 
 do_7() {
-    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $LINES $COLUMNS $(($LINES-8)) --cancel-button Back --ok-button Select \
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $LINES $COLUMNS $(($LINES-8)) --cancel-button Back --ok-button Select \
 	"A1 Overscan" "You may need to configure overscan if black bars are present on display" \
 	"A2 Hostname" "Set the visible name for this Pi on a network" \
 	"A3 Memory Split" "Change the amount of memory made available to the GPU" \
@@ -531,12 +531,12 @@ do_7() {
 	"A5 SSH" "Enable/Disable remote command line access to your Pi using SSH" \
 	"A6 Update" "Update this tool to the latest version" \
 	3>&1 1>&2 2>&3)
-    RET=$?
-    if [ $RET -eq 1 ]; then
-        return 0
-    elif [ $RET -eq 0 ]; then
-        "do_$(echo $FUN | head -c 2)" || whiptail --msgbox "There was an error running option $FUN" 20 60 1
-    fi
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    "do_$(echo $FUN | head -c 2)" || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  fi
 }
 
 
@@ -557,10 +557,10 @@ while true; do
 	3>&1 1>&2 2>&3)
     RET=$?
     if [ $RET -eq 1 ]; then
-	do_finish
+      do_finish
     elif [ $RET -eq 0 ]; then
-	"do_$(echo $FUN | head -c 1)" || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+      "do_$(echo $FUN | head -c 1)" || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else
-	exit 1
+      exit 1
     fi
 done
