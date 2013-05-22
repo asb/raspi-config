@@ -548,9 +548,8 @@ do_advanced_menu() {
     "A1 Overscan" "You may need to configure overscan if black bars are present on display" \
     "A2 Hostname" "Set the visible name for this Pi on a network" \
     "A3 Memory Split" "Change the amount of memory made available to the GPU" \
-    "A4 Overclock" "Configure overclocking for your Pi" \
-    "A5 SSH" "Enable/Disable remote command line access to your Pi using SSH" \
-    "A6 Update" "Update this tool to the latest version" \
+    "A4 SSH" "Enable/Disable remote command line access to your Pi using SSH" \
+    "A5 Update" "Update this tool to the latest version" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -560,9 +559,8 @@ do_advanced_menu() {
       A1\ *) do_overscan ;;
       A2\ *) do_change_hostname ;;
       A3\ *) do_memory_split ;;
-      A4\ *) do_overclock ;;
-      A5\ *) do_ssh ;;
-      A6\ *) do_update ;;
+      A4\ *) do_ssh ;;
+      A5\ *) do_update ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
@@ -574,32 +572,34 @@ do_advanced_menu() {
 #
 calc_wt_size
 while true; do
-    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-	"1 Expand Filesystem" "Ensures that all of the SD card storage is available to the OS" \
-	"2 Change User Password" "Change password for the default user (pi)" \
-	"3 Enable Boot to Desktop" "Choose whether to boot into a desktop environment or the command-line" \
-	"4 Internationalisation Options" "Set up language and regional settings to match your location" \
-	"5 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
-	"6 Add to Rastrack" "Add this Pi to the online Raspberry Pi Map (Rastrack)" \
-	"7 Advanced Options" "Configure advanced settings" \
-	"8 About raspi-config" "Information about this configuration tool" \
-	3>&1 1>&2 2>&3)
-    RET=$?
-    if [ $RET -eq 1 ]; then
-      do_finish
-    elif [ $RET -eq 0 ]; then
-      case "$FUN" in
-        1\ *) do_expand_rootfs ;;
-        2\ *) do_change_pass ;;
-        3\ *) do_boot_behaviour ;;
-        4\ *) do_internationalisation_menu ;;
-        5\ *) do_camera ;;
-        6\ *) do_rastrack ;;
-        7\ *) do_advanced_menu ;;
-        8\ *) do_about ;;
-        *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-      esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
-    else
-      exit 1
-    fi
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+    "1 Expand Filesystem" "Ensures that all of the SD card storage is available to the OS" \
+    "2 Change User Password" "Change password for the default user (pi)" \
+    "3 Enable Boot to Desktop" "Choose whether to boot into a desktop environment or the command-line" \
+    "4 Internationalisation Options" "Set up language and regional settings to match your location" \
+    "5 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
+    "6 Add to Rastrack" "Add this Pi to the online Raspberry Pi Map (Rastrack)" \
+    "7 Overclock" "Configure overclocking for your Pi" \
+    "8 Advanced Options" "Configure advanced settings" \
+    "9 About raspi-config" "Information about this configuration tool" \
+    3>&1 1>&2 2>&3)
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    do_finish
+  elif [ $RET -eq 0 ]; then
+    case "$FUN" in
+      1\ *) do_expand_rootfs ;;
+      2\ *) do_change_pass ;;
+      3\ *) do_boot_behaviour ;;
+      4\ *) do_internationalisation_menu ;;
+      5\ *) do_camera ;;
+      6\ *) do_rastrack ;;
+      7\ *) do_overclock ;;
+      8\ *) do_advanced_menu ;;
+      9\ *) do_about ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  else
+    exit 1
+  fi
 done
