@@ -1,3 +1,10 @@
+raspi-config (20130525) unstable; urgency=low
+
+  * Tweak height of whiptail display (thanks Rob Bishop) 
+  * Fix issue of gpu_mem=16 not working when camera is enabled
+
+ -- Alex Bradbury <asb@asbradbury.org>  Sat, 25 May 2013 16:49:19 +0100
+
 raspi-config (20130522) unstable; urgency=low
 
   * Re-organise menus and give better explanations for options (thanks Rob 
