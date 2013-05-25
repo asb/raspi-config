@@ -1,3 +1,10 @@
+raspi-config (20130525-1) unstable; urgency=low
+
+  * Use start_x rather than startx in config.txt for enabling camera to reduce 
+    confusion
+
+ -- Alex Bradbury <asb@asbradbury.org>  Sat, 25 May 2013 17:15:07 +0100
+
 raspi-config (20130525) unstable; urgency=low
 
   * Tweak height of whiptail display (thanks Rob Bishop) 
