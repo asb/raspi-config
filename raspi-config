@@ -200,21 +200,25 @@ do_change_timezone() {
 }
 
 do_change_hostname() {
-  whiptail --msgbox "\
+  if [[ -z "$1" ]] ; then
+    whiptail --msgbox "\
 Please note: RFCs mandate that a hostname's labels \
 may contain only the ASCII letters 'a' through 'z' (case-insensitive), 
 the digits '0' through '9', and the hyphen.
 Hostname labels cannot begin or end with a hyphen. 
 No other symbols, punctuation characters, or blank spaces are permitted.\
 " 20 70 1
+    [[ $? -ne 0 ]] && return  1
+    NEW_HOSTNAME=$(whiptail --inputbox "Please enter a hostname" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
+  else
+    NEW_HOSTNAME=$1
+  fi
 
   CURRENT_HOSTNAME=`cat /etc/hostname | tr -d " \t\n\r"`
-  NEW_HOSTNAME=$(whiptail --inputbox "Please enter a hostname" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
-  if [ $? -eq 0 ]; then
-    echo $NEW_HOSTNAME > /etc/hostname
-    sed -i "s/127.0.1.1.*$CURRENT_HOSTNAME/127.0.1.1\t$NEW_HOSTNAME/g" /etc/hosts
-    ASK_TO_REBOOT=1
-  fi
+
+  echo $NEW_HOSTNAME > /etc/hostname
+  sed -ie "s/127.0.1.1.*$CURRENT_HOSTNAME/127.0.1.1\t$NEW_HOSTNAME/g" /etc/hosts
+  ASK_TO_REBOOT=1
 }
 
 do_memory_split() { # Memory Split
@@ -225,14 +229,17 @@ do_memory_split() { # Memory Split
     fi
     ## get current memory split from /boot/config.txt
     CUR_GPU_MEM=$(get_config_var gpu_mem /boot/config.txt)
-    [ -z "$CUR_GPU_MEM" ] && CUR_GPU_MEM=64
+    [[ -n "$CUR_GPU_MEM" ]] ||  CUR_GPU_MEM=64
     ## ask users what gpu_mem they want
-    NEW_GPU_MEM=$(whiptail --inputbox "How much memory should the GPU have?  e.g. 16/32/64/128/256" \
-      20 70 -- "$CUR_GPU_MEM" 3>&1 1>&2 2>&3)
-    if [ $? -eq 0 ]; then
-      set_config_var gpu_mem "$NEW_GPU_MEM" /boot/config.txt
-      ASK_TO_REBOOT=1
+    if [[ -n "$1" && ( $1 -eq 16 || $1 -eq 32 || $1 -eq 64 || $1 -eq 128 || $1 -eq 256 )  ]] ; then
+      NEW_GPU_MEM=$1
+    else
+      NEW_GPU_MEM=$(whiptail --inputbox "How much memory should the GPU have?  e.g. 16/32/64/128/256" \
+        20 70 -- "$CUR_GPU_MEM" 3>&1 1>&2 2>&3)
+        [[ $? -gt 0 ]] && return 1  # dialog failed
     fi
+    set_config_var gpu_mem "$NEW_GPU_MEM" /boot/config.txt
+    ASK_TO_REBOOT=1
   else # Old firmware so do start.elf renaming
     get_current_memory_split
     MEMSPLIT=$(whiptail --menu "Set memory split.\n$MEMSPLIT_DESCRIPTION" 20 60 10 \
@@ -270,21 +277,25 @@ set_memory_split() {
 }
 
 do_overclock() {
-  whiptail --msgbox "\
-Be aware that overclocking may reduce the lifetime of your
-Raspberry Pi. If overclocking at a certain level causes
-system instability, try a more modest overclock. Hold down
-shift during boot to temporarily disable overclock.
-See http://elinux.org/RPi_Overclocking for more information.\
-" 20 70 1
-  OVERCLOCK=$(whiptail --menu "Chose overclock preset" 20 60 10 \
-    "None" "700MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
-    "Modest" "800MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
-    "Medium" "900MHz ARM, 250MHz core, 450MHz SDRAM, 2 overvolt" \
-    "High" "950MHz ARM, 250MHz core, 450MHz SDRAM, 6 overvolt" \
-    "Turbo" "1000MHz ARM, 500MHz core, 600MHz SDRAM, 6 overvolt" \
-    3>&1 1>&2 2>&3)
-  if [ $? -eq 0 ]; then
+  if [[ -n "$1" && (  $1 == "None" || $1 == "Modest" || $1 == "Medium" || $1 == "High" || $1 == "Turbo" ) ]] ; then
+	OVERCLOCK=$1
+  else
+	  whiptail --msgbox "\
+	Be aware that overclocking may reduce the lifetime of your
+	Raspberry Pi. If overclocking at a certain level causes
+	system instability, try a more modest overclock. Hold down
+	shift during boot to temporarily disable overclock.
+	See http://elinux.org/RPi_Overclocking for more information.\
+	" 20 70 1
+	  OVERCLOCK=$(whiptail --menu "Chose overclock preset" 20 60 10 \
+	    "None" "700MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
+	    "Modest" "800MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
+	    "Medium" "900MHz ARM, 250MHz core, 450MHz SDRAM, 2 overvolt" \
+	    "High" "950MHz ARM, 250MHz core, 450MHz SDRAM, 6 overvolt" \
+	    "Turbo" "1000MHz ARM, 500MHz core, 600MHz SDRAM, 6 overvolt" \
+	    3>&1 1>&2 2>&3)
+	    [ $? -ne 0 ] && return 1
+  fi
     case "$OVERCLOCK" in
       None)
         set_overclock None 700 250 400 0
@@ -309,8 +320,14 @@ See http://elinux.org/RPi_Overclocking for more information.\
         return 1
         ;;
     esac
+
+    if [[ $INTERACTIVE -ne False ]] ; then 
+        whiptail --msgbox "Set overclock to preset $OVERCLOCK" 20 60 2
+    else
+        echo "Set overclock to preset $OVERCLOCK"
+    fi
+
     ASK_TO_REBOOT=1
-  fi
 }
 
 set_overclock() {
@@ -355,8 +372,7 @@ case "$1" in
 esac
 EOF
   chmod +x /etc/init.d/switch_cpu_governor &&
-  update-rc.d switch_cpu_governor defaults &&
-  whiptail --msgbox "Set overclock to preset '$1'" 20 60 2
+	  update-rc.d switch_cpu_governor defaults
 }
 
 do_ssh() {
@@ -493,20 +509,46 @@ do_finish() {
 for i in $*
 do
   case $i in
-  --memory-split)
-    OPT_MEMORY_SPLIT=GET
-    printf "Not currently supported\n"
-    exit 1
+  --hostname=*)
+    INTERACTIVE=False
+    HOSTNAME=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+    do_change_hostname $HOSTNAME
+    printf "Please reboot\n"
+    exit 0
+    ;;
+  --overclock=*)
+    INTERACTIVE=False
+    OVERCLOCK_MODE=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+    do_overclock $OVERCLOCK_MODE
+    printf "Please reboot\n"
+    exit 0
     ;;
   --memory-split=*)
+    INTERACTIVE=False
     OPT_MEMORY_SPLIT=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
-    printf "Not currently supported\n"
-    exit 1
+    do_memory_split $OPT_MEMORY_SPLIT
+    printf "Please reboot\n"
+    exit 0
+    ;;
+  --enable-camera)
+    INTERACTIVE=False
+    set_camera 1
+    exit 0
+    ;;
+  --disable-camera)
+    INTERACTIVE=False
+    set_camera 0
+    exit 0
     ;;
   --expand-rootfs)
     INTERACTIVE=False
     do_expand_rootfs
     printf "Please reboot\n"
+    exit 0
+    ;;
+  --help|-h)
+    INTERACTIVE=False
+    printf "Usage: sudo $(basename $0) [--hostname=<new_host_name>] | [--memory-split=<16|32|64|126|256>] | [--expand-rootfs] | [--enable-camera|--disable-camera] | [--overclock=<None|Modest|Medium|High|Turbo>]\n"
     exit 0
     ;;
   *)
@@ -580,6 +622,7 @@ do_advanced_menu() {
 #
 # Interactive use loop
 #
+INTERACTIVE=True
 calc_wt_size
 while true; do
   FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
