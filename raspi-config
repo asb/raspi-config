@@ -208,7 +208,7 @@ the digits '0' through '9', and the hyphen.
 Hostname labels cannot begin or end with a hyphen. 
 No other symbols, punctuation characters, or blank spaces are permitted.\
 " 20 70 1
-    [[ $? -ne 0 ]] && return
+    [[ $? -ne 0 ]] && return  1
     NEW_HOSTNAME=$(whiptail --inputbox "Please enter a hostname" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
   else
     NEW_HOSTNAME=$1
@@ -216,9 +216,9 @@ No other symbols, punctuation characters, or blank spaces are permitted.\
 
   CURRENT_HOSTNAME=`cat /etc/hostname | tr -d " \t\n\r"`
 
-    echo $NEW_HOSTNAME > /etc/hostname
-    sed -ie "s/127.0.1.1.*$CURRENT_HOSTNAME/127.0.1.1\t$NEW_HOSTNAME/g" /etc/hosts
-    ASK_TO_REBOOT=1
+  echo $NEW_HOSTNAME > /etc/hostname
+  sed -ie "s/127.0.1.1.*$CURRENT_HOSTNAME/127.0.1.1\t$NEW_HOSTNAME/g" /etc/hosts
+  ASK_TO_REBOOT=1
 }
 
 do_memory_split() { # Memory Split
@@ -229,9 +229,9 @@ do_memory_split() { # Memory Split
     fi
     ## get current memory split from /boot/config.txt
     CUR_GPU_MEM=$(get_config_var gpu_mem /boot/config.txt)
-    [ -z "$CUR_GPU_MEM" ] && CUR_GPU_MEM=64
+    [[ -n "$CUR_GPU_MEM" ]] ||  CUR_GPU_MEM=64
     ## ask users what gpu_mem they want
-    if [[ -s "$1" && ( $1 == 16 || $1 == 32 || $1 == 64 || $1 == 128 || $1 == 256 )  ]] ; then
+    if [[ -n "$1" && ( $1 -eq 16 || $1 -eq 32 || $1 -eq 64 || $1 -eq 128 || $1 -eq 256 )  ]] ; then
       NEW_GPU_MEM=$1
     else
       NEW_GPU_MEM=$(whiptail --inputbox "How much memory should the GPU have?  e.g. 16/32/64/128/256" \
@@ -277,22 +277,24 @@ set_memory_split() {
 }
 
 do_overclock() {
-  if [[ -z "$1" ||  $1 -ne "None" && $1 -ne "Modest" && $1 -ne "Medium" && $1 -ne "High" && $1 -ne "Turbo"  ]] ; then
-  whiptail --msgbox "\
-Be aware that overclocking may reduce the lifetime of your
-Raspberry Pi. If overclocking at a certain level causes
-system instability, try a more modest overclock. Hold down
-shift during boot to temporarily disable overclock.
-See http://elinux.org/RPi_Overclocking for more information.\
-" 20 70 1
-  OVERCLOCK=$(whiptail --menu "Chose overclock preset" 20 60 10 \
-    "None" "700MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
-    "Modest" "800MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
-    "Medium" "900MHz ARM, 250MHz core, 450MHz SDRAM, 2 overvolt" \
-    "High" "950MHz ARM, 250MHz core, 450MHz SDRAM, 6 overvolt" \
-    "Turbo" "1000MHz ARM, 500MHz core, 600MHz SDRAM, 6 overvolt" \
-    3>&1 1>&2 2>&3)
-    [ $? -ne 0 ] && return
+  if [[ -n "$1" && (  $1 == "None" || $1 == "Modest" || $1 == "Medium" || $1 == "High" || $1 == "Turbo" ) ]] ; then
+	OVERCLOCK=$1
+  else
+	  whiptail --msgbox "\
+	Be aware that overclocking may reduce the lifetime of your
+	Raspberry Pi. If overclocking at a certain level causes
+	system instability, try a more modest overclock. Hold down
+	shift during boot to temporarily disable overclock.
+	See http://elinux.org/RPi_Overclocking for more information.\
+	" 20 70 1
+	  OVERCLOCK=$(whiptail --menu "Chose overclock preset" 20 60 10 \
+	    "None" "700MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
+	    "Modest" "800MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
+	    "Medium" "900MHz ARM, 250MHz core, 450MHz SDRAM, 2 overvolt" \
+	    "High" "950MHz ARM, 250MHz core, 450MHz SDRAM, 6 overvolt" \
+	    "Turbo" "1000MHz ARM, 500MHz core, 600MHz SDRAM, 6 overvolt" \
+	    3>&1 1>&2 2>&3)
+	    [ $? -ne 0 ] && return 1
   fi
     case "$OVERCLOCK" in
       None)
@@ -318,6 +320,7 @@ See http://elinux.org/RPi_Overclocking for more information.\
         return 1
         ;;
     esac
+    whiptail --msgbox "Set overclock to preset $OVERCLOCK" 20 60 2
     ASK_TO_REBOOT=1
 }
 
@@ -363,8 +366,7 @@ case "$1" in
 esac
 EOF
   chmod +x /etc/init.d/switch_cpu_governor &&
-  update-rc.d switch_cpu_governor defaults &&
-  whiptail --msgbox "Set overclock to preset '$1'" 20 60 2
+	  update-rc.d switch_cpu_governor defaults
 }
 
 do_ssh() {
