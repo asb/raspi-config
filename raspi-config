@@ -320,7 +320,13 @@ do_overclock() {
         return 1
         ;;
     esac
-    whiptail --msgbox "Set overclock to preset $OVERCLOCK" 20 60 2
+
+    if [[ $INTERACTIVE -ne False ]] ; then 
+        whiptail --msgbox "Set overclock to preset $OVERCLOCK" 20 60 2
+    else
+        echo "Set overclock to preset $OVERCLOCK"
+    fi
+
     ASK_TO_REBOOT=1
 }
 
@@ -504,18 +510,21 @@ for i in $*
 do
   case $i in
   --hostname=*)
+    INTERACTIVE=False
     HOSTNAME=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
     do_change_hostname $HOSTNAME
     printf "Please reboot\n"
     exit 0
     ;;
   --overclock=*)
+    INTERACTIVE=False
     OVERCLOCK_MODE=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
     do_overclock $OVERCLOCK_MODE
     printf "Please reboot\n"
     exit 0
     ;;
   --memory-split=*)
+    INTERACTIVE=False
     OPT_MEMORY_SPLIT=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
     do_memory_split $OPT_MEMORY_SPLIT
     printf "Please reboot\n"
@@ -613,6 +622,7 @@ do_advanced_menu() {
 #
 # Interactive use loop
 #
+INTERACTIVE=True
 calc_wt_size
 while true; do
   FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
