@@ -1,3 +1,9 @@
+raspi-config (20130909-1) unstable; urgency=low
+
+  * Support boot to scratch and applying language/keyboard settings from noobs
+
+ -- Alexander Bradbury <asb@asbradbury.org>  Mon, 09 Sep 2013 23:53:58 +0100
+
 raspi-config (20130525-1) unstable; urgency=low
 
   * Use start_x rather than startx in config.txt for enabling camera to reduce 
