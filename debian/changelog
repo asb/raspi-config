@@ -1,3 +1,10 @@
+raspi-config (20130910-1) unstable; urgency=low
+
+  * Bugfix for boot to scratch
+  * Bugfix for detecting flavour set by NOOBS
+
+ -- Alexander Bradbury <asb@asbradbury.org>  Tue, 10 Sep 2013 14:36:14 +0100
+
 raspi-config (20130909-1) unstable; urgency=low
 
   * Support boot to scratch and applying language/keyboard settings from noobs

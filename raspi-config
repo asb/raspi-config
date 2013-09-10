@@ -466,8 +466,8 @@ do_boot_behaviour() {
       Scratch)
         if [ -e /usr/bin/scratch ]; then
           [ -e /etc/init.d/lightdm ] && update-rc.d lightdm disable 2
-          enable_boot_to_scratch
           disable_raspi_config_at_boot
+          enable_boot_to_scratch
         else
           whiptail --msgbox "Do sudo apt-get install scratch to allow configuration of boot to scratch" 20 60 2
         fi
@@ -577,7 +577,7 @@ do_apply_os_config() {
   if [ -n "$NOOBSFLAVOUR" ]; then
     printf "Setting flavour to %s based on os_config.json from NOOBS. May take a while\n" "$NOOBSFLAVOUR"
 
-    if [ "$NOOBSFLAVOUR" = "Scratch" ]; then
+    if printf "%s" "$NOOBSFLAVOUR" | grep -q "Scratch"; then
       disable_raspi_config_at_boot
       enable_boot_to_scratch
     else
