@@ -623,15 +623,14 @@ do_apply_os_config() {
 
   if [ -n "$DEBLANGUAGE" ]; then
     printf "Setting language to %s based on os_config.json from NOOBS. May take a while\n" "$DEBLANGUAGE"
-    # TODO: map noobs language to Debian spec
     cat << EOF | debconf-set-selections
-locales   locales/locales_to_be_generated multiselect     fr_FR.UTF-8 UTF-8
+locales   locales/locales_to_be_generated multiselect     $DEBLANGUAGE UTF-8
 EOF
     rm /etc/locale.gen
     dpkg-reconfigure -f noninteractive locales
-    update-locale LANG=fr_FR.UTF-8
+    update-locale LANG="$DEBLANGUAGE"
     cat << EOF | debconf-set-selections
-locales   locales/default_environment_locale select       fr_FR.UTF-8
+locales   locales/default_environment_locale select       $DEBLANGUAGE
 EOF
   fi
 
