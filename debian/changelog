@@ -1,3 +1,10 @@
+raspi-config (20130925-1) unstable; urgency=low
+
+  * Fix issue inheriting language settings from NOOBS
+  * Add ability to toggle spi module blacklisting
+
+ -- Alex Bradbury <asb@asbradbury.org>  Wed, 25 Sep 2013 20:55:34 +0100
+
 raspi-config (20130910-1) unstable; urgency=low
 
   * Bugfix for boot to scratch
