@@ -379,6 +379,29 @@ do_ssh() {
   fi
 }
 
+do_spi() {
+  CURRENT_STATUS="yes" # assume not blacklisted
+  if [ -e /etc/modprobe.d/raspi-blacklist.conf ] && grep -q "^blacklist[[:space:]]*spi-bcm2708" /etc/modprobe.d/raspi-blacklist.conf; then
+    CURRENT_STATUS="no"
+  fi
+
+  whiptail --yesno "Would you like the SPI kernel module to be loaded by default? Current setting: $CURRENT_STATUS" 20 60 2
+  RET=$?
+  if [ $RET -eq 0 ]; then
+    sed -i /etc/modprobe.d/raspi-blacklist.conf -e "s/^blacklist[[:space:]]*spi-bcm2708.*/#blacklist spi-bcm2708/"
+    sudo modprobe spi-bcm2708
+    whiptail --msgbox "SPI kernel module will now be loaded by default" 20 60 1
+  elif [ $RET -eq 1 ]; then
+    sed -i /etc/modprobe.d/raspi-blacklist.conf -e "s/^#blacklist[[:space:]]*spi-bcm2708.*/blacklist spi-bcm2708/"
+    if ! grep -q "^blacklist spi-bcm2708" /etc/modprobe.d/raspi-blacklist.conf; then
+      printf "blacklist spi-bcm2708\n" >> /etc/modprobe.d/raspi-blacklist.conf
+    fi
+    whiptail --msgbox "SPI kernel module will no longer be loaded by default" 20 60 1
+  else
+    return $RET
+  fi
+}
+
 disable_raspi_config_at_boot() {
   if [ -e /etc/profile.d/raspi-config.sh ]; then
     rm -f /etc/profile.d/raspi-config.sh
@@ -720,7 +743,8 @@ do_advanced_menu() {
     "A2 Hostname" "Set the visible name for this Pi on a network" \
     "A3 Memory Split" "Change the amount of memory made available to the GPU" \
     "A4 SSH" "Enable/Disable remote command line access to your Pi using SSH" \
-    "A5 Update" "Update this tool to the latest version" \
+    "A5 SPI" "Enable/Disable automatic loading of SPI kernel module (needed for e.g. PiFace)" \
+    "A6 Update" "Update this tool to the latest version" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -731,7 +755,8 @@ do_advanced_menu() {
       A2\ *) do_change_hostname ;;
       A3\ *) do_memory_split ;;
       A4\ *) do_ssh ;;
-      A5\ *) do_update ;;
+      A5\ *) do_spi ;;
+      A6\ *) do_update ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
