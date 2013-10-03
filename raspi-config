@@ -789,7 +789,7 @@ while true; do
     "4 Internationalisation Options" "Set up language and regional settings to match your location" \
     "5 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
     "6 Add to Rastrack" "Add this Pi to the online Raspberry Pi Map (Rastrack)" \
-    "7 Overclock" "Configure overclocking for your Pi" \
+    "7 Auto Update" "Configure auto updating for your Pi" \
     "8 Advanced Options" "Configure advanced settings" \
     "9 About raspi-config" "Information about this configuration tool" \
     3>&1 1>&2 2>&3)
@@ -804,7 +804,7 @@ while true; do
       4\ *) do_internationalisation_menu ;;
       5\ *) do_camera ;;
       6\ *) do_rastrack ;;
-      7\ *) do_overclock ;;
+      7\ *) do_update_control ;;
       8\ *) do_advanced_menu ;;
       9\ *) do_about ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
