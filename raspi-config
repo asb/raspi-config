@@ -2,7 +2,7 @@
 # Part of raspi-config http://github.com/asb/raspi-config
 #
 # See LICENSE file for copyright and license details
-
+#by penn5
 INTERACTIVE=True
 ASK_TO_REBOOT=0
 
