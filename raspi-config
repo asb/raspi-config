@@ -643,6 +643,20 @@ do_apply_os_config() {
       printf "Language '%s' not handled currently. Run sudo raspi-config to set up" "$NOOBSLANGUAGE"
       ;;
   esac
+  
+do_update_control() {
+  whiptail --yesno "Activate automatic updating" 20 60 2 --yes-button "Enable" --no-button "Disable"
+  RET=$?
+  if [ "$RET" = 1 ]; then
+    sudo rm /etc/cron.daily/update.sh
+    return 0
+  fi
+  if [ "$RET" = 0 ]; then
+    sudo cp /var/cache/raspi-config-update /etc/cron.daily/update.sh
+    sudo chmod +x /etc/cron.daily/update.sh
+
+  fi
+}
 
   if [ -n "$DEBLANGUAGE" ]; then
     printf "Setting language to %s based on os_config.json from NOOBS. May take a while\n" "$DEBLANGUAGE"
