@@ -1,3 +1,11 @@
+raspi-config (20131216-1) unstable; urgency=low
+
+  * Add option to configure audio out
+  * Fail boot to scratch or boot to desktop setting when pi user was removed
+  * When enabling camera, only set gpu mem if it's unset or < 128MiB
+
+ -- Alexander Bradbury <asb@asbradbury.org>  Mon, 16 Dec 2013 21:50:38 +0000
+
 raspi-config (20130925-1) unstable; urgency=low
 
   * Fix issue inheriting language settings from NOOBS
