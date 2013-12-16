@@ -299,9 +299,6 @@ See http://elinux.org/RPi_Overclocking for more information.\
         set_overclock High 950 250 450 6
         ;;
       Turbo)
-        whiptail --msgbox "Warning: some people have reported SD card corruption with this level of overclock." \
-          20 70 1
-        [ $? -ne 0 ] && return 1
         set_overclock Turbo 1000 500 600 6
         ;;
       *)
