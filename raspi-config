@@ -477,10 +477,14 @@ do_boot_behaviour() {
         ;;
       Desktop)
         if [ -e /etc/init.d/lightdm ]; then
-          update-rc.d lightdm enable 2
-          sed /etc/lightdm/lightdm.conf -i -e "s/^#autologin-user=.*/autologin-user=pi/"
-          disable_boot_to_scratch
-          disable_raspi_config_at_boot
+          if id -u pi > /dev/null 2>&1; then
+            update-rc.d lightdm enable 2
+            sed /etc/lightdm/lightdm.conf -i -e "s/^#autologin-user=.*/autologin-user=pi/"
+            disable_boot_to_scratch
+            disable_raspi_config_at_boot
+          else
+            whiptail --msgbox "The pi user has been removed, can't set up boot to desktop" 20 60 2
+          fi
         else
           whiptail --msgbox "Do sudo apt-get install lightdm to allow configuration of boot to desktop" 20 60 2
           return 1
@@ -488,9 +492,13 @@ do_boot_behaviour() {
         ;;
       Scratch)
         if [ -e /usr/bin/scratch ]; then
-          [ -e /etc/init.d/lightdm ] && update-rc.d lightdm disable 2
-          disable_raspi_config_at_boot
-          enable_boot_to_scratch
+          if id -u pi > /dev/null 2>&1; then
+            [ -e /etc/init.d/lightdm ] && update-rc.d lightdm disable 2
+            disable_raspi_config_at_boot
+            enable_boot_to_scratch
+          else
+            whiptail --msgbox "The pi user has been removed, can't set up boot to scratch" 20 60 2
+          fi
         else
           whiptail --msgbox "Do sudo apt-get install scratch to allow configuration of boot to scratch" 20 60 2
         fi
