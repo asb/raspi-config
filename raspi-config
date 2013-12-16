@@ -639,6 +639,12 @@ do_apply_os_config() {
     "pt")
       DEBLANGUAGE="pt_PT.UTF-8"
       ;;
+    "ru")
+      DEBLANGUAGE="ru_RU.UTF-8"
+      ;;
+    "zh_CN")
+      DEBLANGUAGE="zh_CN.UTF-8"
+      ;;
     *)
       printf "Language '%s' not handled currently. Run sudo raspi-config to set up" "$NOOBSLANGUAGE"
       ;;
