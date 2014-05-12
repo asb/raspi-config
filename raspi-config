@@ -503,20 +503,29 @@ do_i2c() {
     touch $BLACKLIST
   fi
 
-  whiptail --yesno "Would you like the I2C kernel module to be loaded by default?" $DEFAULT 20 60 2
-  RET=$?
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like the I2C kernel module to be loaded by default?" $DEFAULT 20 60 2
+	RET=$?
+  else
+    RET=$1
+  fi
+
   if [ $RET -eq 0 ]; then
     sed $BLACKLIST -i -e "s/^\(blacklist[[:space:]]*i2c[-_]bcm2708\)/#\1/"
     modprobe i2c-bcm2708
-    whiptail --msgbox "I2C kernel module will now be loaded by default" 20 60 1
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "I2C kernel module will now be loaded by default" 20 60 1
+    fi
   elif [ $RET -eq 1 ]; then
     sed $BLACKLIST -i -e "s/^#\(blacklist[[:space:]]*i2c[-_]bcm2708\)/\1/"
     if ! grep -q "^blacklist i2c[-_]bcm2708" $BLACKLIST; then
       printf "blacklist i2c-bcm2708\n" >> $BLACKLIST
     fi
-    whiptail --msgbox "I2C kernel module will no longer be loaded by default" 20 60 1
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "I2C kernel module will no longer be loaded by default" 20 60 1
+    fi
   else
-    return 0
+    return $RET
   fi
 }
 
@@ -863,6 +872,16 @@ do
   --apply-os-config)
     INTERACTIVE=False
     do_apply_os_config
+    exit $?
+    ;;
+  --set-i2c-on)
+    INTERACTIVE=False
+    do_i2c 1
+    exit $?
+    ;;
+  --set-i2c-off)
+    INTERACTIVE=False
+    do_i2c 0
     exit $?
     ;;
   *)
