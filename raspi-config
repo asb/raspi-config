@@ -399,6 +399,29 @@ do_spi() {
   fi
 }
 
+do_i2c() {
+  CURRENT_STATUS="yes" # assume not blacklisted
+  if [ -e /etc/modprobe.d/raspi-blacklist.conf ] && grep -q "^blacklist[[:space:]]*i2c-bcm2708" /etc/modprobe.d/raspi-blacklist.conf; then
+    CURRENT_STATUS="no"
+  fi
+
+  whiptail --yesno "Would you like the i2c kernel module to be loaded by default? Current setting: $CURRENT_STATUS" 20 60 2
+  RET=$?
+  if [ $RET -eq 0 ]; then
+    sed -i /etc/modprobe.d/raspi-blacklist.conf -e "s/^blacklist[[:space:]]*i2c-bcm2708.*/#blacklist i2c-bcm2708/"
+    sudo modprobe i2c-bcm2708
+    whiptail --msgbox "i2c kernel module will now be loaded by default" 20 60 1
+  elif [ $RET -eq 1 ]; then
+    sed -i /etc/modprobe.d/raspi-blacklist.conf -e "s/^#blacklist[[:space:]]*i2c-bcm2708.*/blacklist i2c-bcm2708/"
+    if ! grep -q "^blacklist i2c-bcm2708" /etc/modprobe.d/raspi-blacklist.conf; then
+      printf "blacklist i2c-bcm2708\n" >> /etc/modprobe.d/raspi-blacklist.conf
+    fi
+    whiptail --msgbox "i2c kernel module will no longer be loaded by default" 20 60 1
+  else
+    return $RET
+  fi
+}
+
 disable_raspi_config_at_boot() {
   if [ -e /etc/profile.d/raspi-config.sh ]; then
     rm -f /etc/profile.d/raspi-config.sh
@@ -769,8 +792,9 @@ do_advanced_menu() {
     "A3 Memory Split" "Change the amount of memory made available to the GPU" \
     "A4 SSH" "Enable/Disable remote command line access to your Pi using SSH" \
     "A5 SPI" "Enable/Disable automatic loading of SPI kernel module (needed for e.g. PiFace)" \
-    "A6 Audio" "Force audio out through HDMI or 3.5mm jack" \
-    "A7 Update" "Update this tool to the latest version" \
+    "A6 I2C" "Enable/Disable automatic loading of I2C kernel module" \
+    "A7 Audio" "Force audio out through HDMI or 3.5mm jack" \
+    "A8 Update" "Update this tool to the latest version" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -782,8 +806,9 @@ do_advanced_menu() {
       A3\ *) do_memory_split ;;
       A4\ *) do_ssh ;;
       A5\ *) do_spi ;;
-      A6\ *) do_audio ;;
-      A7\ *) do_update ;;
+      A6\ *) do_i2c ;;
+      A7\ *) do_audio ;;
+      A8\ *) do_update ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
