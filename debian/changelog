@@ -1,3 +1,9 @@
+raspi-config (20140902-1) unstable; urgency=low
+
+  * Add option to toggle i2c and serial
+
+ -- Alexander Bradbury <asb@asbradbury.org>  Tue, 02 Sep 2014 17:26:06 +0100
+
 raspi-config (20131216-1) unstable; urgency=low
 
   * Add option to configure audio out
