@@ -422,6 +422,32 @@ do_i2c() {
   fi
 }
 
+do_serial() {
+  CURRENT_STATUS="yes" # assume ttyAMA0 output enabled
+  if ! grep -q "^T.*:.*:respawn:.*ttyAMA0" /etc/inittab; then
+    CURRENT_STATUS="no"
+  fi
+
+  whiptail --yesno "Would you like a login shell to be accessible over serial?  Current setting: $CURRENT_STATUS" 20 60 2
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    sed -i /etc/inittab -e "s|^.*:.*:respawn:.*ttyAMA0|#&|"
+    sed -i /boot/cmdline.txt -e "s/console=ttyAMA0,[0-9]\+ //"
+    whiptail --msgbox "Serial is now disabled" 20 60 1
+  elif [ $RET -eq 0 ]; then
+    sed -i /etc/inittab -e "s|^#\(.*:.*:respawn:.*ttyAMA0\)|\1|"
+    if ! grep -q "^T.*:.*:respawn:.*ttyAMA0" /etc/inittab; then
+      printf "T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100\n" >> /etc/inittab
+    fi
+    if ! grep -q "console=ttyAMA0" /boot/cmdline.txt; then
+      sed -i /boot/cmdline.txt -e "s/root=/console=ttyAMA0,115200 root=/"
+    fi
+    whiptail --msgbox "Serial is now enabled" 20 60 1
+  else
+    return $RET
+  fi
+}
+
 disable_raspi_config_at_boot() {
   if [ -e /etc/profile.d/raspi-config.sh ]; then
     rm -f /etc/profile.d/raspi-config.sh
@@ -793,8 +819,9 @@ do_advanced_menu() {
     "A4 SSH" "Enable/Disable remote command line access to your Pi using SSH" \
     "A5 SPI" "Enable/Disable automatic loading of SPI kernel module (needed for e.g. PiFace)" \
     "A6 I2C" "Enable/Disable automatic loading of I2C kernel module" \
-    "A7 Audio" "Force audio out through HDMI or 3.5mm jack" \
-    "A8 Update" "Update this tool to the latest version" \
+    "A7 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
+    "A8 Audio" "Force audio out through HDMI or 3.5mm jack" \
+    "A9 Update" "Update this tool to the latest version" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -807,8 +834,9 @@ do_advanced_menu() {
       A4\ *) do_ssh ;;
       A5\ *) do_spi ;;
       A6\ *) do_i2c ;;
-      A7\ *) do_audio ;;
-      A8\ *) do_update ;;
+      A7\ *) do_serial ;;
+      A8\ *) do_audio ;;
+      A9\ *) do_update ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
