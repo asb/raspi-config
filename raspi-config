@@ -5,6 +5,8 @@
 
 INTERACTIVE=True
 ASK_TO_REBOOT=0
+BLACKLIST=/etc/modprobe.d/raspi-blacklist.conf
+CONFIG=/boot/config.txt
 
 calc_wt_size() {
   # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
@@ -19,7 +21,7 @@ calc_wt_size() {
   if [ "$WT_WIDTH" -gt 178 ]; then
     WT_WIDTH=120
   fi
-  WT_MENU_HEIGHT=$(($WT_HEIGHT-8))
+  WT_MENU_HEIGHT=$(($WT_HEIGHT-7))
 }
 
 do_about() {
@@ -157,13 +159,13 @@ set_overscan() {
     return 1
   fi
 
-  [ -e /boot/config.txt ] || touch /boot/config.txt
+  [ -e $CONFIG ] || touch $CONFIG
 
   if [ "$1" -eq 0 ]; then # disable overscan
-    sed /boot/config.txt -i -e "s/^overscan_/#overscan_/"
-    set_config_var disable_overscan 1 /boot/config.txt
+    sed $CONFIG -i -e "s/^overscan_/#overscan_/"
+    set_config_var disable_overscan 1 $CONFIG
   else # enable overscan
-    set_config_var disable_overscan 0 /boot/config.txt
+    set_config_var disable_overscan 0 $CONFIG
   fi
 }
 
@@ -224,13 +226,13 @@ do_memory_split() { # Memory Split
       return 1
     fi
     ## get current memory split from /boot/config.txt
-    CUR_GPU_MEM=$(get_config_var gpu_mem /boot/config.txt)
+    CUR_GPU_MEM=$(get_config_var gpu_mem $CONFIG)
     [ -z "$CUR_GPU_MEM" ] && CUR_GPU_MEM=64
     ## ask users what gpu_mem they want
     NEW_GPU_MEM=$(whiptail --inputbox "How much memory should the GPU have?  e.g. 16/32/64/128/256" \
       20 70 -- "$CUR_GPU_MEM" 3>&1 1>&2 2>&3)
     if [ $? -eq 0 ]; then
-      set_config_var gpu_mem "$NEW_GPU_MEM" /boot/config.txt
+      set_config_var gpu_mem "$NEW_GPU_MEM" $CONFIG
       ASK_TO_REBOOT=1
     fi
   else # Old firmware so do start.elf renaming
@@ -311,10 +313,10 @@ See http://elinux.org/RPi_Overclocking for more information.\
 }
 
 set_overclock() {
-  set_config_var arm_freq $2 /boot/config.txt &&
-  set_config_var core_freq $3 /boot/config.txt &&
-  set_config_var sdram_freq $4 /boot/config.txt &&
-  set_config_var over_voltage $5 /boot/config.txt &&
+  set_config_var arm_freq $2 $CONFIG &&
+  set_config_var core_freq $3 $CONFIG &&
+  set_config_var sdram_freq $4 $CONFIG &&
+  set_config_var over_voltage $5 $CONFIG &&
   # now set up an init.d script
 cat <<\EOF > /etc/init.d/switch_cpu_governor &&
 #!/bin/sh
@@ -376,49 +378,168 @@ do_ssh() {
   fi
 }
 
-do_spi() {
-  CURRENT_STATUS="yes" # assume not blacklisted
-  if [ -e /etc/modprobe.d/raspi-blacklist.conf ] && grep -q "^blacklist[[:space:]]*spi-bcm2708" /etc/modprobe.d/raspi-blacklist.conf; then
-    CURRENT_STATUS="no"
+do_devicetree() {
+  CURRENT_SETTING="enabled" # assume not disabled
+  DEFAULT=
+  if [ -e $CONFIG ] && grep -q "^device_tree=$" $CONFIG; then
+    CURRENT_SETTING="disabled"
+    DEFAULT=--defaultno
   fi
 
-  whiptail --yesno "Would you like the SPI kernel module to be loaded by default? Current setting: $CURRENT_STATUS" 20 60 2
+  whiptail --yesno "Would you like the kernel to use Device Tree?" $DEFAULT 20 60 2
   RET=$?
   if [ $RET -eq 0 ]; then
-    sed -i /etc/modprobe.d/raspi-blacklist.conf -e "s/^blacklist[[:space:]]*spi-bcm2708.*/#blacklist spi-bcm2708/"
-    sudo modprobe spi-bcm2708
+    sed $CONFIG -i -e "s/^\(device_tree=\)$/#\1/"
+    sed $CONFIG -i -e "s/^#\(device_tree=.\)/\1/"
+    SETTING=enabled
+  elif [ $RET -eq 1 ]; then
+    sed $CONFIG -i -e "s/^#\(device_tree=\)$/\1/"
+    sed $CONFIG -i -e "s/^\(device_tree=.\)/#\1/"
+    if ! grep -q "^device_tree=$" $CONFIG; then
+      printf "device_tree=\n" >> $CONFIG
+    fi
+    SETTING=disabled
+  else
+    return 0
+  fi
+  TENSE=is
+  REBOOT=
+  if [ $SETTING != $CURRENT_SETTING ]; then
+    TENSE="will be"
+    REBOOT=" after a reboot"
+  fi
+  whiptail --msgbox "Device Tree $TENSE $SETTING$REBOOT" 20 60 1
+}
+
+do_spi() {
+  DEVICE_TREE="yes" # assume not disabled
+  DEFAULT=
+  if [ -e $CONFIG ] && grep -q "^device_tree=$" $CONFIG; then
+    DEVICE_TREE="no"
+  fi
+
+  CURRENT_SETTING="off" # assume disabled
+  DEFAULT=--defaultno
+  if [ -e $CONFIG ] && grep -q -E "^(device_tree_param|dtparam)=([^,]*,)*spi(=(on|true|yes|1))?(,.*)?$" $CONFIG; then
+    CURRENT_SETTING="on"
+    DEFAULT=
+  fi
+
+  if [ $DEVICE_TREE = "yes" ]; then
+    whiptail --yesno "Would you like the SPI interface to be enabled?" $DEFAULT 20 60 2
+    RET=$?
+    if [ $RET -eq 0 ]; then
+      SETTING=on
+      STATUS=enabled
+    elif [ $RET -eq 1 ]; then
+      SETTING=off
+      STATUS=disabled
+    else
+      return 0
+    fi
+    TENSE=is
+    REBOOT=
+    if [ $SETTING != $CURRENT_SETTING ]; then
+      TENSE="will be"
+      REBOOT=" after a reboot"
+    fi
+    sed $CONFIG -i -r -e "s/^((device_tree_param|dtparam)=([^,]*,)*spi)(=[^,]*)?/\1=$SETTING/"
+    if ! grep -q -E "^(device_tree_param|dtparam)=([^,]*,)*spi=[^,]*" $CONFIG; then
+      printf "dtparam=spi=$SETTING\n" >> $CONFIG
+    fi
+    whiptail --msgbox "The SPI interface $TENSE $STATUS$REBOOT" 20 60 1
+    if [ $SETTING = "off" ]; then
+      return 0
+    fi
+  fi
+
+  CURRENT_STATUS="yes" # assume not blacklisted
+  DEFAULT=
+  if [ -e $BLACKLIST ] && grep -q "^blacklist[[:space:]]*spi[-_]bcm2708" $BLACKLIST; then
+    CURRENT_STATUS="no"
+    DEFAULT=--defaultno
+  fi
+
+  whiptail --yesno "Would you like the SPI kernel module to be loaded by default?" $DEFAULT 20 60 2
+  RET=$?
+  if [ $RET -eq 0 ]; then
+    sed $BLACKLIST -i -e "s/^\(blacklist[[:space:]]*spi[-_]bcm2708\)/#\1/"
+    modprobe spi-bcm2708
     whiptail --msgbox "SPI kernel module will now be loaded by default" 20 60 1
   elif [ $RET -eq 1 ]; then
-    sed -i /etc/modprobe.d/raspi-blacklist.conf -e "s/^#blacklist[[:space:]]*spi-bcm2708.*/blacklist spi-bcm2708/"
-    if ! grep -q "^blacklist spi-bcm2708" /etc/modprobe.d/raspi-blacklist.conf; then
-      printf "blacklist spi-bcm2708\n" >> /etc/modprobe.d/raspi-blacklist.conf
+    sed $BLACKLIST -i -e "s/^#\(blacklist[[:space:]]*spi[-_]bcm2708\)/\1/"
+    if ! grep -q "^blacklist spi[-_]bcm2708" $BLACKLIST; then
+      printf "blacklist spi-bcm2708\n" >> $BLACKLIST
     fi
     whiptail --msgbox "SPI kernel module will no longer be loaded by default" 20 60 1
   else
-    return $RET
+    return 0
   fi
 }
 
 do_i2c() {
-  CURRENT_STATUS="yes" # assume not blacklisted
-  if [ -e /etc/modprobe.d/raspi-blacklist.conf ] && grep -q "^blacklist[[:space:]]*i2c-bcm2708" /etc/modprobe.d/raspi-blacklist.conf; then
-    CURRENT_STATUS="no"
+  DEVICE_TREE="yes" # assume not disabled
+  DEFAULT=
+  if [ -e $CONFIG ] && grep -q "^device_tree=$" $CONFIG; then
+    DEVICE_TREE="no"
   fi
 
-  whiptail --yesno "Would you like the i2c kernel module to be loaded by default? Current setting: $CURRENT_STATUS" 20 60 2
+  CURRENT_SETTING="off" # assume disabled
+  DEFAULT=--defaultno
+  if [ -e $CONFIG ] && grep -q -E "^(device_tree_param|dtparam)=([^,]*,)*i2c(_arm)?(=(on|true|yes|1))?(,.*)?$" $CONFIG; then
+    CURRENT_SETTING="on"
+    DEFAULT=
+  fi
+
+  if [ $DEVICE_TREE = "yes" ]; then
+    whiptail --yesno "Would you like the ARM I2C interface to be enabled?" $DEFAULT 20 60 2
+    RET=$?
+    if [ $RET -eq 0 ]; then
+      SETTING=on
+      STATUS=enabled
+    elif [ $RET -eq 1 ]; then
+      SETTING=off
+      STATUS=disabled
+    else
+      return 0
+    fi
+    TENSE=is
+    REBOOT=
+    if [ $SETTING != $CURRENT_SETTING ]; then
+      TENSE="will be"
+      REBOOT=" after a reboot"
+    fi
+    sed $CONFIG -i -r -e "s/^((device_tree_param|dtparam)=([^,]*,)*i2c(_arm)?)(=[^,]*)?/\1=$SETTING/"
+    if ! grep -q -E "^(device_tree_param|dtparam)=([^,]*,)*i2c(_arm)?=[^,]*" $CONFIG; then
+      printf "dtparam=i2c_arm=$SETTING\n" >> $CONFIG
+    fi
+    whiptail --msgbox "The ARM I2C interface $TENSE $STATUS$REBOOT" 20 60 1
+    if [ $SETTING = "off" ]; then
+      return 0
+    fi
+  fi
+
+  CURRENT_STATUS="yes" # assume not blacklisted
+  DEFAULT=
+  if [ -e $BLACKLIST ] && grep -q "^blacklist[[:space:]]*i2c[-_]bcm2708" $BLACKLIST; then
+    CURRENT_STATUS="no"
+    DEFAULT=--defaultno
+  fi
+
+  whiptail --yesno "Would you like the I2C kernel module to be loaded by default?" $DEFAULT 20 60 2
   RET=$?
   if [ $RET -eq 0 ]; then
-    sed -i /etc/modprobe.d/raspi-blacklist.conf -e "s/^blacklist[[:space:]]*i2c-bcm2708.*/#blacklist i2c-bcm2708/"
-    sudo modprobe i2c-bcm2708
-    whiptail --msgbox "i2c kernel module will now be loaded by default" 20 60 1
+    sed $BLACKLIST -i -e "s/^\(blacklist[[:space:]]*i2c[-_]bcm2708\)/#\1/"
+    modprobe i2c-bcm2708
+    whiptail --msgbox "I2C kernel module will now be loaded by default" 20 60 1
   elif [ $RET -eq 1 ]; then
-    sed -i /etc/modprobe.d/raspi-blacklist.conf -e "s/^#blacklist[[:space:]]*i2c-bcm2708.*/blacklist i2c-bcm2708/"
-    if ! grep -q "^blacklist i2c-bcm2708" /etc/modprobe.d/raspi-blacklist.conf; then
-      printf "blacklist i2c-bcm2708\n" >> /etc/modprobe.d/raspi-blacklist.conf
+    sed $BLACKLIST -i -e "s/^#\(blacklist[[:space:]]*i2c[-_]bcm2708\)/\1/"
+    if ! grep -q "^blacklist i2c[-_]bcm2708" $BLACKLIST; then
+      printf "blacklist i2c-bcm2708\n" >> $BLACKLIST
     fi
-    whiptail --msgbox "i2c kernel module will no longer be loaded by default" 20 60 1
+    whiptail --msgbox "I2C kernel module will no longer be loaded by default" 20 60 1
   else
-    return $RET
+    return 0
   fi
 }
 
@@ -428,7 +549,7 @@ do_serial() {
     CURRENT_STATUS="no"
   fi
 
-  whiptail --yesno "Would you like a login shell to be accessible over serial?  Current setting: $CURRENT_STATUS" 20 60 2
+  whiptail --yesno "Would you like a login shell to be accessible over serial?" 20 60 2
   RET=$?
   if [ $RET -eq 1 ]; then
     sed -i /etc/inittab -e "s|^.*:.*:respawn:.*ttyAMA0|#&|"
@@ -589,21 +710,21 @@ set_camera() {
     return 1
   fi
 
-  [ -e /boot/config.txt ] || touch /boot/config.txt
+  [ -e $CONFIG ] || touch $CONFIG
 
   if [ "$1" -eq 0 ]; then # disable camera
-    set_config_var start_x 0 /boot/config.txt
-    sed /boot/config.txt -i -e "s/^startx/#startx/"
-    sed /boot/config.txt -i -e "s/^start_file/#start_file/"
-    sed /boot/config.txt -i -e "s/^fixup_file/#fixup_file/"
+    set_config_var start_x 0 $CONFIG
+    sed $CONFIG -i -e "s/^startx/#startx/"
+    sed $CONFIG -i -e "s/^start_file/#start_file/"
+    sed $CONFIG -i -e "s/^fixup_file/#fixup_file/"
   else # enable camera
-    set_config_var start_x 1 /boot/config.txt
-    CUR_GPU_MEM=$(get_config_var gpu_mem /boot/config.txt)
+    set_config_var start_x 1 $CONFIG
+    CUR_GPU_MEM=$(get_config_var gpu_mem $CONFIG)
     if [ -z "$CUR_GPU_MEM" ] || [ "$CUR_GPU_MEM" -lt 128 ]; then
-      set_config_var gpu_mem 128 /boot/config.txt
+      set_config_var gpu_mem 128 $CONFIG
     fi
-    sed /boot/config.txt -i -e "s/^startx/#startx/"
-    sed /boot/config.txt -i -e "s/^fixup_file/#fixup_file/"
+    sed $CONFIG -i -e "s/^startx/#startx/"
+    sed $CONFIG -i -e "s/^fixup_file/#fixup_file/"
   fi
 }
 
@@ -817,11 +938,12 @@ do_advanced_menu() {
     "A2 Hostname" "Set the visible name for this Pi on a network" \
     "A3 Memory Split" "Change the amount of memory made available to the GPU" \
     "A4 SSH" "Enable/Disable remote command line access to your Pi using SSH" \
-    "A5 SPI" "Enable/Disable automatic loading of SPI kernel module (needed for e.g. PiFace)" \
-    "A6 I2C" "Enable/Disable automatic loading of I2C kernel module" \
-    "A7 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
-    "A8 Audio" "Force audio out through HDMI or 3.5mm jack" \
-    "A9 Update" "Update this tool to the latest version" \
+    "A5 Device Tree" "Enable/Disable the use of Device Tree" \
+    "A6 SPI" "Enable/Disable automatic loading of SPI kernel module (needed for e.g. PiFace)" \
+    "A7 I2C" "Enable/Disable automatic loading of I2C kernel module" \
+    "A8 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
+    "A9 Audio" "Force audio out through HDMI or 3.5mm jack" \
+    "A0 Update" "Update this tool to the latest version" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -832,11 +954,12 @@ do_advanced_menu() {
       A2\ *) do_change_hostname ;;
       A3\ *) do_memory_split ;;
       A4\ *) do_ssh ;;
-      A5\ *) do_spi ;;
-      A6\ *) do_i2c ;;
-      A7\ *) do_serial ;;
-      A8\ *) do_audio ;;
-      A9\ *) do_update ;;
+      A5\ *) do_devicetree ;;
+      A6\ *) do_spi ;;
+      A7\ *) do_i2c ;;
+      A8\ *) do_serial ;;
+      A9\ *) do_audio ;;
+      A0\ *) do_update ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
