@@ -1,3 +1,11 @@
+raspi-config (20150129-1) unstable; urgency=low
+
+  * Add devicetree support (thanks Phil Elwell)
+  * Always include the ondemand governor init script
+  * Tweak ondemand cpu scaling governor settings
+
+ -- Alex Bradbury <asb@asbradbury.org>  Thu, 29 Jan 2015 23:40:15 +0000
+
 raspi-config (20140902-1) unstable; urgency=low
 
   * Add option to toggle i2c and serial
