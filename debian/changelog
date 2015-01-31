@@ -2,6 +2,7 @@ raspi-config (20150131-1) unstable; urgency=low
 
   * Add Pi2 overclock preset
   * Ask whether to reboot after changing devicetree
+  * Remove old switch_cpu_governor init script upon install
 
  -- Alex Bradbury <asb@asbradbury.org>  Sat, 31 Jan 2015 20:17:40 +0000
 
