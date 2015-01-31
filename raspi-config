@@ -285,6 +285,7 @@ See http://elinux.org/RPi_Overclocking for more information.\
     "Medium" "900MHz ARM, 250MHz core, 450MHz SDRAM, 2 overvolt" \
     "High" "950MHz ARM, 250MHz core, 450MHz SDRAM, 6 overvolt" \
     "Turbo" "1000MHz ARM, 500MHz core, 600MHz SDRAM, 6 overvolt" \
+    "Pi2" "1000MHz ARM, 500MHz core, 500MHz SDRAM, 2 overvolt" \
     3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
     case "$OVERCLOCK" in
@@ -302,6 +303,9 @@ See http://elinux.org/RPi_Overclocking for more information.\
         ;;
       Turbo)
         set_overclock Turbo 1000 500 600 6
+        ;;
+      Pi2)
+        set_overclock Pi2 1000 500 500 2
         ;;
       *)
         whiptail --msgbox "Programmer error, unrecognised overclock preset" 20 60 2
@@ -369,6 +373,7 @@ do_devicetree() {
   if [ $SETTING != $CURRENT_SETTING ]; then
     TENSE="will be"
     REBOOT=" after a reboot"
+    ASK_TO_REBOOT=1
   fi
   whiptail --msgbox "Device Tree $TENSE $SETTING$REBOOT" 20 60 1
 }
@@ -404,6 +409,7 @@ do_spi() {
     if [ $SETTING != $CURRENT_SETTING ]; then
       TENSE="will be"
       REBOOT=" after a reboot"
+      ASK_TO_REBOOT=1
     fi
     sed $CONFIG -i -r -e "s/^((device_tree_param|dtparam)=([^,]*,)*spi)(=[^,]*)?/\1=$SETTING/"
     if ! grep -q -E "^(device_tree_param|dtparam)=([^,]*,)*spi=[^,]*" $CONFIG; then
@@ -420,6 +426,10 @@ do_spi() {
   if [ -e $BLACKLIST ] && grep -q "^blacklist[[:space:]]*spi[-_]bcm2708" $BLACKLIST; then
     CURRENT_STATUS="no"
     DEFAULT=--defaultno
+  fi
+
+  if ! [ -e $BLACKLIST ]; then
+    touch $BLACKLIST
   fi
 
   whiptail --yesno "Would you like the SPI kernel module to be loaded by default?" $DEFAULT 20 60 2
@@ -470,6 +480,7 @@ do_i2c() {
     if [ $SETTING != $CURRENT_SETTING ]; then
       TENSE="will be"
       REBOOT=" after a reboot"
+      ASK_TO_REBOOT=1
     fi
     sed $CONFIG -i -r -e "s/^((device_tree_param|dtparam)=([^,]*,)*i2c(_arm)?)(=[^,]*)?/\1=$SETTING/"
     if ! grep -q -E "^(device_tree_param|dtparam)=([^,]*,)*i2c(_arm)?=[^,]*" $CONFIG; then
@@ -486,6 +497,10 @@ do_i2c() {
   if [ -e $BLACKLIST ] && grep -q "^blacklist[[:space:]]*i2c[-_]bcm2708" $BLACKLIST; then
     CURRENT_STATUS="no"
     DEFAULT=--defaultno
+  fi
+
+  if ! [ -e $BLACKLIST ]; then
+    touch $BLACKLIST
   fi
 
   whiptail --yesno "Would you like the I2C kernel module to be loaded by default?" $DEFAULT 20 60 2
