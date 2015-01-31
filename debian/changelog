@@ -1,3 +1,10 @@
+raspi-config (20150131-1) unstable; urgency=low
+
+  * Add Pi2 overclock preset
+  * Ask whether to reboot after changing devicetree
+
+ -- Alex Bradbury <asb@asbradbury.org>  Sat, 31 Jan 2015 20:17:40 +0000
+
 raspi-config (20150129-1) unstable; urgency=low
 
   * Add devicetree support (thanks Phil Elwell)
