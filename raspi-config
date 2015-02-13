@@ -34,15 +34,15 @@ you have heavily customised your installation.\
 }
 
 do_expand_rootfs() {
-  if ! [ -h /dev/root ]; then
-    whiptail --msgbox "/dev/root does not exist or is not a symlink. Don't know how to expand" 20 60 2
+  if ! [ -h /dev/disk/by-label/root ]; then
+    whiptail --msgbox "/dev/disk/by-label/root does not exist or is not a symlink. Don't know how to expand" 20 60 2
     return 0
   fi
 
-  ROOT_PART=$(readlink /dev/root)
-  PART_NUM=${ROOT_PART#mmcblk0p}
+  ROOT_PART=$(readlink /dev/disk/by-label/root)
+  PART_NUM=${ROOT_PART#../../mmcblk0p}
   if [ "$PART_NUM" = "$ROOT_PART" ]; then
-    whiptail --msgbox "/dev/root is not an SD card. Don't know how to expand" 20 60 2
+    whiptail --msgbox "/dev/disk/by-label/root is not an SD card. Don't know how to expand" 20 60 2
     return 0
   fi
 
@@ -56,7 +56,7 @@ do_expand_rootfs() {
   LAST_PART_NUM=$(parted /dev/mmcblk0 -ms unit s p | tail -n 1 | cut -f 1 -d:)
 
   if [ "$LAST_PART_NUM" != "$PART_NUM" ]; then
-    whiptail --msgbox "/dev/root is not the last partition. Don't know how to expand" 20 60 2
+    whiptail --msgbox "/dev/disk/by-label/root is not the last partition. Don't know how to expand" 20 60 2
     return 0
   fi
 
@@ -97,7 +97,7 @@ cat <<\EOF > /etc/init.d/resize2fs_once &&
 case "$1" in
   start)
     log_daemon_msg "Starting resize2fs_once" &&
-    resize2fs /dev/root &&
+    resize2fs /dev/disk/by-label/root &&
     rm /etc/init.d/resize2fs_once &&
     update-rc.d resize2fs_once remove &&
     log_end_msg $?
