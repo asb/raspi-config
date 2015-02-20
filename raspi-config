@@ -865,6 +865,16 @@ do
     do_apply_os_config
     exit $?
     ;;
+  --enable_camera)
+    INTERACTIVE=False
+    set_camera 1
+    exit $?
+    ;;
+  --disable_camera)
+    INTERACTIVE=False
+    set_camera 0
+    exit $?
+    ;;
   *)
     # unknown option
     ;;
