@@ -2,7 +2,7 @@
 # Part of raspi-config http://github.com/asb/raspi-config
 #
 # See LICENSE file for copyright and license details
-
+#by penn5
 INTERACTIVE=True
 ASK_TO_REBOOT=0
 BLACKLIST=/etc/modprobe.d/raspi-blacklist.conf
@@ -815,6 +815,20 @@ do_apply_os_config() {
       printf "Language '%s' not handled currently. Run sudo raspi-config to set up" "$NOOBSLANGUAGE"
       ;;
   esac
+  
+do_update_control() {
+  whiptail --yesno "Activate automatic updating" 20 60 2 --yes-button "Enable" --no-button "Disable"
+  RET=$?
+  if [ "$RET" = 1 ]; then
+    sudo rm /etc/cron.daily/update.sh
+    return 0
+  fi
+  if [ "$RET" = 0 ]; then
+    sudo cp /var/cache/raspi-config-update /etc/cron.daily/update.sh
+    sudo chmod +x /etc/cron.daily/update.sh
+
+  fi
+}
 
   if [ -n "$DEBLANGUAGE" ]; then
     printf "Setting language to %s based on os_config.json from NOOBS. May take a while\n" "$DEBLANGUAGE"
@@ -955,7 +969,7 @@ while true; do
     "4 Internationalisation Options" "Set up language and regional settings to match your location" \
     "5 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
     "6 Add to Rastrack" "Add this Pi to the online Raspberry Pi Map (Rastrack)" \
-    "7 Overclock" "Configure overclocking for your Pi" \
+    "7 Auto Update" "Configure auto updating for your Pi" \
     "8 Advanced Options" "Configure advanced settings" \
     "9 About raspi-config" "Information about this configuration tool" \
     3>&1 1>&2 2>&3)
@@ -970,7 +984,7 @@ while true; do
       4\ *) do_internationalisation_menu ;;
       5\ *) do_camera ;;
       6\ *) do_rastrack ;;
-      7\ *) do_overclock ;;
+      7\ *) do_update_control ;;
       8\ *) do_advanced_menu ;;
       9\ *) do_about ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
