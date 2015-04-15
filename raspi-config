@@ -879,8 +879,8 @@ done
 #fi
 
 # Everything else needs to be run as root
-if [ $(id -u) -ne 0 ]; then
-  printf "Script must be run as root. Try 'sudo raspi-config'\n"
+if [ $(id -u) -ne 0 ]; then 
+  sudo $0 $*
   exit 1
 fi
 
