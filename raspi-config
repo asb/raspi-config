@@ -881,7 +881,7 @@ done
 # Everything else needs to be run as root
 if [ $(id -u) -ne 0 ]; then 
   sudo $0 $*
-  exit 1
+  exit $?
 fi
 
 if [ -n "${OPT_MEMORY_SPLIT:-}" ]; then
