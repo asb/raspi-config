@@ -1,0 +1,13 @@
+[Unit]
+Description=Switch to ondemand cpu governor (unless shift key is pressed)
+DefaultDependencies=no
+Before=sysinit.target
+After=udev.service mountkernfs.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/etc/init.d/raspi-config systemd-start
+
+[Install]
+WantedBy=multi-user.target
