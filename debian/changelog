@@ -1,3 +1,9 @@
+raspi-config (20150131-4) stable; urgency=low
+
+  * Use dh_installinit --no-start instead of --noscripts to ensure raspi-config runs
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 14 May 2015 18:09:47 +0100
+
 raspi-config (20150131-3) unstable; urgency=low
 
   * Add prerm failed-upgrade to allow upgrades
