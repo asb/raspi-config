@@ -1,3 +1,16 @@
+raspi-config (20150131-3) unstable; urgency=low
+
+  * Add prerm failed-upgrade to allow upgrades
+
+ -- Serge Schneider <serge@raspberrypi.org>  Wed, 06 May 2015 15:33:35 +0100
+
+raspi-config (20150131-2) unstable; urgency=low
+
+  * Prevent postinstall from trying to stop /etc/init.d/raspi-config
+  dh_installinit --noscripts
+
+ -- Serge Schneider <serge@raspberrypi.org>  Wed, 06 May 2015 14:23:57 +0100
+
 raspi-config (20150131-1) unstable; urgency=low
 
   * Add Pi2 overclock preset
