@@ -190,7 +190,8 @@ do_change_pass() {
 do_configure_keyboard() {
   dpkg-reconfigure keyboard-configuration &&
   printf "Reloading keymap. This may take a short while\n" &&
-  invoke-rc.d keyboard-setup start
+  invoke-rc.d keyboard-setup start &&
+  udevadm trigger --subsystem-match=input --action=change
 }
 
 do_change_locale() {
