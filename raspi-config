@@ -8,6 +8,17 @@ ASK_TO_REBOOT=0
 BLACKLIST=/etc/modprobe.d/raspi-blacklist.conf
 CONFIG=/boot/config.txt
 
+get_init_sys() {
+  if command -v systemctl > /dev/null && systemctl | grep -q '\-\.mount'; then
+    SYSTEMD=1
+  elif [ -f /etc/init.d/cron ] && [ ! -h /etc/init.d/cron ]; then
+    SYSTEMD=0
+  else
+    echo "Unrecognised init system"
+    return 1
+  fi
+}
+
 calc_wt_size() {
   # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
   # output from tput. However in this case, tput detects neither stdout or 
@@ -34,15 +45,19 @@ you have heavily customised your installation.\
 }
 
 do_expand_rootfs() {
-  if ! [ -h /dev/root ]; then
-    whiptail --msgbox "/dev/root does not exist or is not a symlink. Don't know how to expand" 20 60 2
-    return 0
+  if [ $SYSTEMD -eq 1 ]; then
+    ROOT_PART=$(mount | sed -n 's|^/dev/\(.*\) on / .*|\1|p')
+  else
+    if ! [ -h /dev/root ]; then
+      whiptail --msgbox "/dev/root does not exist or is not a symlink. Don't know how to expand" 20 60 2
+      return 0
+    fi
+    ROOT_PART=$(readlink /dev/root)
   fi
 
-  ROOT_PART=$(readlink /dev/root)
   PART_NUM=${ROOT_PART#mmcblk0p}
   if [ "$PART_NUM" = "$ROOT_PART" ]; then
-    whiptail --msgbox "/dev/root is not an SD card. Don't know how to expand" 20 60 2
+    whiptail --msgbox "$ROOT_PART is not an SD card. Don't know how to expand" 20 60 2
     return 0
   fi
 
@@ -54,14 +69,13 @@ do_expand_rootfs() {
   fi
 
   LAST_PART_NUM=$(parted /dev/mmcblk0 -ms unit s p | tail -n 1 | cut -f 1 -d:)
-
-  if [ "$LAST_PART_NUM" != "$PART_NUM" ]; then
-    whiptail --msgbox "/dev/root is not the last partition. Don't know how to expand" 20 60 2
+  if [ $LAST_PART_NUM -ne $PART_NUM ]; then
+    whiptail --msgbox "$ROOT_PART is not the last partition. Don't know how to expand" 20 60 2
     return 0
   fi
 
   # Get the starting offset of the root partition
-  PART_START=$(parted /dev/mmcblk0 -ms unit s p | grep "^${PART_NUM}" | cut -f 2 -d:)
+  PART_START=$(parted /dev/mmcblk0 -ms unit s p | grep "^${PART_NUM}" | cut -f 2 -d: | sed 's/[^0-9]//g')
   [ "$PART_START" ] || return 1
   # Return value will likely be error for fdisk as it fails to reload the
   # partition table because the root fs is mounted
@@ -80,13 +94,13 @@ EOF
   ASK_TO_REBOOT=1
 
   # now set up an init.d script
-cat <<\EOF > /etc/init.d/resize2fs_once &&
+cat <<EOF > /etc/init.d/resize2fs_once &&
 #!/bin/sh
 ### BEGIN INIT INFO
 # Provides:          resize2fs_once
 # Required-Start:
 # Required-Stop:
-# Default-Start: 2 3 4 5 S
+# Default-Start: 3
 # Default-Stop:
 # Short-Description: Resize the root filesystem to fill partition
 # Description:
@@ -94,16 +108,16 @@ cat <<\EOF > /etc/init.d/resize2fs_once &&
 
 . /lib/lsb/init-functions
 
-case "$1" in
+case "\$1" in
   start)
     log_daemon_msg "Starting resize2fs_once" &&
-    resize2fs /dev/root &&
-    rm /etc/init.d/resize2fs_once &&
+    resize2fs /dev/$ROOT_PART &&
     update-rc.d resize2fs_once remove &&
-    log_end_msg $?
+    rm /etc/init.d/resize2fs_once &&
+    log_end_msg \$?
     ;;
   *)
-    echo "Usage: $0 start" >&2
+    echo "Usage: \$0 start" >&2
     exit 3
     ;;
 esac
@@ -523,88 +537,48 @@ do_i2c() {
 }
 
 do_serial() {
-  CURRENT_STATUS="yes" # assume ttyAMA0 output enabled
-  if ! grep -q "^T.*:.*:respawn:.*ttyAMA0" /etc/inittab; then
-    CURRENT_STATUS="no"
+  DEFAULT=
+  if ! grep -q "console=ttyAMA0" /boot/cmdline.txt; then
+      DEFAULT=--defaultno
   fi
 
-  whiptail --yesno "Would you like a login shell to be accessible over serial?" 20 60 2
+  whiptail --yesno "Would you like a login shell to be accessible over serial?" $DEFAULT 20 60 2
   RET=$?
   if [ $RET -eq 1 ]; then
-    sed -i /etc/inittab -e "s|^.*:.*:respawn:.*ttyAMA0|#&|"
+    if [ $SYSTEMD -eq 0 ]; then
+      sed -i /etc/inittab -e "s|^.*:.*:respawn:.*ttyAMA0|#&|"
+    fi
     sed -i /boot/cmdline.txt -e "s/console=ttyAMA0,[0-9]\+ //"
     whiptail --msgbox "Serial is now disabled" 20 60 1
   elif [ $RET -eq 0 ]; then
-    sed -i /etc/inittab -e "s|^#\(.*:.*:respawn:.*ttyAMA0\)|\1|"
-    if ! grep -q "^T.*:.*:respawn:.*ttyAMA0" /etc/inittab; then
-      printf "T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100\n" >> /etc/inittab
+    if [ $SYSTEMD -eq 0 ]; then
+      sed -i /etc/inittab -e "s|^#\(.*:.*:respawn:.*ttyAMA0\)|\1|"
+      if ! grep -q "^T.*:.*:respawn:.*ttyAMA0" /etc/inittab; then
+        printf "T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100\n" >> /etc/inittab
+      fi
     fi
     if ! grep -q "console=ttyAMA0" /boot/cmdline.txt; then
-      sed -i /boot/cmdline.txt -e "s/root=/console=ttyAMA0,115200 root=/"
+        sed -i /boot/cmdline.txt -e "s/root=/console=ttyAMA0,115200 root=/"
     fi
     whiptail --msgbox "Serial is now enabled" 20 60 1
   else
     return $RET
   fi
+  ASK_TO_REBOOT=1
 }
 
 disable_raspi_config_at_boot() {
   if [ -e /etc/profile.d/raspi-config.sh ]; then
     rm -f /etc/profile.d/raspi-config.sh
-    sed -i /etc/inittab \
-      -e "s/^#\(.*\)#\s*RPICFG_TO_ENABLE\s*/\1/" \
-      -e "/#\s*RPICFG_TO_DISABLE/d"
-    telinit q
-  fi
-}
-
-enable_boot_to_scratch() {
-  if [ -e /etc/profile.d/boottoscratch.sh ]; then
-    printf "/etc/profile.d/boottoscratch.sh exists, so assuming boot to scratch enabled\n"
-    return 0;
-  fi
-  sed -i /etc/inittab -e "s|^\(1:2345.*getty.*tty1.*\)|\
-#\1 # BTS_TO_ENABLE\n1:2345:respawn:/bin/login -f pi tty1 </dev/tty1 >/dev/tty1 2>\&1 # BTS_TO_DISABLE|"
-  cat <<\EOF > /etc/profile.d/boottoscratch.sh
-#!/bin/sh
-# Part of raspi-config http://github.com/asb/raspi-config
-#
-# See LICENSE file for copyright and license details
-
-# Should be installed to /etc/profile.d/boottoscratch.sh to force scratch to run upon boot
-
-# You may also want to set automatic login in /etc/inittab on tty1 by adding a 
-# line such as the following (raspi-config does this for you):
-# 1:2345:respawn:/bin/login -f pi tty1 </dev/tty1 >/dev/tty1 2>&1 # BTS_TO_DISABLE
-
-if [ $(tty) = "/dev/tty1" ]; then
-  printf "openbox --config-file /home/pi/boottoscratch/openbox_rc.xml & scratch" | xinit /dev/stdin
-  printf "\n\n\nShutting down in 5 seconds, hit ctrl-C to cancel\n" && sleep 5 && sudo shutdown -h now
-fi
-EOF
-
-  mkdir -p /home/pi/boottoscratch
-  cat <<\EOF > /home/pi/boottoscratch/openbox_rc.xml
-<?xml version="1.0" encoding="UTF-8"?>
-<openbox_config xmlns="http://openbox.org/3.4/rc"
-    xmlns:xi="http://www.w3.org/2001/XInclude">
-<applications>
-  <application name="squeak" type="normal">
-    <focus>yes</focus>
-    <fullscreen>yes</fullscreen>
-  </application>
-</applications>
-</openbox_config>
-EOF
-  telinit q
-}
-
-disable_boot_to_scratch() {
-  if [ -e /etc/profile.d/boottoscratch.sh ]; then
-    rm -f /etc/profile.d/boottoscratch.sh
-    sed -i /etc/inittab \
-      -e "s/^#\(.*\)#\s*BTS_TO_ENABLE\s*/\1/" \
-      -e "/#\s*BTS_TO_DISABLE/d"
+    if [ $SYSTEMD -eq 1 ]; then
+      if [ -e /etc/systemd/system/getty@tty1.service.d/raspi-config-override.conf ]; then
+        rm /etc/systemd/system/getty@tty1.service.d/raspi-config-override.conf
+      fi
+    else
+      sed -i /etc/inittab \
+        -e "s/^#\(.*\)#\s*RPICFG_TO_ENABLE\s*/\1/" \
+        -e "/#\s*RPICFG_TO_DISABLE/d"
+    fi
     telinit q
   fi
 }
@@ -613,20 +587,27 @@ do_boot_behaviour() {
   BOOTOPT=$(whiptail --menu "Chose boot option" 20 60 10 \
     "Console" "Text console, requiring login (default)" \
     "Desktop" "Log in as user 'pi' at the graphical desktop" \
-    "Scratch" "Start the Scratch programming environment upon boot" \
     3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
     case "$BOOTOPT" in
       Console)
-        [ -e /etc/init.d/lightdm ] && update-rc.d lightdm disable 2
-        disable_boot_to_scratch
+        if [ -e /etc/init.d/lightdm ]; then
+          if [ $SYSTEMD -eq 1 ]; then
+            systemctl disable lightdm
+          else
+            update-rc.d lightdm disable 2
+          fi
+        fi
         ;;
       Desktop)
         if [ -e /etc/init.d/lightdm ]; then
           if id -u pi > /dev/null 2>&1; then
-            update-rc.d lightdm enable 2
+            if [ $SYSTEMD -eq 1 ]; then
+              systemctl enable lightdm
+            else
+              update-rc.d lightdm enable 2
+            fi
             sed /etc/lightdm/lightdm.conf -i -e "s/^#autologin-user=.*/autologin-user=pi/"
-            disable_boot_to_scratch
             disable_raspi_config_at_boot
           else
             whiptail --msgbox "The pi user has been removed, can't set up boot to desktop" 20 60 2
@@ -634,19 +615,6 @@ do_boot_behaviour() {
         else
           whiptail --msgbox "Do sudo apt-get install lightdm to allow configuration of boot to desktop" 20 60 2
           return 1
-        fi
-        ;;
-      Scratch)
-        if [ -e /usr/bin/scratch ]; then
-          if id -u pi > /dev/null 2>&1; then
-            [ -e /etc/init.d/lightdm ] && update-rc.d lightdm disable 2
-            disable_raspi_config_at_boot
-            enable_boot_to_scratch
-          else
-            whiptail --msgbox "The pi user has been removed, can't set up boot to scratch" 20 60 2
-          fi
-        else
-          whiptail --msgbox "Do sudo apt-get install scratch to allow configuration of boot to scratch" 20 60 2
         fi
         ;;
       *)
@@ -759,6 +727,7 @@ get_json_string_val() {
   sed -n -e "s/^[[:space:]]*\"$2\"[[:space:]]*:[[:space:]]*\"\(.*\)\"[[:space:]]*,$/\1/p" $1
 }
 
+# TODO: This is probably broken
 do_apply_os_config() {
   [ -e /boot/os_config.json ] || return 0
   NOOBSFLAVOUR=$(get_json_string_val /boot/os_config.json flavour)
@@ -768,12 +737,7 @@ do_apply_os_config() {
   if [ -n "$NOOBSFLAVOUR" ]; then
     printf "Setting flavour to %s based on os_config.json from NOOBS. May take a while\n" "$NOOBSFLAVOUR"
 
-    if printf "%s" "$NOOBSFLAVOUR" | grep -q "Scratch"; then
-      disable_raspi_config_at_boot
-      enable_boot_to_scratch
-    else
-      printf "Unrecognised flavour. Ignoring\n"
-    fi
+    printf "Unrecognised flavour. Ignoring\n"
   fi
 
   # TODO: currently ignores en_gb settings as we assume we are running in a 
@@ -948,6 +912,7 @@ do_advanced_menu() {
 #
 # Interactive use loop
 #
+get_init_sys
 calc_wt_size
 while true; do
   FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \

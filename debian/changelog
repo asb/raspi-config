@@ -1,3 +1,11 @@
+raspi-config (20150529) jessie; urgency=low
+
+  * systemd compatibility
+  * Add udevadm command to notify Xorg after change of keyboard layout - jojopi
+  * Remove boot to scratch
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 29 May 2015 11:31:46 +0100
+
 raspi-config (20150131-4) stable; urgency=low
 
   * Use dh_installinit --no-start instead of --noscripts to ensure raspi-config runs
