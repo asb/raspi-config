@@ -30,6 +30,12 @@ case "$1" in
       log_end_msg 0
     fi
     ;;
+  stop)
+    ;;
+  restart)
+    ;;
+  force-reload)
+    ;;
   *)
     echo "Usage: $0 start" >&2
     exit 3
