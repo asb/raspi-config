@@ -523,13 +523,19 @@ do_i2c() {
   RET=$?
   if [ $RET -eq 0 ]; then
     sed $BLACKLIST -i -e "s/^\(blacklist[[:space:]]*i2c[-_]bcm2708\)/#\1/"
+    sed /etc/modules -i -e "s/^#[[:space:]]*\(i2c[-_]dev\)/\1/"
+    if ! grep -q "^i2c[-_]dev" /etc/modules; then
+      printf "i2c-dev\n" >> /etc/modules
+    fi
     modprobe i2c-bcm2708
+    modprobe i2c-dev
     whiptail --msgbox "I2C kernel module will now be loaded by default" 20 60 1
   elif [ $RET -eq 1 ]; then
     sed $BLACKLIST -i -e "s/^#\(blacklist[[:space:]]*i2c[-_]bcm2708\)/\1/"
     if ! grep -q "^blacklist i2c[-_]bcm2708" $BLACKLIST; then
       printf "blacklist i2c-bcm2708\n" >> $BLACKLIST
     fi
+    sed /etc/modules -i -e "s/^\(i2c[-_]dev\)/#\1/"
     whiptail --msgbox "I2C kernel module will no longer be loaded by default" 20 60 1
   else
     return 0
