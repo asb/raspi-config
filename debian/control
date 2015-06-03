@@ -11,4 +11,4 @@ Package: raspi-config
 Architecture: all
 Depends: ${misc:Depends}, whiptail, parted, lua5.1, triggerhappy
 Description: Raspberry Pi configuration tool
-  A simple configuration tool for common Raspberry Pi administrative tasks
+ A simple configuration tool for common Raspberry Pi administrative tasks
