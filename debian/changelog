@@ -1,4 +1,4 @@
-raspi-config (20150529) jessie; urgency=low
+raspi-config (20150603) jessie; urgency=low
 
   * systemd compatibility
   * Add udevadm command to notify Xorg after change of keyboard layout - jojopi

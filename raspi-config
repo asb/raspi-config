@@ -599,7 +599,7 @@ do_boot_behaviour() {
       Console)
         if [ -e /etc/init.d/lightdm ]; then
           if [ $SYSTEMD -eq 1 ]; then
-            systemctl disable lightdm
+            systemctl set-default multi-user.target
           else
             update-rc.d lightdm disable 2
           fi
@@ -609,7 +609,7 @@ do_boot_behaviour() {
         if [ -e /etc/init.d/lightdm ]; then
           if id -u pi > /dev/null 2>&1; then
             if [ $SYSTEMD -eq 1 ]; then
-              systemctl enable lightdm
+              systemctl set-default graphical.target
             else
               update-rc.d lightdm enable 2
             fi
