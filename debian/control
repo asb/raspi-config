@@ -3,7 +3,7 @@ Section: utils
 Priority: extra
 Maintainer: Serge Schneider <serge@raspberrypi.org>
 Build-Depends: debhelper (>= 8.0.0)
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 Vcs-Git: git://git@github.com:RPi-Distro/raspi-config.git
 Vcs-Browser: https://github.com/RPi-Distro/raspi-config
 

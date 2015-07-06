@@ -1,3 +1,10 @@
+raspi-config (20150706) jessie; urgency=low
+
+  * Include io_is_busy in cpufreq settings
+  * Bump standards version to 3.9.6
+
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 06 Jul 2015 08:59:56 +0100
+
 raspi-config (20150603) jessie; urgency=low
 
   * systemd compatibility
