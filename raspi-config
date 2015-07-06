@@ -942,6 +942,17 @@ do_advanced_menu() {
   fi
 }
 
+#
+# Check dependencies
+#
+for dep in whiptail parted lua5.1 thd
+do
+  command -v $dep &>- || {
+    echo "Dependencies were not met. Please install them first."
+    echo " sudo apt-get install whiptail parted lua5.1 triggerhappy"
+    exit 1
+  }
+done
 
 #
 # Interactive use loop
