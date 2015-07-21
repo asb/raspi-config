@@ -953,7 +953,7 @@ do_advanced_menu() {
 #
 for dep in whiptail parted lua5.1 thd
 do
-  command -v $dep &>- || {
+  command -v $dep >/dev/null || {
     echo "Dependencies were not met. Please install them first."
     echo " sudo apt-get install whiptail parted lua5.1 triggerhappy"
     exit 1
