@@ -211,7 +211,17 @@ No other symbols, punctuation characters, or blank spaces are permitted.\
 " 20 70 1
 
   CURRENT_HOSTNAME=`cat /etc/hostname | tr -d " \t\n\r"`
-  NEW_HOSTNAME=$(whiptail --inputbox "Please enter a hostname" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
+  VALID_HOSTNAME="0"
+  while [ "$VALID_HOSTNAME" = "0" ]
+    do
+      NEW_HOSTNAME=$(whiptail --inputbox "Please enter a hostname" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
+      if hostname $NEW_HOSTNAME > /dev/null 2>&1 ;then
+        VALID_HOSTNAME="1"
+      else
+        whiptail --msgbox "The hostname you entered is not valid, try again." 20 70 1
+      fi
+    done
+
   if [ $? -eq 0 ]; then
     echo $NEW_HOSTNAME > /etc/hostname
     sed -i "s/127.0.1.1.*$CURRENT_HOSTNAME/127.0.1.1\t$NEW_HOSTNAME/g" /etc/hosts
