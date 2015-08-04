@@ -672,8 +672,7 @@ do_rastrack() {
 Rastrack (http://rastrack.co.uk) is a website run by Ryan Walmsley
 for tracking where people are using Raspberry Pis around the world.
 If you have an internet connection, you can add yourself directly
-using this tool. This is just a bit of fun, not any sort of official
-registration.\
+using this tool. This is just a bit of fun, not any sort of official registration.\
 " 20 70 1
   if [ $? -ne 0 ]; then
     return 0;
