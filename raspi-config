@@ -191,14 +191,17 @@ do_configure_keyboard() {
   dpkg-reconfigure keyboard-configuration &&
   printf "Reloading keymap. This may take a short while\n" &&
   invoke-rc.d keyboard-setup start
+  do_internationalisation_menu
 }
 
 do_change_locale() {
   dpkg-reconfigure locales
+  do_internationalisation_menu
 }
 
 do_change_timezone() {
   dpkg-reconfigure tzdata
+  do_internationalisation_menu
 }
 
 do_change_hostname() {
@@ -211,7 +214,17 @@ No other symbols, punctuation characters, or blank spaces are permitted.\
 " 20 70 1
 
   CURRENT_HOSTNAME=`cat /etc/hostname | tr -d " \t\n\r"`
-  NEW_HOSTNAME=$(whiptail --inputbox "Please enter a hostname" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
+  VALID_HOSTNAME="0"
+  while [ "$VALID_HOSTNAME" = "0" ]
+    do
+      NEW_HOSTNAME=$(whiptail --inputbox "Please enter a hostname" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
+      if hostname $NEW_HOSTNAME > /dev/null 2>&1 ;then
+        VALID_HOSTNAME="1"
+      else
+        whiptail --msgbox "The hostname you entered is not valid, try again." 20 60 1
+      fi
+    done
+
   if [ $? -eq 0 ]; then
     echo $NEW_HOSTNAME > /etc/hostname
     sed -i "s/127.0.1.1.*$CURRENT_HOSTNAME/127.0.1.1\t$NEW_HOSTNAME/g" /etc/hosts
@@ -279,14 +292,32 @@ system instability, try a more modest overclock. Hold down
 shift during boot to temporarily disable overclock.
 See http://elinux.org/RPi_Overclocking for more information.\
 " 20 70 1
-  OVERCLOCK=$(whiptail --menu "Chose overclock preset" 20 60 10 \
-    "None" "700MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
-    "Modest" "800MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
-    "Medium" "900MHz ARM, 250MHz core, 450MHz SDRAM, 2 overvolt" \
-    "High" "950MHz ARM, 250MHz core, 450MHz SDRAM, 6 overvolt" \
-    "Turbo" "1000MHz ARM, 500MHz core, 600MHz SDRAM, 6 overvolt" \
-    "Pi2" "1000MHz ARM, 500MHz core, 500MHz SDRAM, 2 overvolt" \
-    3>&1 1>&2 2>&3)
+
+  get_pi_version
+  if [ "$MAJOR_VERSION" = "1" ] ;then
+    OVERCLOCK=$(whiptail --menu "Chose overclock preset" 20 60 10 \
+      "None" "700MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
+      "Modest" "800MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
+      "Medium" "900MHz ARM, 250MHz core, 450MHz SDRAM, 2 overvolt" \
+      "High" "950MHz ARM, 250MHz core, 450MHz SDRAM, 6 overvolt" \
+      "Turbo" "1000MHz ARM, 500MHz core, 600MHz SDRAM, 6 overvolt" \
+      3>&1 1>&2 2>&3)
+  elif [ "$MAJOR_VERSION" = "2" ] ;then
+    OVERCLOCK=$(whiptail --menu "Chose overclock preset" 20 60 10 \
+      "Pi2" "1000MHz ARM, 500MHz core, 500MHz SDRAM, 2 overvolt" \
+      3>&1 1>&2 2>&3)
+  else
+    whiptail --msgbox "Unable to get your raspberry version. Now you can manually choose one of all available overclock settings." 20 60 1
+    OVERCLOCK=$(whiptail --menu "Chose overclock preset" 20 60 10 \
+      "None" "700MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
+      "Modest" "800MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
+      "Medium" "900MHz ARM, 250MHz core, 450MHz SDRAM, 2 overvolt" \
+      "High" "950MHz ARM, 250MHz core, 450MHz SDRAM, 6 overvolt" \
+      "Turbo" "1000MHz ARM, 500MHz core, 600MHz SDRAM, 6 overvolt" \
+      "Pi2" "1000MHz ARM, 500MHz core, 500MHz SDRAM, 2 overvolt" \
+      3>&1 1>&2 2>&3)
+  fi
+
   if [ $? -eq 0 ]; then
     case "$OVERCLOCK" in
       None)
@@ -661,8 +692,7 @@ do_rastrack() {
 Rastrack (http://rastrack.co.uk) is a website run by Ryan Walmsley
 for tracking where people are using Raspberry Pis around the world.
 If you have an internet connection, you can add yourself directly
-using this tool. This is just a bit of fun, not any sort of official
-registration.\
+using this tool. This is just a bit of fun, not any sort of official registration.\
 " 20 70 1
   if [ $? -ne 0 ]; then
     return 0;
@@ -702,6 +732,42 @@ set_camera() {
     fi
     sed $CONFIG -i -e "s/^startx/#startx/"
     sed $CONFIG -i -e "s/^fixup_file/#fixup_file/"
+  fi
+}
+
+get_pi_version() {
+  REVISION=$(grep "Revision" /proc/cpuinfo)
+  REVISION=${REVISION##* }
+  case $REVISION in
+    0002) VERSION="Model B Revision 1.0" ;;
+    0003) VERSION="Model B Revision 1.0 + ECN0001 (no fuses, D14 removed)" ;;
+    0004|0005|0006) VERSION="Model B Revision 2.0 Mounting holes" ;;
+    0007|0008|0009) VERSION="Model A Mounting holes" ;;
+    000d|000e|000f) VERSION="Model B Revision 2.0 Mounting holes" ;;
+    0010) VERSION="Model B+" ;;
+    0011) VERSION="Compute Module" ;;
+    0012) VERSION="Model A+" ;;
+    a01041) VERSION="Pi 2 Model B (Sony, UK)" ;;
+    a21041) VERSION="Pi 2 Model B (Embest, China)" ;;
+    *) VERSION="Unable to get your raspberry version. Maybe raspi-config is not up to date?" ;;
+  esac
+
+  if echo "$VERSION" | grep -q "^Model.*$" ;then
+    MAJOR_VERSION="1"
+  elif echo "$VERSION" | grep -q "^Pi 2 Model.*$" ;then
+    MAJOR_VERSION="2"
+  else
+    # Concerns only the Compute Module. Dont know how to handle this now.
+    MAJOR_VERSION="False"
+  fi
+}
+
+do_pi_version() {
+  get_pi_version
+  if [ "$INTERACTIVE" = "True" ]; then
+    whiptail --msgbox "Your raspberry version is: $VERSION." 20 70 1
+  else
+    echo "Raspberry version: $VERSION"
   fi
 }
 
@@ -865,6 +931,11 @@ do
     do_apply_os_config
     exit $?
     ;;
+  --show-pi-version)
+    INTERACTIVE=False
+    do_pi_version
+    exit 0
+    ;;
   *)
     # unknown option
     ;;
@@ -957,7 +1028,8 @@ while true; do
     "6 Add to Rastrack" "Add this Pi to the online Raspberry Pi Map (Rastrack)" \
     "7 Overclock" "Configure overclocking for your Pi" \
     "8 Advanced Options" "Configure advanced settings" \
-    "9 About raspi-config" "Information about this configuration tool" \
+    "9 Show raspberry version" "Shows the version of your raspberry pi" \
+    "10 About raspi-config" "Information about this configuration tool" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -972,7 +1044,8 @@ while true; do
       6\ *) do_rastrack ;;
       7\ *) do_overclock ;;
       8\ *) do_advanced_menu ;;
-      9\ *) do_about ;;
+      9\ *) do_pi_version ;;
+      10\ *) do_about ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   else
