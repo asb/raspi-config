@@ -1,1 +1,2 @@
-./raspi-config /usr/bin/
+raspi-config /usr/bin
+autologin@.service /etc/systemd/system

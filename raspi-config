@@ -45,6 +45,7 @@ you have heavily customised your installation.\
 }
 
 do_expand_rootfs() {
+  get_init_sys
   if [ $SYSTEMD -eq 1 ]; then
     ROOT_PART=$(mount | sed -n 's|^/dev/\(.*\) on / .*|\1|p')
   else
@@ -184,9 +185,13 @@ set_overscan() {
 }
 
 do_overscan() {
-  whiptail --yesno "What would you like to do with overscan" 20 60 2 \
-    --yes-button Disable --no-button Enable
-  RET=$?
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "What would you like to do with overscan" 20 60 2 \
+      --yes-button Disable --no-button Enable
+    RET=$?
+  else
+    RET=$1
+  fi
   if [ $RET -eq 0 ] || [ $RET -eq 1 ]; then
     ASK_TO_REBOOT=1
     set_overscan $RET;
@@ -218,16 +223,22 @@ do_change_timezone() {
 }
 
 do_change_hostname() {
-  whiptail --msgbox "\
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "\
 Please note: RFCs mandate that a hostname's labels \
 may contain only the ASCII letters 'a' through 'z' (case-insensitive), 
 the digits '0' through '9', and the hyphen.
 Hostname labels cannot begin or end with a hyphen. 
 No other symbols, punctuation characters, or blank spaces are permitted.\
 " 20 70 1
-
+  fi
   CURRENT_HOSTNAME=`cat /etc/hostname | tr -d " \t\n\r"`
-  NEW_HOSTNAME=$(whiptail --inputbox "Please enter a hostname" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
+  if [ "$INTERACTIVE" = True ]; then
+    NEW_HOSTNAME=$(whiptail --inputbox "Please enter a hostname" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
+  else
+    NEW_HOSTNAME=$1
+    true
+  fi
   if [ $? -eq 0 ]; then
     echo $NEW_HOSTNAME > /etc/hostname
     sed -i "s/127.0.1.1.*$CURRENT_HOSTNAME/127.0.1.1\t$NEW_HOSTNAME/g" /etc/hosts
@@ -245,8 +256,13 @@ do_memory_split() { # Memory Split
     CUR_GPU_MEM=$(get_config_var gpu_mem $CONFIG)
     [ -z "$CUR_GPU_MEM" ] && CUR_GPU_MEM=64
     ## ask users what gpu_mem they want
-    NEW_GPU_MEM=$(whiptail --inputbox "How much memory should the GPU have?  e.g. 16/32/64/128/256" \
-      20 70 -- "$CUR_GPU_MEM" 3>&1 1>&2 2>&3)
+    if [ "$INTERACTIVE" = True ]; then
+      NEW_GPU_MEM=$(whiptail --inputbox "How much memory should the GPU have?  e.g. 16/32/64/128/256" \
+        20 70 -- "$CUR_GPU_MEM" 3>&1 1>&2 2>&3)
+    else
+      NEW_GPU_MEM=$1
+      true
+    fi
     if [ $? -eq 0 ]; then
       set_config_var gpu_mem "$NEW_GPU_MEM" $CONFIG
       ASK_TO_REBOOT=1
@@ -288,21 +304,26 @@ set_memory_split() {
 }
 
 do_overclock() {
-  whiptail --msgbox "\
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "\
 Be aware that overclocking may reduce the lifetime of your
 Raspberry Pi. If overclocking at a certain level causes
 system instability, try a more modest overclock. Hold down
 shift during boot to temporarily disable overclock.
 See http://elinux.org/RPi_Overclocking for more information.\
 " 20 70 1
-  OVERCLOCK=$(whiptail --menu "Chose overclock preset" 20 60 10 \
-    "None" "700MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
-    "Modest" "800MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
-    "Medium" "900MHz ARM, 250MHz core, 450MHz SDRAM, 2 overvolt" \
-    "High" "950MHz ARM, 250MHz core, 450MHz SDRAM, 6 overvolt" \
-    "Turbo" "1000MHz ARM, 500MHz core, 600MHz SDRAM, 6 overvolt" \
-    "Pi2" "1000MHz ARM, 500MHz core, 500MHz SDRAM, 2 overvolt" \
-    3>&1 1>&2 2>&3)
+    OVERCLOCK=$(whiptail --menu "Chose overclock preset" 20 60 10 \
+      "None" "700MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
+      "Modest" "800MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
+      "Medium" "900MHz ARM, 250MHz core, 450MHz SDRAM, 2 overvolt" \
+      "High" "950MHz ARM, 250MHz core, 450MHz SDRAM, 6 overvolt" \
+      "Turbo" "1000MHz ARM, 500MHz core, 600MHz SDRAM, 6 overvolt" \
+      "Pi2" "1000MHz ARM, 500MHz core, 500MHz SDRAM, 2 overvolt" \
+      3>&1 1>&2 2>&3)
+  else
+    OVERCLOCK=$1
+    true
+  fi
   if [ $? -eq 0 ]; then
     case "$OVERCLOCK" in
       None)
@@ -323,6 +344,9 @@ See http://elinux.org/RPi_Overclocking for more information.\
       Pi2)
         set_overclock Pi2 1000 500 500 2
         ;;
+      Pi2None)
+        set_overclock Medium 900 250 450 0
+        ;;
       *)
         whiptail --msgbox "Programmer error, unrecognised overclock preset" 20 60 2
         return 1
@@ -337,7 +361,9 @@ set_overclock() {
   set_config_var core_freq $3 $CONFIG &&
   set_config_var sdram_freq $4 $CONFIG &&
   set_config_var over_voltage $5 $CONFIG &&
-  whiptail --msgbox "Set overclock to preset '$1'" 20 60 2
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "Set overclock to preset '$1'" 20 60 2
+  fi
 }
 
 do_ssh() {
@@ -345,16 +371,24 @@ do_ssh() {
     whiptail --msgbox "Initial ssh key generation still running. Please wait and try again." 20 60 2
     return 1
   fi
-  whiptail --yesno "Would you like the SSH server enabled or disabled?" 20 60 2 \
-    --yes-button Enable --no-button Disable
-  RET=$?
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like the SSH server enabled or disabled?" 20 60 2 \
+      --yes-button Enable --no-button Disable
+    RET=$?
+  else
+    RET=$1
+  fi
   if [ $RET -eq 0 ]; then
     update-rc.d ssh enable &&
     invoke-rc.d ssh start &&
-    whiptail --msgbox "SSH server enabled" 20 60 1
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "SSH server enabled" 20 60 1
+    fi
   elif [ $RET -eq 1 ]; then
     update-rc.d ssh disable &&
-    whiptail --msgbox "SSH server disabled" 20 60 1
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "SSH server disabled" 20 60 1
+    fi
   else
     return $RET
   fi
@@ -367,9 +401,12 @@ do_devicetree() {
     CURRENT_SETTING="disabled"
     DEFAULT=--defaultno
   fi
-
-  whiptail --yesno "Would you like the kernel to use Device Tree?" $DEFAULT 20 60 2
-  RET=$?
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like the kernel to use Device Tree?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    RET=$1
+  fi
   if [ $RET -eq 0 ]; then
     sed $CONFIG -i -e "s/^\(device_tree=\)$/#\1/"
     sed $CONFIG -i -e "s/^#\(device_tree=.\)/\1/"
@@ -409,8 +446,12 @@ do_spi() {
   fi
 
   if [ $DEVICE_TREE = "yes" ]; then
-    whiptail --yesno "Would you like the SPI interface to be enabled?" $DEFAULT 20 60 2
-    RET=$?
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --yesno "Would you like the SPI interface to be enabled?" $DEFAULT 20 60 2
+      RET=$?
+    else
+      RET=$1
+    fi
     if [ $RET -eq 0 ]; then
       SETTING=on
       STATUS=enabled
@@ -431,7 +472,9 @@ do_spi() {
     if ! grep -q -E "^(device_tree_param|dtparam)=([^,]*,)*spi=[^,]*" $CONFIG; then
       printf "dtparam=spi=$SETTING\n" >> $CONFIG
     fi
-    whiptail --msgbox "The SPI interface $TENSE $STATUS$REBOOT" 20 60 1
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "The SPI interface $TENSE $STATUS$REBOOT" 20 60 1
+    fi
     if [ $SETTING = "off" ]; then
       return 0
     fi
@@ -448,18 +491,26 @@ do_spi() {
     touch $BLACKLIST
   fi
 
-  whiptail --yesno "Would you like the SPI kernel module to be loaded by default?" $DEFAULT 20 60 2
-  RET=$?
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like the SPI kernel module to be loaded by default?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    RET=$1
+  fi
   if [ $RET -eq 0 ]; then
     sed $BLACKLIST -i -e "s/^\(blacklist[[:space:]]*spi[-_]bcm2708\)/#\1/"
     modprobe spi-bcm2708
-    whiptail --msgbox "SPI kernel module will now be loaded by default" 20 60 1
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "SPI kernel module will now be loaded by default" 20 60 1
+    fi
   elif [ $RET -eq 1 ]; then
     sed $BLACKLIST -i -e "s/^#\(blacklist[[:space:]]*spi[-_]bcm2708\)/\1/"
     if ! grep -q "^blacklist spi[-_]bcm2708" $BLACKLIST; then
       printf "blacklist spi-bcm2708\n" >> $BLACKLIST
     fi
-    whiptail --msgbox "SPI kernel module will no longer be loaded by default" 20 60 1
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "SPI kernel module will no longer be loaded by default" 20 60 1
+    fi
   else
     return 0
   fi
@@ -480,8 +531,12 @@ do_i2c() {
   fi
 
   if [ $DEVICE_TREE = "yes" ]; then
-    whiptail --yesno "Would you like the ARM I2C interface to be enabled?" $DEFAULT 20 60 2
-    RET=$?
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --yesno "Would you like the ARM I2C interface to be enabled?" $DEFAULT 20 60 2
+      RET=$?
+    else
+      RET=$1
+    fi
     if [ $RET -eq 0 ]; then
       SETTING=on
       STATUS=enabled
@@ -502,7 +557,9 @@ do_i2c() {
     if ! grep -q -E "^(device_tree_param|dtparam)=([^,]*,)*i2c(_arm)?=[^,]*" $CONFIG; then
       printf "dtparam=i2c_arm=$SETTING\n" >> $CONFIG
     fi
-    whiptail --msgbox "The ARM I2C interface $TENSE $STATUS$REBOOT" 20 60 1
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "The ARM I2C interface $TENSE $STATUS$REBOOT" 20 60 1
+    fi
     if [ $SETTING = "off" ]; then
       return 0
     fi
@@ -519,8 +576,12 @@ do_i2c() {
     touch $BLACKLIST
   fi
 
-  whiptail --yesno "Would you like the I2C kernel module to be loaded by default?" $DEFAULT 20 60 2
-  RET=$?
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like the I2C kernel module to be loaded by default?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    RET=$1
+  fi
   if [ $RET -eq 0 ]; then
     sed $BLACKLIST -i -e "s/^\(blacklist[[:space:]]*i2c[-_]bcm2708\)/#\1/"
     sed /etc/modules -i -e "s/^#[[:space:]]*\(i2c[-_]dev\)/\1/"
@@ -529,14 +590,18 @@ do_i2c() {
     fi
     modprobe i2c-bcm2708
     modprobe i2c-dev
-    whiptail --msgbox "I2C kernel module will now be loaded by default" 20 60 1
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "I2C kernel module will now be loaded by default" 20 60 1
+    fi
   elif [ $RET -eq 1 ]; then
     sed $BLACKLIST -i -e "s/^#\(blacklist[[:space:]]*i2c[-_]bcm2708\)/\1/"
     if ! grep -q "^blacklist i2c[-_]bcm2708" $BLACKLIST; then
       printf "blacklist i2c-bcm2708\n" >> $BLACKLIST
     fi
     sed /etc/modules -i -e "s/^\(i2c[-_]dev\)/#\1/"
-    whiptail --msgbox "I2C kernel module will no longer be loaded by default" 20 60 1
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "I2C kernel module will no longer be loaded by default" 20 60 1
+    fi
   else
     return 0
   fi
@@ -548,14 +613,21 @@ do_serial() {
       DEFAULT=--defaultno
   fi
 
-  whiptail --yesno "Would you like a login shell to be accessible over serial?" $DEFAULT 20 60 2
-  RET=$?
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like a login shell to be accessible over serial?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    get_init_sys
+    RET=$1
+  fi
   if [ $RET -eq 1 ]; then
     if [ $SYSTEMD -eq 0 ]; then
       sed -i /etc/inittab -e "s|^.*:.*:respawn:.*ttyAMA0|#&|"
     fi
     sed -i /boot/cmdline.txt -e "s/console=ttyAMA0,[0-9]\+ //"
-    whiptail --msgbox "Serial is now disabled" 20 60 1
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "Serial is now disabled" 20 60 1
+    fi
   elif [ $RET -eq 0 ]; then
     if [ $SYSTEMD -eq 0 ]; then
       sed -i /etc/inittab -e "s|^#\(.*:.*:respawn:.*ttyAMA0\)|\1|"
@@ -566,7 +638,9 @@ do_serial() {
     if ! grep -q "console=ttyAMA0" /boot/cmdline.txt; then
         sed -i /boot/cmdline.txt -e "s/root=/console=ttyAMA0,115200 root=/"
     fi
-    whiptail --msgbox "Serial is now enabled" 20 60 1
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "Serial is now enabled" 20 60 1
+    fi
   else
     return $RET
   fi
@@ -589,11 +663,95 @@ disable_raspi_config_at_boot() {
   fi
 }
 
+do_boot_behaviour_new() {
+  if [ "$INTERACTIVE" = True ]; then
+    BOOTOPT=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
+      "B1 Console" "Text console, requiring user to login" \
+      "B2 Console Autologin" "Text console, automatically logged in as 'pi' user" \
+      "B3 Desktop" "Desktop GUI, requiring user to login" \
+      "B4 Desktop Autologin" "Desktop GUI, automatically logged in as 'pi' user" \
+      3>&1 1>&2 2>&3)
+  else
+    get_init_sys
+    BOOTOPT=$1
+    true
+  fi
+  if [ $? -eq 0 ]; then
+    case "$BOOTOPT" in
+      B1*)
+        if [ -e /etc/init.d/lightdm ]; then
+          if [ $SYSTEMD -eq 1 ]; then
+            systemctl set-default multi-user.target
+            sudo ln -fs /lib/systemd/system/getty@.service /etc/systemd/system/getty.target.wants/getty@tty1.service
+          else
+            update-rc.d lightdm disable 2
+            sed /etc/inittab -i -e "s/1:2345:respawn:\/bin\/login -f pi tty1 <\/dev\/tty1 >\/dev\/tty1 2>&1/1:2345:respawn:\/sbin\/getty --noclear 38400 tty1/"
+          fi
+        fi
+        ;;
+      B2*)
+        if [ -e /etc/init.d/lightdm ]; then
+          if [ $SYSTEMD -eq 1 ]; then
+            systemctl set-default multi-user.target
+            sudo ln -fs /etc/systemd/system/autologin@.service /etc/systemd/system/getty.target.wants/getty@tty1.service
+          else
+            update-rc.d lightdm disable 2
+            sed /etc/inittab -i -e "s/1:2345:respawn:\/sbin\/getty --noclear 38400 tty1/1:2345:respawn:\/bin\/login -f pi tty1 <\/dev\/tty1 >\/dev\/tty1 2>&1/"
+          fi
+        fi
+        ;;
+      B3*)
+        if [ -e /etc/init.d/lightdm ]; then
+          if [ $SYSTEMD -eq 1 ]; then
+            systemctl set-default graphical.target
+          else
+            update-rc.d lightdm enable 2
+          fi
+          sed /etc/lightdm/lightdm.conf -i -e "s/^autologin-user=pi/#autologin-user=/"
+          disable_raspi_config_at_boot
+        else
+          whiptail --msgbox "Do sudo apt-get install lightdm to allow configuration of boot to desktop" 20 60 2
+          return 1
+        fi
+        ;;
+      B4*)
+        if [ -e /etc/init.d/lightdm ]; then
+          if id -u pi > /dev/null 2>&1; then
+            if [ $SYSTEMD -eq 1 ]; then
+              systemctl set-default graphical.target
+            else
+              update-rc.d lightdm enable 2
+            fi
+            sed /etc/lightdm/lightdm.conf -i -e "s/^#autologin-user=.*/autologin-user=pi/"
+            disable_raspi_config_at_boot
+          else
+            whiptail --msgbox "The pi user has been removed, can't set up boot to desktop" 20 60 2
+          fi
+        else
+          whiptail --msgbox "Do sudo apt-get install lightdm to allow configuration of boot to desktop" 20 60 2
+          return 1
+        fi
+        ;;
+      *)
+        whiptail --msgbox "Programmer error, unrecognised boot option" 20 60 2
+        return 1
+        ;;
+    esac
+    ASK_TO_REBOOT=1
+  fi
+}
+
 do_boot_behaviour() {
-  BOOTOPT=$(whiptail --menu "Chose boot option" 20 60 10 \
-    "Console" "Text console, requiring login (default)" \
-    "Desktop" "Log in as user 'pi' at the graphical desktop" \
-    3>&1 1>&2 2>&3)
+  if [ "$INTERACTIVE" = True ]; then
+    BOOTOPT=$(whiptail --menu "Chose boot option" 20 60 10 \
+      "Console" "Text console, requiring login (default)" \
+      "Desktop" "Log in as user 'pi' at the graphical desktop" \
+      3>&1 1>&2 2>&3)
+  else
+    get_init_sys
+    BOOTOPT=$1
+    true
+  fi
   if [ $? -eq 0 ]; then
     case "$BOOTOPT" in
       Console)
@@ -686,9 +844,13 @@ do_camera() {
     whiptail --msgbox "Your firmware appears to be out of date (no start_x.elf). Please update" 20 60 2
     return 1
   fi
-  whiptail --yesno "Enable support for Raspberry Pi camera?" 20 60 2 \
-    --yes-button Disable --no-button Enable
-  RET=$?
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Enable support for Raspberry Pi camera?" 20 60 2 \
+      --yes-button Disable --no-button Enable
+    RET=$?
+  else
+    RET=$1
+  fi
   if [ $RET -eq 0 ] || [ $RET -eq 1 ]; then
     ASK_TO_REBOOT=1
     set_camera $RET;
@@ -810,6 +972,10 @@ EOF
   return 0
 }
 
+nonint() {
+    $*
+}
+
 #
 # Command line options for non-interactive use
 #
@@ -836,6 +1002,10 @@ do
     INTERACTIVE=False
     do_apply_os_config
     exit $?
+    ;;
+  nonint)
+    INTERACTIVE=False
+    $@
     ;;
   *)
     # unknown option
@@ -918,37 +1088,39 @@ do_advanced_menu() {
 #
 # Interactive use loop
 #
-get_init_sys
-calc_wt_size
-while true; do
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-    "1 Expand Filesystem" "Ensures that all of the SD card storage is available to the OS" \
-    "2 Change User Password" "Change password for the default user (pi)" \
-    "3 Enable Boot to Desktop/Scratch" "Choose whether to boot into a desktop environment, Scratch, or the command-line" \
-    "4 Internationalisation Options" "Set up language and regional settings to match your location" \
-    "5 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
-    "6 Add to Rastrack" "Add this Pi to the online Raspberry Pi Map (Rastrack)" \
-    "7 Overclock" "Configure overclocking for your Pi" \
-    "8 Advanced Options" "Configure advanced settings" \
-    "9 About raspi-config" "Information about this configuration tool" \
-    3>&1 1>&2 2>&3)
-  RET=$?
-  if [ $RET -eq 1 ]; then
-    do_finish
-  elif [ $RET -eq 0 ]; then
-    case "$FUN" in
-      1\ *) do_expand_rootfs ;;
-      2\ *) do_change_pass ;;
-      3\ *) do_boot_behaviour ;;
-      4\ *) do_internationalisation_menu ;;
-      5\ *) do_camera ;;
-      6\ *) do_rastrack ;;
-      7\ *) do_overclock ;;
-      8\ *) do_advanced_menu ;;
-      9\ *) do_about ;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
-  else
-    exit 1
-  fi
-done
+if [ "$INTERACTIVE" = True ]; then
+  get_init_sys
+  calc_wt_size
+  while true; do
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+      "1 Expand Filesystem" "Ensures that all of the SD card storage is available to the OS" \
+      "2 Change User Password" "Change password for the default user (pi)" \
+      "3 Boot Options" "Choose whether to boot into a desktop environment or the command line" \
+      "4 Internationalisation Options" "Set up language and regional settings to match your location" \
+      "5 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
+      "6 Add to Rastrack" "Add this Pi to the online Raspberry Pi Map (Rastrack)" \
+      "7 Overclock" "Configure overclocking for your Pi" \
+      "8 Advanced Options" "Configure advanced settings" \
+      "9 About raspi-config" "Information about this configuration tool" \
+      3>&1 1>&2 2>&3)
+    RET=$?
+    if [ $RET -eq 1 ]; then
+      do_finish
+    elif [ $RET -eq 0 ]; then
+      case "$FUN" in
+        1\ *) do_expand_rootfs ;;
+        2\ *) do_change_pass ;;
+        3\ *) do_boot_behaviour_new ;;
+        4\ *) do_internationalisation_menu ;;
+        5\ *) do_camera ;;
+        6\ *) do_rastrack ;;
+        7\ *) do_overclock ;;
+        8\ *) do_advanced_menu ;;
+        9\ *) do_about ;;
+        *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+      esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+    else
+      exit 1
+    fi
+  done
+fi

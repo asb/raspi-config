@@ -1,3 +1,9 @@
+raspi-config (20150915) jessie; urgency=medium
+
+  * Add support for rc_gui from spl
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 15 Sep 2015 10:23:52 +0100
+
 raspi-config (20150706) jessie; urgency=low
 
   * Include io_is_busy in cpufreq settings
