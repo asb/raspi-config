@@ -157,12 +157,17 @@ get_config_var() {
 local key=assert(arg[1])
 local fn=assert(arg[2])
 local file=assert(io.open(fn))
+local found=false
 for line in file:lines() do
-  local val = line:match("^#?%s*"..key.."=(.*)$")
+  local val = line:match("^%s*"..key.."=(.*)$")
   if (val ~= nil) then
     print(val)
+    found=true
     break
   end
+end
+if not found then
+   print(0)
 end
 EOF
 }
@@ -682,7 +687,7 @@ do_boot_behaviour_new() {
         if [ -e /etc/init.d/lightdm ]; then
           if [ $SYSTEMD -eq 1 ]; then
             systemctl set-default multi-user.target
-            sudo ln -fs /lib/systemd/system/getty@.service /etc/systemd/system/getty.target.wants/getty@tty1.service
+            ln -fs /lib/systemd/system/getty@.service /etc/systemd/system/getty.target.wants/getty@tty1.service
           else
             update-rc.d lightdm disable 2
             sed /etc/inittab -i -e "s/1:2345:respawn:\/bin\/login -f pi tty1 <\/dev\/tty1 >\/dev\/tty1 2>&1/1:2345:respawn:\/sbin\/getty --noclear 38400 tty1/"
@@ -693,7 +698,7 @@ do_boot_behaviour_new() {
         if [ -e /etc/init.d/lightdm ]; then
           if [ $SYSTEMD -eq 1 ]; then
             systemctl set-default multi-user.target
-            sudo ln -fs /etc/systemd/system/autologin@.service /etc/systemd/system/getty.target.wants/getty@tty1.service
+            ln -fs /etc/systemd/system/autologin@.service /etc/systemd/system/getty.target.wants/getty@tty1.service
           else
             update-rc.d lightdm disable 2
             sed /etc/inittab -i -e "s/1:2345:respawn:\/sbin\/getty --noclear 38400 tty1/1:2345:respawn:\/bin\/login -f pi tty1 <\/dev\/tty1 >\/dev\/tty1 2>&1/"
@@ -704,6 +709,7 @@ do_boot_behaviour_new() {
         if [ -e /etc/init.d/lightdm ]; then
           if [ $SYSTEMD -eq 1 ]; then
             systemctl set-default graphical.target
+            ln -fs /lib/systemd/system/getty@.service /etc/systemd/system/getty.target.wants/getty@tty1.service
           else
             update-rc.d lightdm enable 2
           fi
@@ -719,6 +725,7 @@ do_boot_behaviour_new() {
           if id -u pi > /dev/null 2>&1; then
             if [ $SYSTEMD -eq 1 ]; then
               systemctl set-default graphical.target
+              ln -fs /etc/systemd/system/autologin@.service /etc/systemd/system/getty.target.wants/getty@tty1.service
             else
               update-rc.d lightdm enable 2
             fi

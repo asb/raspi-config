@@ -1,3 +1,9 @@
+raspi-config (20150923) jessie; urgency=medium
+
+  * Auto-login to desktop and console option for rc_gui
+
+ -- Serge Schneider <serge@raspberrypi.org>  Wed, 23 Sep 2015 21:25:52 +0100
+
 raspi-config (20150915) jessie; urgency=medium
 
   * Add support for rc_gui from spl
