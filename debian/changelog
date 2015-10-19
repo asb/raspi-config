@@ -1,3 +1,11 @@
+raspi-config (20151019) jessie; urgency=medium
+
+  * Add alsa-utils dependency
+  * Remove unnecessary sudo in init script
+  * Add wait for network option
+
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 19 Oct 2015 13:01:26 +0100
+
 raspi-config (20150923) jessie; urgency=medium
 
   * Auto-login to desktop and console option for rc_gui
