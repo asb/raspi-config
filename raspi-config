@@ -152,6 +152,21 @@ EOF
 mv "$3.bak" "$3"
 }
 
+clear_config_var() {
+  lua - "$1" "$2" <<EOF > "$2.bak"
+local key=assert(arg[1])
+local fn=assert(arg[2])
+local file=assert(io.open(fn))
+for line in file:lines() do
+  if line:match("^%s*"..key.."=.*$") then
+    line="#"..line
+  end
+  print(line)
+end
+EOF
+mv "$2.bak" "$2"
+}
+
 get_config_var() {
   lua - "$1" "$2" <<EOF
 local key=assert(arg[1])
@@ -332,7 +347,7 @@ See http://elinux.org/RPi_Overclocking for more information.\
   if [ $? -eq 0 ]; then
     case "$OVERCLOCK" in
       None)
-        set_overclock None 700 250 400 0
+        clear_overclock
         ;;
       Modest)
         set_overclock Modest 800 250 400 0
@@ -350,7 +365,7 @@ See http://elinux.org/RPi_Overclocking for more information.\
         set_overclock Pi2 1000 500 500 2
         ;;
       Pi2None)
-        set_overclock Medium 900 250 450 0
+        clear_overclock
         ;;
       *)
         whiptail --msgbox "Programmer error, unrecognised overclock preset" 20 60 2
@@ -368,6 +383,16 @@ set_overclock() {
   set_config_var over_voltage $5 $CONFIG &&
   if [ "$INTERACTIVE" = True ]; then
     whiptail --msgbox "Set overclock to preset '$1'" 20 60 2
+  fi
+}
+
+clear_overclock () {
+  clear_config_var arm_freq $CONFIG &&
+  clear_config_var core_freq $CONFIG &&
+  clear_config_var sdram_freq $CONFIG &&
+  clear_config_var over_voltage $CONFIG &&
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "Set overclock to preset 'None'" 20 60 2
   fi
 }
 

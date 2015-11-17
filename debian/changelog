@@ -1,3 +1,10 @@
+raspi-config (20151117) jessie; urgency=medium
+
+  * raspi-config modified to remove config variables rather than set default
+    values when overclocking
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 17 Nov 2015 11:35:14 +0000
+
 raspi-config (20151019) jessie; urgency=medium
 
   * Add alsa-utils dependency
