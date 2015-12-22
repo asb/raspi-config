@@ -279,7 +279,7 @@ system instability, try a more modest overclock. Hold down
 shift during boot to temporarily disable overclock.
 See http://elinux.org/RPi_Overclocking for more information.\
 " 20 70 1
-  OVERCLOCK=$(whiptail --menu "Chose overclock preset" 20 60 10 \
+  OVERCLOCK=$(whiptail --menu "Choose overclock preset" 20 60 10 \
     "None" "700MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
     "Modest" "800MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
     "Medium" "900MHz ARM, 250MHz core, 450MHz SDRAM, 2 overvolt" \
@@ -608,7 +608,7 @@ disable_boot_to_scratch() {
 }
 
 do_boot_behaviour() {
-  BOOTOPT=$(whiptail --menu "Chose boot option" 20 60 10 \
+  BOOTOPT=$(whiptail --menu "Choose boot option" 20 60 10 \
     "Console" "Text console, requiring login (default)" \
     "Desktop" "Log in as user 'pi' at the graphical desktop" \
     "Scratch" "Start the Scratch programming environment upon boot" \
