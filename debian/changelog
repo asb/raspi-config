@@ -1,3 +1,12 @@
+raspi-config (20160108) jessie; urgency=medium
+
+  * Update URL
+  * Remove first boot auto-login files
+  * Fix auto-login
+  * Fix typos
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 08 Jan 2016 10:44:05 +0000
+
 raspi-config (20151117) jessie; urgency=medium
 
   * raspi-config modified to remove config variables rather than set default
