@@ -924,6 +924,48 @@ do_camera() {
   fi
 }
 
+# $1 is 0 to disable driver, 1 to enable it
+set_gldriver() {
+  [ -e $CONFIG ] || touch $CONFIG
+
+  if [ "$1" -eq 0 ]; then # disable driver
+    sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/"
+    mv /usr/share/X11/xorg.conf.d/99-fbturbo.~ /usr/share/X11/xorg.conf.d/99-fbturbo.conf
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "Desktop GL driver is disabled" 20 60 1
+    fi
+  else # enable driver
+    sed $CONFIG -i -e "s/^#dtoverlay=vc4-kms-v3d/dtoverlay=vc4-kms-v3d/"
+    if ! grep -q -E "^dtoverlay=vc4-kms-v3d" $CONFIG; then
+      printf "dtoverlay=vc4-kms-v3d\n" >> $CONFIG
+    fi
+    mv /usr/share/X11/xorg.conf.d/99-fbturbo.conf /usr/share/X11/xorg.conf.d/99-fbturbo.~
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "Desktop GL driver is enabled" 20 60 1
+    fi
+  fi
+}
+
+do_gldriver() {
+  if [ ! -e /boot/overlays/vc4-kms-v3d.overlay ]; then
+    whiptail --msgbox "Driver and kernel not present on your system. Please update" 20 60 2
+    return 1
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Enable experimental GL driver for desktop?" 20 60 2 \
+      --yes-button Disable --no-button Enable
+    RET=$?
+  else
+    RET=$1
+  fi
+  if [ $RET -eq 0 ] || [ $RET -eq 1 ]; then
+    ASK_TO_REBOOT=1
+    set_gldriver $RET;
+  else
+    return 1
+  fi
+}
+
 do_update() {
   apt-get update &&
   apt-get install raspi-config &&
@@ -1127,6 +1169,7 @@ do_advanced_menu() {
     "A7 I2C" "Enable/Disable automatic loading of I2C kernel module" \
     "A8 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
     "A9 Audio" "Force audio out through HDMI or 3.5mm jack" \
+    "AA GL Driver" "Enable/Disable experimental desktop GL driver" \
     "A0 Update" "Update this tool to the latest version" \
     3>&1 1>&2 2>&3)
   RET=$?
@@ -1143,6 +1186,7 @@ do_advanced_menu() {
       A7\ *) do_i2c ;;
       A8\ *) do_serial ;;
       A9\ *) do_audio ;;
+      AA\ *) do_gldriver ;;
       A0\ *) do_update ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
