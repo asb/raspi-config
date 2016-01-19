@@ -1,3 +1,9 @@
+raspi-config (20160119) jessie; urgency=medium
+
+  * Option added to select experimental GL driver
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 19 Jan 2016 13:56:53 +0000
+
 raspi-config (20160108) jessie; urgency=medium
 
   * Update URL
