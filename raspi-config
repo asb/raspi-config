@@ -930,6 +930,7 @@ set_gldriver() {
 
   if [ "$1" -eq 0 ]; then # disable driver
     sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/"
+    rm /etc/xdg/autostart/xcompmgr.desktop
     mv /usr/share/X11/xorg.conf.d/99-fbturbo.~ /usr/share/X11/xorg.conf.d/99-fbturbo.conf
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "Desktop GL driver is disabled" 20 60 1
@@ -939,6 +940,14 @@ set_gldriver() {
     if ! grep -q -E "^dtoverlay=vc4-kms-v3d" $CONFIG; then
       printf "dtoverlay=vc4-kms-v3d\n" >> $CONFIG
     fi
+    cat <<EOF >/etc/xdg/autostart/xcompmgr.desktop
+[Desktop Entry]
+Type=Application
+Name=xcompmgr
+Comment=Start simple compositor
+NoDisplay=true
+Exec=xcompmgr -a
+EOF
     mv /usr/share/X11/xorg.conf.d/99-fbturbo.conf /usr/share/X11/xorg.conf.d/99-fbturbo.~
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "Desktop GL driver is enabled" 20 60 1
