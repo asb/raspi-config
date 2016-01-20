@@ -960,6 +960,10 @@ do_gldriver() {
     whiptail --msgbox "Driver and kernel not present on your system. Please update" 20 60 2
     return 1
   fi
+  if [ ! -e /usr/bin/xcompmgr ]; then
+    whiptail --msgbox "xcompmgr not found - please install" 20 60 2
+    return 1
+  fi
   if [ "$INTERACTIVE" = True ]; then
     whiptail --yesno "Enable experimental GL driver for desktop?" 20 60 2 \
       --yes-button Disable --no-button Enable
