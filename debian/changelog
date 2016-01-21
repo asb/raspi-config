@@ -1,3 +1,11 @@
+raspi-config (20160121) jessie; urgency=medium
+
+  * GPU memory reset to default when GL driver enabled
+  * Launch of simple compositor added when GL driver is enabled
+  * Filename of V3d overlay corrected
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 21 Jan 2016 11:12:49 +0000
+
 raspi-config (20160119) jessie; urgency=medium
 
   * Option added to select experimental GL driver
