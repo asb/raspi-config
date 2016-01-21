@@ -949,6 +949,7 @@ NoDisplay=true
 Exec=xcompmgr -a
 EOF
     mv /usr/share/X11/xorg.conf.d/99-fbturbo.conf /usr/share/X11/xorg.conf.d/99-fbturbo.~
+    sed $CONFIG -i -e "s/^gpu_mem/#gpu_mem/"
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "Desktop GL driver is enabled" 20 60 1
     fi
