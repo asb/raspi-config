@@ -8,6 +8,31 @@ ASK_TO_REBOOT=0
 BLACKLIST=/etc/modprobe.d/raspi-blacklist.conf
 CONFIG=/boot/config.txt
 
+is_pione() {
+   if grep -q "^Revision\s*:\s*00[0-9a-fA-F][0-9a-fA-F]$" /proc/cpuinfo; then
+      return 0
+   elif  grep -q "^Revision\s*:\s*[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]0[0-3][0-9a-fA-F]" /proc/cpuinfo ; then
+      return 0
+   else
+      return 1
+   fi
+}
+
+is_pitwo() {
+   grep -q "^Revision\s*:\s*[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]04[0-9a-fA-F]" /proc/cpuinfo
+   return $?
+}
+
+get_pi_type() {
+   if is_pione; then
+      echo 1
+   elif is_pitwo; then
+      echo 2
+   else
+      echo 0
+   fi
+}
+
 get_init_sys() {
   if command -v systemctl > /dev/null && systemctl | grep -q '\-\.mount'; then
     SYSTEMD=1
@@ -324,6 +349,10 @@ set_memory_split() {
 }
 
 do_overclock() {
+  if ! is_pione && ! is_pitwo; then
+    whiptail --msgbox "This Pi cannot be overclocked." 20 60 2
+    return 1
+  fi
   if [ "$INTERACTIVE" = True ]; then
     whiptail --msgbox "\
 Be aware that overclocking may reduce the lifetime of your
@@ -332,14 +361,20 @@ system instability, try a more modest overclock. Hold down
 shift during boot to temporarily disable overclock.
 See http://elinux.org/RPi_Overclocking for more information.\
 " 20 70 1
+   if is_pione; then
     OVERCLOCK=$(whiptail --menu "Choose overclock preset" 20 60 10 \
       "None" "700MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
       "Modest" "800MHz ARM, 250MHz core, 400MHz SDRAM, 0 overvolt" \
       "Medium" "900MHz ARM, 250MHz core, 450MHz SDRAM, 2 overvolt" \
       "High" "950MHz ARM, 250MHz core, 450MHz SDRAM, 6 overvolt" \
       "Turbo" "1000MHz ARM, 500MHz core, 600MHz SDRAM, 6 overvolt" \
-      "Pi2" "1000MHz ARM, 500MHz core, 500MHz SDRAM, 2 overvolt" \
       3>&1 1>&2 2>&3)
+   elif is_pitwo; then
+    OVERCLOCK=$(whiptail --menu "Choose overclock preset" 20 60 10 \
+      "None" "900MHz ARM, 250MHz core, 450MHz SDRAM, 0 overvolt" \
+      "High" "1000MHz ARM, 500MHz core, 500MHz SDRAM, 2 overvolt" \
+      3>&1 1>&2 2>&3)
+   fi
   else
     OVERCLOCK=$1
     true
@@ -356,16 +391,14 @@ See http://elinux.org/RPi_Overclocking for more information.\
         set_overclock Medium 900 250 450 2
         ;;
       High)
-        set_overclock High 950 250 450 6
+        if is_pione; then
+          set_overclock High 950 250 450 6
+        else
+          set_overclock High 1000 500 500 2
+        fi
         ;;
       Turbo)
         set_overclock Turbo 1000 500 600 6
-        ;;
-      Pi2)
-        set_overclock Pi2 1000 500 500 2
-        ;;
-      Pi2None)
-        clear_overclock
         ;;
       *)
         whiptail --msgbox "Programmer error, unrecognised overclock preset" 20 60 2
