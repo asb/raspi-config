@@ -1,3 +1,10 @@
+raspi-config (20160125) jessie; urgency=medium
+
+  * Do not allow GL driver to be enabled on 2835-based Pis - it needs at least 1GB of RAM.
+  * Overclocking behaviour made board-specific.
+
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 25 Jan 2016 12:29:54 +0000
+
 raspi-config (20160121) jessie; urgency=medium
 
   * GPU memory reset to default when GL driver enabled
