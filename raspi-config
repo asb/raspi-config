@@ -11,7 +11,7 @@ CONFIG=/boot/config.txt
 is_pione() {
    if grep -q "^Revision\s*:\s*00[0-9a-fA-F][0-9a-fA-F]$" /proc/cpuinfo; then
       return 0
-   elif  grep -q "^Revision\s*:\s*[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]0[0-3][0-9a-fA-F]" /proc/cpuinfo ; then
+   elif  grep -q "^Revision\s*:\s*[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]0[0-36][0-9a-fA-F]" /proc/cpuinfo ; then
       return 0
    else
       return 1
