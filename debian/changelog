@@ -1,3 +1,9 @@
+raspi-config (20160201) jessie; urgency=medium
+
+  * Compute Module added to is_pione
+
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 01 Feb 2016 12:28:22 +0000
+
 raspi-config (20160125) jessie; urgency=medium
 
   * Do not allow GL driver to be enabled on 2835-based Pis - it needs at least 1GB of RAM.
