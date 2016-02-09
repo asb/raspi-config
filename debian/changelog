@@ -1,3 +1,9 @@
+raspi-config (20160209) jessie; urgency=medium
+
+  * Check for mesa driver before allowing GL driver to be enabled
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 09 Feb 2016 13:56:44 +0000
+
 raspi-config (20160201) jessie; urgency=medium
 
   * Compute Module added to is_pione
