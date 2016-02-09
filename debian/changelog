@@ -1,3 +1,9 @@
+raspi-config (20160210) jessie; urgency=medium
+
+  * Pi board checks now take account of warranty bits.
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 09 Feb 2016 16:16:58 +0000
+
 raspi-config (20160209) jessie; urgency=medium
 
   * Check for mesa driver before allowing GL driver to be enabled
