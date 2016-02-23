@@ -677,7 +677,7 @@ do_i2c() {
 
 do_serial() {
   DEFAULT=
-  if ! grep -q "console=ttyAMA0" /boot/cmdline.txt; then
+  if ! grep -q "console=ttyAMA0" /boot/cmdline.txt && ! grep -q "console=serial0" /boot/cmdline.txt ; then
       DEFAULT=--defaultno
   fi
 
@@ -693,6 +693,7 @@ do_serial() {
       sed -i /etc/inittab -e "s|^.*:.*:respawn:.*ttyAMA0|#&|"
     fi
     sed -i /boot/cmdline.txt -e "s/console=ttyAMA0,[0-9]\+ //"
+    sed -i /boot/cmdline.txt -e "s/console=serial0,[0-9]\+ //"
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "Serial is now disabled" 20 60 1
     fi
@@ -703,8 +704,16 @@ do_serial() {
         printf "T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100\n" >> /etc/inittab
       fi
     fi
-    if ! grep -q "console=ttyAMA0" /boot/cmdline.txt; then
+    if grep -q "console=ttyAMA0" /boot/cmdline.txt ; then
+      if [ -e /proc/device-tree/aliases/serial0 ]; then
+        sed -i /boot/cmdline.txt -e "s/console=ttyAMA0/console=serial0/"
+      fi
+    elif ! grep -q "console=ttyAMA0" /boot/cmdline.txt && ! grep -q "console=serial0" /boot/cmdline.txt ; then
+      if [ -e /proc/device-tree/aliases/serial0 ]; then
+        sed -i /boot/cmdline.txt -e "s/root=/console=serial0,115200 root=/"
+      else
         sed -i /boot/cmdline.txt -e "s/root=/console=ttyAMA0,115200 root=/"
+      fi
     fi
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "Serial is now enabled" 20 60 1
