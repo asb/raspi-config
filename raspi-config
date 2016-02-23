@@ -274,9 +274,14 @@ do_change_timezone() {
 
 do_configure_wifi_country() {
   oIFS="$IFS"
-  IFS="/"
-  value=$(cat /usr/share/zoneinfo/iso3166.tab | tail -n +26 | tr '\t' '/' | tr '\n' '/')
-  COUNTRY=$(whiptail --menu "Select the country in which the Pi is to be used" 20 60 10 ${value} 3>&1 1>&2 2>&3)
+  if [ "$INTERACTIVE" = True ]; then
+    IFS="/"
+    value=$(cat /usr/share/zoneinfo/iso3166.tab | tail -n +26 | tr '\t' '/' | tr '\n' '/')
+    COUNTRY=$(whiptail --menu "Select the country in which the Pi is to be used" 20 60 10 ${value} 3>&1 1>&2 2>&3)
+  else
+    COUNTRY=$1
+    true
+  fi
   if [ $? -eq 0 ];then
     if grep -q "^country=" /etc/wpa_supplicant/wpa_supplicant.conf ; then
         sed -i "s/^country=.*/country=$COUNTRY/g" /etc/wpa_supplicant/wpa_supplicant.conf
