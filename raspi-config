@@ -272,6 +272,25 @@ do_change_timezone() {
   dpkg-reconfigure tzdata
 }
 
+do_configure_wifi_country() {
+  oIFS="$IFS"
+  IFS="/"
+  value=$(cat /usr/share/zoneinfo/iso3166.tab | tail -n +26 | tr '\t' '/' | tr '\n' '/')
+  COUNTRY=$(whiptail --menu "Select the country in which the Pi is to be used" 20 60 10 ${value} 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ];then
+    if grep -q "^country=" /etc/wpa_supplicant/wpa_supplicant.conf ; then
+        sed -i "s/^country=.*/country=$COUNTRY/g" /etc/wpa_supplicant/wpa_supplicant.conf
+    else
+        sed -i "1i country=$COUNTRY" /etc/wpa_supplicant/wpa_supplicant.conf
+    fi
+    if [ "$INTERACTIVE" = True ]; then
+        whiptail --msgbox "Wi-fi country set to $COUNTRY" 20 60 1
+    fi
+    ASK_TO_REBOOT=1
+  fi
+  IFS=$oIFS
+}
+
 do_change_hostname() {
   if [ "$INTERACTIVE" = True ]; then
     whiptail --msgbox "\
@@ -1213,6 +1232,7 @@ do_internationalisation_menu() {
     "I1 Change Locale" "Set up language and regional settings to match your location" \
     "I2 Change Timezone" "Set up timezone to match your location" \
     "I3 Change Keyboard Layout" "Set the keyboard layout to match your keyboard" \
+    "I4 Change Wi-fi Country" "Set the legal channels used in your country" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -1222,6 +1242,7 @@ do_internationalisation_menu() {
       I1\ *) do_change_locale ;;
       I2\ *) do_change_timezone ;;
       I3\ *) do_configure_keyboard ;;
+      I4\ *) do_configure_wifi_country ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
