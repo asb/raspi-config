@@ -1,3 +1,11 @@
+raspi-config (20160225) jessie; urgency=medium
+
+  * Added wi-fi country setting to raspi-config
+  * Wifi setting in raspi-config can now be called in non-interactive mode.
+  * Mods to support new serial device alias in cmdline.txt.
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 25 Feb 2016 07:48:56 +0000
+
 raspi-config (20160210) jessie; urgency=medium
 
   * Pi board checks now take account of warranty bits.
