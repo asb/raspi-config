@@ -283,10 +283,14 @@ do_configure_wifi_country() {
     true
   fi
   if [ $? -eq 0 ];then
-    if grep -q "^country=" /etc/wpa_supplicant/wpa_supplicant.conf ; then
-        sed -i "s/^country=.*/country=$COUNTRY/g" /etc/wpa_supplicant/wpa_supplicant.conf
+    if [ -e /etc/wpa_supplicant/wpa_supplicant.conf ]; then
+        if grep -q "^country=" /etc/wpa_supplicant/wpa_supplicant.conf ; then
+            sed -i "s/^country=.*/country=$COUNTRY/g" /etc/wpa_supplicant/wpa_supplicant.conf
+        else
+            sed -i "1i country=$COUNTRY" /etc/wpa_supplicant/wpa_supplicant.conf
+        fi
     else
-        sed -i "1i country=$COUNTRY" /etc/wpa_supplicant/wpa_supplicant.conf
+        echo "country=$COUNTRY" > /etc/wpa_supplicant/wpa_supplicant.conf
     fi
     if [ "$INTERACTIVE" = True ]; then
         whiptail --msgbox "Wi-fi country set to $COUNTRY" 20 60 1
