@@ -999,6 +999,41 @@ do_camera() {
   fi
 }
 
+# $1 is 1 to disable interface, 0 to enable it
+set_onewire() {
+  [ -e $CONFIG ] || touch $CONFIG
+  if [ "$1" -eq 1 ]; then # disable driver
+    sed $CONFIG -i -e "s/^dtoverlay=w1-gpio/#dtoverlay=w1-gpio/"
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "One-wire interface is disabled" 20 60 1
+    fi
+  else # enable driver
+    sed $CONFIG -i -e "s/^#dtoverlay=w1-gpio/dtoverlay=w1-gpio/"
+    if ! grep -q -E "^dtoverlay=w1-gpio" $CONFIG; then
+      printf "dtoverlay=w1-gpio\n" >> $CONFIG
+    fi
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "One-wire interface is enabled" 20 60 1
+    fi
+  fi
+}
+
+do_onewire() {
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Enable one-wire interface?" 20 60 2 \
+      --yes-button Enable --no-button Disable
+    RET=$?
+  else
+    RET=$1
+  fi
+  if [ $RET -eq 0 ] || [ $RET -eq 1 ]; then
+    ASK_TO_REBOOT=1
+    set_onewire $RET;
+  else
+    return 1
+  fi
+}
+
 # $1 is 0 to disable driver, 1 to enable it
 set_gldriver() {
   [ -e $CONFIG ] || touch $CONFIG
@@ -1269,6 +1304,7 @@ do_advanced_menu() {
     "A8 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
     "A9 Audio" "Force audio out through HDMI or 3.5mm jack" \
     "AA GL Driver" "Enable/Disable experimental desktop GL driver" \
+    "AB 1-Wire" "Enable/Disable one-wire interface" \
     "A0 Update" "Update this tool to the latest version" \
     3>&1 1>&2 2>&3)
   RET=$?
@@ -1286,6 +1322,7 @@ do_advanced_menu() {
       A8\ *) do_serial ;;
       A9\ *) do_audio ;;
       AA\ *) do_gldriver ;;
+      AB\ *) do_onewire ;;
       A0\ *) do_update ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
