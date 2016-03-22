@@ -1,3 +1,14 @@
+raspi-config (20160322) jessie; urgency=medium
+
+  * [Simon Long]
+    - 1-wire interface control added
+    - Wifi country code setting now creates wpa_supplicant.conf
+      if it doesn't exist
+  * [Serge Schneider]
+    - Add first boot resize script
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 22 Mar 2016 16:45:29 +0000
+
 raspi-config (20160225) jessie; urgency=medium
 
   * Added wi-fi country setting to raspi-config
