@@ -863,7 +863,7 @@ do_wait_for_network() {
   if [ $? -eq 0 ]; then
     case "$RET" in
       Fast)
-        rm /etc/systemd/system/dhcpcd.service.d/wait.conf
+        rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
         ;;
       Slow)
         mkdir -p /etc/systemd/system/dhcpcd.service.d/
