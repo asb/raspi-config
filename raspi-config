@@ -901,6 +901,45 @@ EOF
   fi
 }
 
+do_gpiosec() {
+  get_init_sys
+  if [ $SYSTEMD -eq 0 ]; then
+    whiptail --msgbox "This option can only be selected when using systemd" 20 60 2
+    return 1
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    RET=$(whiptail --menu "Choose GPIO Access Mode" 20 70 10 \
+      "Public" "GPIO server can be accessed remotely" \
+      "Private" "GPIO server can only be accessed locally" \
+      3>&1 1>&2 2>&3)
+  else
+    get_init_sys
+    RET=$1
+    true
+  fi
+  if [ $? -eq 0 ]; then
+    case "$RET" in
+      Public)
+		echo "Setting insecure"
+        #rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
+        ;;
+      Private)
+		echo "Setting secure"
+        #mkdir -p /etc/systemd/system/dhcpcd.service.d/
+        #cat > /etc/systemd/system/dhcpcd.service.d/wait.conf << EOF
+#[Service]
+#ExecStart=
+#ExecStart=/sbin/dhcpcd -q -w
+#EOF
+        ;;
+      *)
+        whiptail --msgbox "Programmer error, unrecognised option" 20 60 2
+        return 1
+        ;;
+    esac
+  fi
+}
+
 do_boot_behaviour() {
   if [ "$INTERACTIVE" = True ]; then
     BOOTOPT=$(whiptail --menu "Choose boot option" 20 60 10 \
@@ -1325,6 +1364,7 @@ do_advanced_menu() {
     "A9 Audio" "Force audio out through HDMI or 3.5mm jack" \
     "AA GL Driver" "Enable/Disable experimental desktop GL driver" \
     "AB 1-Wire" "Enable/Disable one-wire interface" \
+    "AC GPIO Server" "Enable/Disable remote access to GPIO pins" \
     "A0 Update" "Update this tool to the latest version" \
     3>&1 1>&2 2>&3)
   RET=$?
@@ -1343,6 +1383,7 @@ do_advanced_menu() {
       A9\ *) do_audio ;;
       AA\ *) do_gldriver ;;
       AB\ *) do_onewire ;;
+      AC\ *) do_gpiosec ;;
       A0\ *) do_update ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
