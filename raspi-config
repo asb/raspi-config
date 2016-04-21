@@ -742,6 +742,7 @@ do_serial() {
     fi
     sed -i /boot/cmdline.txt -e "s/console=ttyAMA0,[0-9]\+ //"
     sed -i /boot/cmdline.txt -e "s/console=serial0,[0-9]\+ //"
+    set_config_var enable_uart 0 $CONFIG
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "Serial is now disabled" 20 60 1
     fi
@@ -763,6 +764,7 @@ do_serial() {
         sed -i /boot/cmdline.txt -e "s/root=/console=ttyAMA0,115200 root=/"
       fi
     fi
+    set_config_var enable_uart 1 $CONFIG
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "Serial is now enabled" 20 60 1
     fi
@@ -919,24 +921,24 @@ do_gpiosec() {
   fi
   if [ $? -eq 0 ]; then
     case "$RET" in
-      Public)
-		echo "Setting insecure"
-        #rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
-        ;;
       Private)
-		echo "Setting secure"
-        #mkdir -p /etc/systemd/system/dhcpcd.service.d/
-        #cat > /etc/systemd/system/dhcpcd.service.d/wait.conf << EOF
-#[Service]
-#ExecStart=
-#ExecStart=/sbin/dhcpcd -q -w
-#EOF
+        rm -f /etc/systemd/system/pigpio.service.d/public.conf
+        ;;
+      Public)
+        mkdir -p /etc/systemd/system/pigpio.service.d/
+        cat > /etc/systemd/system/pigpio.service.d/public.conf << EOF
+[Service]
+ExecStart=
+ExecStart=/usr/bin/pigpiod
+EOF
         ;;
       *)
         whiptail --msgbox "Programmer error, unrecognised option" 20 60 2
         return 1
         ;;
     esac
+    systemctl daemon-reload
+    systemctl restart pigpio
   fi
 }
 
