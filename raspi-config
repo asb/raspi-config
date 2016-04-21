@@ -331,8 +331,20 @@ do_memory_split() { # Memory Split
       return 1
     fi
     ## get current memory split from /boot/config.txt
-    CUR_GPU_MEM=$(get_config_var gpu_mem $CONFIG)
-    [ -z "$CUR_GPU_MEM" ] && CUR_GPU_MEM=64
+	arm=$(vcgencmd get_mem arm | cut -d '=' -f 2 | cut -d 'M' -f 1)
+	gpu=$(vcgencmd get_mem gpu | cut -d '=' -f 2 | cut -d 'M' -f 1)
+	tot=$(($arm+$gpu))
+    if [ $tot -gt 512 ]; then
+		CUR_GPU_MEM=$(get_config_var gpu_mem_1024 $CONFIG)
+	elif [ $tot -gt 256 ]; then
+		CUR_GPU_MEM=$(get_config_var gpu_mem_512 $CONFIG)
+	else
+		CUR_GPU_MEM=$(get_config_var gpu_mem_256 $CONFIG)
+	fi
+    if [ -z "$CUR_GPU_MEM" ] || [ $CUR_GPU_MEM = "0" ]; then
+		CUR_GPU_MEM=$(get_config_var gpu_mem $CONFIG)
+	fi
+    [ -z "$CUR_GPU_MEM" ] || [ $CUR_GPU_MEM = "0" ] && CUR_GPU_MEM=64
     ## ask users what gpu_mem they want
     if [ "$INTERACTIVE" = True ]; then
       NEW_GPU_MEM=$(whiptail --inputbox "How much memory should the GPU have?  e.g. 16/32/64/128/256" \
@@ -342,6 +354,14 @@ do_memory_split() { # Memory Split
       true
     fi
     if [ $? -eq 0 ]; then
+	  if [ $(get_config_var gpu_mem_1024 $CONFIG) != "0" ] || [ $(get_config_var gpu_mem_512 $CONFIG) != "0" ] || [ $(get_config_var gpu_mem_256 $CONFIG) != "0" ]; then
+        if [ "$INTERACTIVE" = True ]; then
+		  whiptail --msgbox "Device-specific memory settings were found. These have been cleared." 20 60 2
+		fi
+		clear_config_var gpu_mem_1024 $CONFIG
+		clear_config_var gpu_mem_512 $CONFIG
+		clear_config_var gpu_mem_256 $CONFIG
+	  fi
       set_config_var gpu_mem "$NEW_GPU_MEM" $CONFIG
       ASK_TO_REBOOT=1
     fi
