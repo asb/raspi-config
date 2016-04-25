@@ -1,3 +1,15 @@
+raspi-config (20160425) jessie; urgency=medium
+
+  * [Simon Long]
+    - Merge - Prevent errors when enabling "Fast" network boot multiple times
+    - UART switch added to serial; GPIO server public access finished
+    - Skeleton added for setting security state of GPIO server
+    - Reads in gpu_mem_<size> settings and clears them when writing
+  * [Serge Schneider]
+    - Remove io_is_busy
+
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 25 Apr 2016 11:58:48 +0100
+
 raspi-config (20160322) jessie; urgency=medium
 
   * [Simon Long]
