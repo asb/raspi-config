@@ -26,7 +26,6 @@ case "$1" in
         echo 50 > /sys/devices/system/cpu/cpufreq/ondemand/up_threshold
         echo 100000 > /sys/devices/system/cpu/cpufreq/ondemand/sampling_rate
         echo 50 > /sys/devices/system/cpu/cpufreq/ondemand/sampling_down_factor
-        echo 1 > /sys/devices/system/cpu/cpufreq/ondemand/io_is_busy
       fi
       log_end_msg 0
     fi
