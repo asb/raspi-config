@@ -607,29 +607,8 @@ do_spi() {
     touch $BLACKLIST
   fi
 
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --yesno "Would you like the SPI kernel module to be loaded by default?" $DEFAULT 20 60 2
-    RET=$?
-  else
-    RET=$1
-  fi
-  if [ $RET -eq 0 ]; then
-    sed $BLACKLIST -i -e "s/^\(blacklist[[:space:]]*spi[-_]bcm2708\)/#\1/"
-    modprobe spi-bcm2708
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "SPI kernel module will now be loaded by default" 20 60 1
-    fi
-  elif [ $RET -eq 1 ]; then
-    sed $BLACKLIST -i -e "s/^#\(blacklist[[:space:]]*spi[-_]bcm2708\)/\1/"
-    if ! grep -q "^blacklist spi[-_]bcm2708" $BLACKLIST; then
-      printf "blacklist spi-bcm2708\n" >> $BLACKLIST
-    fi
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "SPI kernel module will no longer be loaded by default" 20 60 1
-    fi
-  else
-    return 0
-  fi
+  sed $BLACKLIST -i -e "s/^\(blacklist[[:space:]]*spi[-_]bcm2708\)/#\1/"
+  sudo dtparam spi=on
 }
 
 do_i2c() {
@@ -692,35 +671,13 @@ do_i2c() {
     touch $BLACKLIST
   fi
 
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --yesno "Would you like the I2C kernel module to be loaded by default?" $DEFAULT 20 60 2
-    RET=$?
-  else
-    RET=$1
+  sed $BLACKLIST -i -e "s/^\(blacklist[[:space:]]*i2c[-_]bcm2708\)/#\1/"
+  sed /etc/modules -i -e "s/^#[[:space:]]*\(i2c[-_]dev\)/\1/"
+  if ! grep -q "^i2c[-_]dev" /etc/modules; then
+    printf "i2c-dev\n" >> /etc/modules
   fi
-  if [ $RET -eq 0 ]; then
-    sed $BLACKLIST -i -e "s/^\(blacklist[[:space:]]*i2c[-_]bcm2708\)/#\1/"
-    sed /etc/modules -i -e "s/^#[[:space:]]*\(i2c[-_]dev\)/\1/"
-    if ! grep -q "^i2c[-_]dev" /etc/modules; then
-      printf "i2c-dev\n" >> /etc/modules
-    fi
-    modprobe i2c-bcm2708
-    modprobe i2c-dev
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "I2C kernel module will now be loaded by default" 20 60 1
-    fi
-  elif [ $RET -eq 1 ]; then
-    sed $BLACKLIST -i -e "s/^#\(blacklist[[:space:]]*i2c[-_]bcm2708\)/\1/"
-    if ! grep -q "^blacklist i2c[-_]bcm2708" $BLACKLIST; then
-      printf "blacklist i2c-bcm2708\n" >> $BLACKLIST
-    fi
-    sed /etc/modules -i -e "s/^\(i2c[-_]dev\)/#\1/"
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "I2C kernel module will no longer be loaded by default" 20 60 1
-    fi
-  else
-    return 0
-  fi
+  sudo dtparam i2c_arm=on
+  modprobe i2c-dev
 }
 
 do_serial() {
