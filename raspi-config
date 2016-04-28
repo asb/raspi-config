@@ -608,7 +608,7 @@ do_spi() {
   fi
 
   sed $BLACKLIST -i -e "s/^\(blacklist[[:space:]]*spi[-_]bcm2708\)/#\1/"
-  sudo dtparam spi=on
+  dtparam spi=on
 }
 
 do_i2c() {
@@ -676,7 +676,7 @@ do_i2c() {
   if ! grep -q "^i2c[-_]dev" /etc/modules; then
     printf "i2c-dev\n" >> /etc/modules
   fi
-  sudo dtparam i2c_arm=on
+  dtparam i2c_arm=on
   modprobe i2c-dev
 }
 
