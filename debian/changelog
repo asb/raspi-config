@@ -1,3 +1,10 @@
+raspi-config (20160428) jessie; urgency=medium
+
+  * [Simon Long]
+    - dtparam used instead of modprobe for SPI and I2C
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 28 Apr 2016 15:42:42 +0100
+
 raspi-config (20160425) jessie; urgency=medium
 
   * [Simon Long]
