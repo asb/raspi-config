@@ -1,3 +1,10 @@
+raspi-config (20160429) UNRELEASED; urgency=medium
+
+  * Downgrade hard dependency on triggerhappy to recommendation.
+    + init script: Check if thd is present before using it.
+
+ -- Axel Beckert <abe@debian.org>  Thu, 05 May 2016 20:57:55 +0200
+
 raspi-config (20160428) jessie; urgency=medium
 
   * [Simon Long]
