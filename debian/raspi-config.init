@@ -14,8 +14,7 @@
 case "$1" in
   start)
     log_daemon_msg "Checking if shift key is held down"
-    timeout 1 thd --dump /dev/input/event* | grep -q "LEFTSHIFT\|RIGHTSHIFT"
-    if [ $? -eq 0 ]; then
+    if [ -x /usr/sbin/thd ] && timeout 1 thd --dump /dev/input/event* | grep -q "LEFTSHIFT\|RIGHTSHIFT"; then
       printf " Yes. Not enabling ondemand scaling governor"
       log_end_msg 0
     else
