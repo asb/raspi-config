@@ -1,9 +1,15 @@
-raspi-config (20160429) UNRELEASED; urgency=medium
+raspi-config (20160506) jessie; urgency=medium
 
+  [ Axel Beckert ]
   * Downgrade hard dependency on triggerhappy to recommendation.
     + init script: Check if thd is present before using it.
 
- -- Axel Beckert <abe@debian.org>  Thu, 05 May 2016 20:57:55 +0200
+  [ Simon Long ]
+  * New method for testing whether serial is enabled.
+  * Current state of serial i/f reflected in raspi-config.
+  * Menu option to toggle device tree removed.
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 06 May 2016 18:41:58 +0100
 
 raspi-config (20160428) jessie; urgency=medium
 
