@@ -1333,14 +1333,13 @@ do_advanced_menu() {
     "A2 Hostname" "Set the visible name for this Pi on a network" \
     "A3 Memory Split" "Change the amount of memory made available to the GPU" \
     "A4 SSH" "Enable/Disable remote command line access to your Pi using SSH" \
-    "A5 Device Tree" "Enable/Disable the use of Device Tree" \
-    "A6 SPI" "Enable/Disable automatic loading of SPI kernel module (needed for e.g. PiFace)" \
-    "A7 I2C" "Enable/Disable automatic loading of I2C kernel module" \
-    "A8 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
-    "A9 Audio" "Force audio out through HDMI or 3.5mm jack" \
-    "AA GL Driver" "Enable/Disable experimental desktop GL driver" \
-    "AB 1-Wire" "Enable/Disable one-wire interface" \
-    "AC GPIO Server" "Enable/Disable remote access to GPIO pins" \
+    "A5 SPI" "Enable/Disable automatic loading of SPI kernel module (needed for e.g. PiFace)" \
+    "A6 I2C" "Enable/Disable automatic loading of I2C kernel module" \
+    "A7 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
+    "A8 Audio" "Force audio out through HDMI or 3.5mm jack" \
+    "A9 GL Driver" "Enable/Disable experimental desktop GL driver" \
+    "AA 1-Wire" "Enable/Disable one-wire interface" \
+    "AB GPIO Server" "Enable/Disable remote access to GPIO pins" \
     "A0 Update" "Update this tool to the latest version" \
     3>&1 1>&2 2>&3)
   RET=$?
@@ -1352,14 +1351,13 @@ do_advanced_menu() {
       A2\ *) do_change_hostname ;;
       A3\ *) do_memory_split ;;
       A4\ *) do_ssh ;;
-      A5\ *) do_devicetree ;;
-      A6\ *) do_spi ;;
-      A7\ *) do_i2c ;;
-      A8\ *) do_serial ;;
-      A9\ *) do_audio ;;
-      AA\ *) do_gldriver ;;
-      AB\ *) do_onewire ;;
-      AC\ *) do_gpiosec ;;
+      A5\ *) do_spi ;;
+      A6\ *) do_i2c ;;
+      A7\ *) do_serial ;;
+      A8\ *) do_audio ;;
+      A9\ *) do_gldriver ;;
+      AA\ *) do_onewire ;;
+      AB\ *) do_gpiosec ;;
       A0\ *) do_update ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
