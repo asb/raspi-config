@@ -773,6 +773,14 @@ do_boot_behaviour_new() {
   fi
 }
 
+get_boot_fast() {
+  if test -e /etc/systemd/system/dhcpcd.service.d/wait.conf; then
+    echo 1
+  else
+    echo 0
+  fi
+}
+
 do_wait_for_network() {
   get_init_sys
   if [ $SYSTEMD -eq 0 ]; then
@@ -807,6 +815,14 @@ EOF
         return 1
         ;;
     esac
+  fi
+}
+
+get_rgpio() {
+  if test -e /etc/systemd/system/pigpiod.service.d/public.conf; then
+    echo 0
+  else
+    echo 1
   fi
 }
 
