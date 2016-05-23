@@ -697,7 +697,44 @@ disable_raspi_config_at_boot() {
   fi
 }
 
-do_boot_behaviour_new() {
+get_boot_cli() {
+  if service lightdm status | grep -q inactive; then
+    echo 0
+  else
+    echo 1
+  fi
+}
+
+get_autologin() {
+  get_init_sys
+  if [ $(get_boot_cli) -eq 0 ]; then
+    # booting to CLI - check the autologin in getty or initd */
+    if [ $SYSTEMD -eq 1 ]; then
+      # systemd used - check getty */
+      if grep -q autologin /etc/systemd/system/getty.target.wants/getty@tty1.service ; then
+        echo 0
+      else
+        echo 1
+      fi
+    else
+      # systemd not used - check initd */
+      if grep -q login /etc/inittab ; then
+        echo 0
+      else
+        echo 1
+      fi
+    fi
+  else
+    # booting to desktop - check the autologin for lightdm */
+    if grep -q "^autologin-user=" /etc/lightdm/lightdm.conf ; then
+      echo 0
+    else
+      echo 1
+    fi
+  fi
+}
+
+do_boot_behaviour() {
   if [ "$INTERACTIVE" = True ]; then
     BOOTOPT=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
       "B1 Console" "Text console, requiring user to login" \
@@ -773,11 +810,11 @@ do_boot_behaviour_new() {
   fi
 }
 
-get_boot_fast() {
+get_boot_slow() {
   if test -e /etc/systemd/system/dhcpcd.service.d/wait.conf; then
-    echo 1
-  else
     echo 0
+  else
+    echo 1
   fi
 }
 
@@ -863,55 +900,6 @@ EOF
     systemctl daemon-reload
     systemctl restart pigpiod
     return 0
-  fi
-}
-
-do_boot_behaviour() {
-  if [ "$INTERACTIVE" = True ]; then
-    BOOTOPT=$(whiptail --menu "Choose boot option" 20 60 10 \
-      "Console" "Text console, requiring login (default)" \
-      "Desktop" "Log in as user 'pi' at the graphical desktop" \
-      3>&1 1>&2 2>&3)
-  else
-    get_init_sys
-    BOOTOPT=$1
-    true
-  fi
-  if [ $? -eq 0 ]; then
-    case "$BOOTOPT" in
-      Console)
-        if [ -e /etc/init.d/lightdm ]; then
-          if [ $SYSTEMD -eq 1 ]; then
-            systemctl set-default multi-user.target
-          else
-            update-rc.d lightdm disable 2
-          fi
-        fi
-        ;;
-      Desktop)
-        if [ -e /etc/init.d/lightdm ]; then
-          if id -u pi > /dev/null 2>&1; then
-            if [ $SYSTEMD -eq 1 ]; then
-              systemctl set-default graphical.target
-            else
-              update-rc.d lightdm enable 2
-            fi
-            sed /etc/lightdm/lightdm.conf -i -e "s/^#autologin-user=.*/autologin-user=pi/"
-            disable_raspi_config_at_boot
-          else
-            whiptail --msgbox "The pi user has been removed, can't set up boot to desktop" 20 60 2
-          fi
-        else
-          whiptail --msgbox "Do sudo apt-get install lightdm to allow configuration of boot to desktop" 20 60 2
-          return 1
-        fi
-        ;;
-      *)
-        whiptail --msgbox "Programmer error, unrecognised boot option" 20 60 2
-        return 1
-        ;;
-    esac
-    ASK_TO_REBOOT=1
   fi
 }
 
@@ -1353,7 +1341,7 @@ if [ "$INTERACTIVE" = True ]; then
       case "$FUN" in
         1\ *) do_expand_rootfs ;;
         2\ *) do_change_pass ;;
-        3\ *) do_boot_behaviour_new ;;
+        3\ *) do_boot_behaviour ;;
         4\ *) do_wait_for_network ;;
         5\ *) do_internationalisation_menu ;;
         6\ *) do_camera ;;
