@@ -482,14 +482,26 @@ clear_overclock () {
   fi
 }
 
+get_ssh() {
+  if service ssh status | grep -q inactive; then
+    echo 1
+  else
+    echo 0
+  fi
+}
+
 do_ssh() {
+  DEFAULT=--defaultno
+  if [ $(get_ssh) -eq 0 ]; then
+    DEFAULT=
+  fi
+
   if [ -e /var/log/regen_ssh_keys.log ] && ! grep -q "^finished" /var/log/regen_ssh_keys.log; then
     whiptail --msgbox "Initial ssh key generation still running. Please wait and try again." 20 60 2
     return 1
   fi
   if [ "$INTERACTIVE" = True ]; then
-    whiptail --yesno "Would you like the SSH server enabled or disabled?" 20 60 2 \
-      --yes-button Enable --no-button Disable
+    whiptail --yesno "Would you like the SSH server to be enabled?" $DEFAULT 20 60 2
     RET=$?
   else
     RET=$1
@@ -498,23 +510,30 @@ do_ssh() {
     update-rc.d ssh enable &&
     invoke-rc.d ssh start &&
     if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "SSH server enabled" 20 60 1
+      whiptail --msgbox "The SSH server is enabled" 20 60 1
     fi
   elif [ $RET -eq 1 ]; then
     update-rc.d ssh disable &&
+    invoke-rc.d ssh stop &&
     if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "SSH server disabled" 20 60 1
+      whiptail --msgbox "The SSH server is disabled" 20 60 1
     fi
   else
     return $RET
   fi
 }
 
-do_spi() {
-  CURRENT_SETTING="off" # assume disabled
-  DEFAULT=--defaultno
+get_spi() {
   if [ -e $CONFIG ] && grep -q -E "^(device_tree_param|dtparam)=([^,]*,)*spi(=(on|true|yes|1))?(,.*)?$" $CONFIG; then
-    CURRENT_SETTING="on"
+    echo 0
+  else
+    echo 1
+  fi
+}
+
+do_spi() {
+  DEFAULT=--defaultno
+  if [ $(get_spi) -eq 0 ]; then
     DEFAULT=
   fi
 
@@ -546,11 +565,17 @@ do_spi() {
   dtparam spi=$SETTING
 }
 
-do_i2c() {
-  CURRENT_SETTING="off" # assume disabled
-  DEFAULT=--defaultno
+get_i2c() {
   if [ -e $CONFIG ] && grep -q -E "^(device_tree_param|dtparam)=([^,]*,)*i2c(_arm)?(=(on|true|yes|1))?(,.*)?$" $CONFIG; then
-    CURRENT_SETTING="on"
+    echo 0
+  else
+    echo 1
+  fi
+}
+
+do_i2c() {
+  DEFAULT=--defaultno
+  if [ $(get_i2c) -eq 0 ]; then
     DEFAULT=
   fi
 
@@ -606,10 +631,9 @@ get_serial() {
 }
 
 do_serial() {
-  DEFAULT=
-  CUR_SERIAL=$(get_serial)
-  if [ $CUR_SERIAL -eq 1 ] ; then
-      DEFAULT=--defaultno
+  DEFAULT=--defaultno
+  if [ $(get_serial) -eq 0 ] ; then
+      DEFAULT=
   fi
 
   if [ "$INTERACTIVE" = True ]; then
@@ -944,13 +968,21 @@ do_camera() {
   fi
 }
 
+get_onewire() {
+  if [ -e $CONFIG ] && grep -q -E "^dtoverlay=w1-gpio" $CONFIG; then
+    echo 0
+  else
+    echo 1
+  fi
+}
+
 # $1 is 1 to disable interface, 0 to enable it
 set_onewire() {
   [ -e $CONFIG ] || touch $CONFIG
   if [ "$1" -eq 1 ]; then # disable driver
     sed $CONFIG -i -e "s/^dtoverlay=w1-gpio/#dtoverlay=w1-gpio/"
     if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "One-wire interface is disabled" 20 60 1
+      whiptail --msgbox "The one-wire interface is disabled" 20 60 1
     fi
   else # enable driver
     sed $CONFIG -i -e "s/^#dtoverlay=w1-gpio/dtoverlay=w1-gpio/"
@@ -958,15 +990,19 @@ set_onewire() {
       printf "dtoverlay=w1-gpio\n" >> $CONFIG
     fi
     if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "One-wire interface is enabled" 20 60 1
+      whiptail --msgbox "The one-wire interface is enabled" 20 60 1
     fi
   fi
 }
 
 do_onewire() {
+  DEFAULT=--defaultno
+  if [ $(get_onewire) -eq 0 ]; then
+    DEFAULT=
+  fi
+
   if [ "$INTERACTIVE" = True ]; then
-    whiptail --yesno "Enable one-wire interface?" 20 60 2 \
-      --yes-button Enable --no-button Disable
+    whiptail --yesno "Would you like the one-wire interface to be enabled?" $DEFAULT 20 60 2
     RET=$?
   else
     RET=$1
