@@ -304,6 +304,10 @@ do_configure_wifi_country() {
   IFS=$oIFS
 }
 
+get_hostname() {
+    cat /etc/hostname | tr -d " \t\n\r"
+}
+
 do_change_hostname() {
   if [ "$INTERACTIVE" = True ]; then
     whiptail --msgbox "\
