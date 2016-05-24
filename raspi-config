@@ -485,14 +485,13 @@ get_ssh() {
 }
 
 do_ssh() {
-  DEFAULT=--defaultno
-  if [ $(get_ssh) -eq 0 ]; then
-    DEFAULT=
-  fi
-
   if [ -e /var/log/regen_ssh_keys.log ] && ! grep -q "^finished" /var/log/regen_ssh_keys.log; then
     whiptail --msgbox "Initial ssh key generation still running. Please wait and try again." 20 60 2
     return 1
+  fi
+  DEFAULT=--defaultno
+  if [ $(get_ssh) -eq 0 ]; then
+    DEFAULT=
   fi
   if [ "$INTERACTIVE" = True ]; then
     whiptail --yesno "Would you like the SSH server to be enabled?" $DEFAULT 20 60 2
@@ -503,17 +502,16 @@ do_ssh() {
   if [ $RET -eq 0 ]; then
     update-rc.d ssh enable &&
     invoke-rc.d ssh start &&
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "The SSH server is enabled" 20 60 1
-    fi
+    STATUS=enabled
   elif [ $RET -eq 1 ]; then
     update-rc.d ssh disable &&
     invoke-rc.d ssh stop &&
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "The SSH server is disabled" 20 60 1
-    fi
+    STATUS=disabled
   else
     return $RET
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "The SSH server is $STATUS" 20 60 1
   fi
 }
 
@@ -530,7 +528,6 @@ do_spi() {
   if [ $(get_spi) -eq 0 ]; then
     DEFAULT=
   fi
-
   if [ "$INTERACTIVE" = True ]; then
     whiptail --yesno "Would you like the SPI interface to be enabled?" $DEFAULT 20 60 2
     RET=$?
@@ -544,8 +541,9 @@ do_spi() {
     SETTING=off
     STATUS=disabled
   else
-    return 0
+    return $RET
   fi
+
   set_config_var dtparam=spi $SETTING $CONFIG &&
   if [ "$INTERACTIVE" = True ]; then
     whiptail --msgbox "The SPI interface is $STATUS" 20 60 1
@@ -572,7 +570,6 @@ do_i2c() {
   if [ $(get_i2c) -eq 0 ]; then
     DEFAULT=
   fi
-
   if [ "$INTERACTIVE" = True ]; then
     whiptail --yesno "Would you like the ARM I2C interface to be enabled?" $DEFAULT 20 60 2
     RET=$?
@@ -586,7 +583,7 @@ do_i2c() {
     SETTING=off
     STATUS=disabled
   else
-    return 0
+    return $RET
   fi
 
   set_config_var dtparam=i2c_arm $SETTING $CONFIG &&
@@ -631,7 +628,6 @@ do_serial() {
       DEFAULT=
       CURRENT=1
   fi
-
   if [ "$INTERACTIVE" = True ]; then
     whiptail --yesno "Would you like a login shell to be accessible over serial?" $DEFAULT 20 60 2
     RET=$?
@@ -642,17 +638,7 @@ do_serial() {
   if [ $RET -eq $CURRENT ]; then
     ASK_TO_REBOOT=1
   fi
-  if [ $RET -eq 1 ]; then
-    if [ $SYSTEMD -eq 0 ]; then
-      sed -i /etc/inittab -e "s|^.*:.*:respawn:.*ttyAMA0|#&|"
-    fi
-    sed -i /boot/cmdline.txt -e "s/console=ttyAMA0,[0-9]\+ //"
-    sed -i /boot/cmdline.txt -e "s/console=serial0,[0-9]\+ //"
-    set_config_var enable_uart 0 $CONFIG
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "The serial interface is disabled" 20 60 1
-    fi
-  elif [ $RET -eq 0 ]; then
+  if [ $RET -eq 0 ]; then
     if [ $SYSTEMD -eq 0 ]; then
       sed -i /etc/inittab -e "s|^#\(.*:.*:respawn:.*ttyAMA0\)|\1|"
       if ! grep -q "^T.*:.*:respawn:.*ttyAMA0" /etc/inittab; then
@@ -671,11 +657,20 @@ do_serial() {
       fi
     fi
     set_config_var enable_uart 1 $CONFIG
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "The serial interface is enabled" 20 60 1
+    STATUS=enabled
+  elif [ $RET -eq 1 ]; then
+    if [ $SYSTEMD -eq 0 ]; then
+      sed -i /etc/inittab -e "s|^.*:.*:respawn:.*ttyAMA0|#&|"
     fi
+    sed -i /boot/cmdline.txt -e "s/console=ttyAMA0,[0-9]\+ //"
+    sed -i /boot/cmdline.txt -e "s/console=serial0,[0-9]\+ //"
+    set_config_var enable_uart 0 $CONFIG
+    STATUS=disabled
   else
     return $RET
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "The serial interface is $STATUS" 20 60 1
   fi
 }
 
@@ -881,6 +876,9 @@ do_gpiosec() {
     case "$RET" in
       Private)
         rm -f /etc/systemd/system/pigpiod.service.d/public.conf
+        if [ "$INTERACTIVE" = True ]; then
+          whiptail --msgbox "Remote access to the GPIO server is disabled" 20 60 1
+        fi
         ;;
       Public)
         mkdir -p /etc/systemd/system/pigpiod.service.d/
@@ -889,6 +887,9 @@ do_gpiosec() {
 ExecStart=
 ExecStart=/usr/bin/pigpiod
 EOF
+        if [ "$INTERACTIVE" = True ]; then
+          whiptail --msgbox "Remote access to the GPIO server is enabled" 20 60 1
+        fi
         ;;
       *)
         whiptail --msgbox "Programmer error, unrecognised option" 20 60 2
@@ -939,6 +940,8 @@ do_camera() {
     whiptail --msgbox "Your firmware appears to be out of date (no start_x.elf). Please update" 20 60 2
     return 1
   fi
+  sed $CONFIG -i -e "s/^startx/#startx/"
+  sed $CONFIG -i -e "s/^fixup_file/#fixup_file/"
 
   DEFAULT=--defaultno
   CURRENT=0
@@ -946,9 +949,6 @@ do_camera() {
       DEFAULT=
       CURRENT=1
   fi
-
-  sed $CONFIG -i -e "s/^startx/#startx/"
-  sed $CONFIG -i -e "s/^fixup_file/#fixup_file/"
   if [ "$INTERACTIVE" = True ]; then
     whiptail --yesno "Would you like the camera interface to be enabled?" $DEFAULT 20 60 2
     RET=$?
@@ -958,23 +958,22 @@ do_camera() {
   if [ $RET -eq $CURRENT ]; then
     ASK_TO_REBOOT=1
   fi
-  if [ $RET -eq 1 ]; then
-    set_config_var start_x 0 $CONFIG
-    sed $CONFIG -i -e "s/^start_file/#start_file/"
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "The camera interface is disabled" 20 60 1
-    fi
-  elif [ $RET -eq 0 ]; then
+  if [ $RET -eq 0 ]; then
     set_config_var start_x 1 $CONFIG
     CUR_GPU_MEM=$(get_config_var gpu_mem $CONFIG)
     if [ -z "$CUR_GPU_MEM" ] || [ "$CUR_GPU_MEM" -lt 128 ]; then
       set_config_var gpu_mem 128 $CONFIG
     fi
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "The camera interface is enabled" 20 60 1
-    fi
+    STATUS=enabled
+  elif [ $RET -eq 1 ]; then
+    set_config_var start_x 0 $CONFIG
+    sed $CONFIG -i -e "s/^start_file/#start_file/"
+    STATUS=disabled
   else
-    return 1
+    return $RET
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "The camera interface is $STATUS" 20 60 1
   fi
 }
 
@@ -993,7 +992,6 @@ do_onewire() {
     DEFAULT=
     CURRENT=1
   fi
-
   if [ "$INTERACTIVE" = True ]; then
     whiptail --yesno "Would you like the one-wire interface to be enabled?" $DEFAULT 20 60 2
     RET=$?
@@ -1008,16 +1006,15 @@ do_onewire() {
     if ! grep -q -E "^dtoverlay=w1-gpio" $CONFIG; then
       printf "dtoverlay=w1-gpio\n" >> $CONFIG
     fi
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "The one-wire interface is enabled" 20 60 1
-    fi
+    STATUS=enabled
   elif [ $RET -eq 1 ]; then
     sed $CONFIG -i -e "s/^dtoverlay=w1-gpio/#dtoverlay=w1-gpio/"
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "The one-wire interface is disabled" 20 60 1
-    fi
+    STATUS=disabled
   else
-    return 1
+    return $RET
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "The one-wire interface is $STATUS" 20 60 1
   fi
 }
 
