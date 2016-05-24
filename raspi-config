@@ -265,7 +265,7 @@ do_overscan() {
       CURRENT=1
   fi
   if [ "$INTERACTIVE" = True ]; then
-    whiptail --yesno "Would you like to enable overscan?" $DEFAULT 20 60 2
+    whiptail --yesno "Would you like to enable compensation for displays with overscan?" $DEFAULT 20 60 2
     RET=$?
   else
     RET=$1
