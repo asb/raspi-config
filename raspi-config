@@ -219,13 +219,6 @@ EOF
 
 # $1 is 0 to disable overscan, 1 to disable it
 set_overscan() {
-  # Stop if /boot is not a mountpoint
-  if ! mountpoint -q /boot; then
-    return 1
-  fi
-
-  [ -e $CONFIG ] || touch $CONFIG
-
   if [ "$1" -eq 0 ]; then # disable overscan
     sed $CONFIG -i -e "s/^overscan_/#overscan_/"
     set_config_var disable_overscan 1 $CONFIG
@@ -335,9 +328,6 @@ No other symbols, punctuation characters, or blank spaces are permitted.\
 do_memory_split() { # Memory Split
   if [ -e /boot/start_cd.elf ]; then
     # New-style memory split setting
-    if ! mountpoint -q /boot; then
-      return 1
-    fi
     ## get current memory split from /boot/config.txt
 	arm=$(vcgencmd get_mem arm | cut -d '=' -f 2 | cut -d 'M' -f 1)
 	gpu=$(vcgencmd get_mem gpu | cut -d '=' -f 2 | cut -d 'M' -f 1)
@@ -389,10 +379,6 @@ do_memory_split() { # Memory Split
 }
 
 get_current_memory_split() {
-  # Stop if /boot is not a mountpoint
-  if ! mountpoint -q /boot; then
-    return 1
-  fi
   AVAILABLE_SPLITS="128 192 224 240"
   MEMSPLIT_DESCRIPTION=""
   for SPLIT in $AVAILABLE_SPLITS;do
@@ -532,7 +518,7 @@ do_ssh() {
 }
 
 get_spi() {
-  if [ -e $CONFIG ] && grep -q -E "^(device_tree_param|dtparam)=([^,]*,)*spi(=(on|true|yes|1))?(,.*)?$" $CONFIG; then
+  if grep -q -E "^(device_tree_param|dtparam)=([^,]*,)*spi(=(on|true|yes|1))?(,.*)?$" $CONFIG; then
     echo 0
   else
     echo 1
@@ -574,7 +560,7 @@ do_spi() {
 }
 
 get_i2c() {
-  if [ -e $CONFIG ] && grep -q -E "^(device_tree_param|dtparam)=([^,]*,)*i2c(_arm)?(=(on|true|yes|1))?(,.*)?$" $CONFIG; then
+  if grep -q -E "^(device_tree_param|dtparam)=([^,]*,)*i2c(_arm)?(=(on|true|yes|1))?(,.*)?$" $CONFIG; then
     echo 0
   else
     echo 1
@@ -953,10 +939,6 @@ do_camera() {
     whiptail --msgbox "Your firmware appears to be out of date (no start_x.elf). Please update" 20 60 2
     return 1
   fi
-  # Stop if /boot is not a mountpoint
-  if ! mountpoint -q /boot; then
-    return 1
-  fi
 
   DEFAULT=--defaultno
   CURRENT=0
@@ -965,7 +947,6 @@ do_camera() {
       CURRENT=1
   fi
 
-  [ -e $CONFIG ] || touch $CONFIG
   sed $CONFIG -i -e "s/^startx/#startx/"
   sed $CONFIG -i -e "s/^fixup_file/#fixup_file/"
   if [ "$INTERACTIVE" = True ]; then
@@ -998,7 +979,7 @@ do_camera() {
 }
 
 get_onewire() {
-  if [ -e $CONFIG ] && grep -q -E "^dtoverlay=w1-gpio" $CONFIG; then
+  if grep -q -E "^dtoverlay=w1-gpio" $CONFIG; then
     echo 0
   else
     echo 1
@@ -1013,7 +994,6 @@ do_onewire() {
     CURRENT=1
   fi
 
-  [ -e $CONFIG ] || touch $CONFIG
   if [ "$INTERACTIVE" = True ]; then
     whiptail --yesno "Would you like the one-wire interface to be enabled?" $DEFAULT 20 60 2
     RET=$?
@@ -1043,8 +1023,6 @@ do_onewire() {
 
 # $1 is 0 to disable driver, 1 to enable it
 set_gldriver() {
-  [ -e $CONFIG ] || touch $CONFIG
-
   if [ "$1" -eq 0 ]; then # disable driver
     sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/"
     rm /etc/xdg/autostart/xcompmgr.desktop
@@ -1341,6 +1319,11 @@ do_advanced_menu() {
 # Interactive use loop
 #
 if [ "$INTERACTIVE" = True ]; then
+  if ! mountpoint -q /boot; then
+    whiptail --msgbox "The boot partition is not mounted - cannot configure. Note that raspi-config is intended for use on Raspbian only and cannot be guaranteed to work on other operating systems." 20 60 1
+    exit 1
+  fi
+  [ -e $CONFIG ] || touch $CONFIG
   get_init_sys
   calc_wt_size
   while true; do
