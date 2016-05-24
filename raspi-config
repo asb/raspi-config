@@ -74,6 +74,37 @@ you have heavily customised your installation.\
 " 20 70 1
 }
 
+get_can_expand() {
+  get_init_sys
+  if [ $SYSTEMD -eq 1 ]; then
+    ROOT_PART=$(mount | sed -n 's|^/dev/\(.*\) on / .*|\1|p')
+  else
+    if ! [ -h /dev/root ]; then
+      echo 1
+      exit
+    fi
+    ROOT_PART=$(readlink /dev/root)
+  fi
+
+  PART_NUM=${ROOT_PART#mmcblk0p}
+  if [ "$PART_NUM" = "$ROOT_PART" ]; then
+    echo 1
+    exit
+  fi
+
+  if [ "$PART_NUM" -ne 2 ]; then
+    echo 1
+    exit
+  fi
+
+  LAST_PART_NUM=$(parted /dev/mmcblk0 -ms unit s p | tail -n 1 | cut -f 1 -d:)
+  if [ $LAST_PART_NUM -ne $PART_NUM ]; then
+    echo 1
+    exit
+  fi
+  echo 0
+}
+
 do_expand_rootfs() {
   get_init_sys
   if [ $SYSTEMD -eq 1 ]; then
@@ -217,29 +248,38 @@ end
 EOF
 }
 
-# $1 is 0 to disable overscan, 1 to disable it
-set_overscan() {
-  if [ "$1" -eq 0 ]; then # disable overscan
-    sed $CONFIG -i -e "s/^overscan_/#overscan_/"
-    set_config_var disable_overscan 1 $CONFIG
-  else # enable overscan
-    set_config_var disable_overscan 0 $CONFIG
+get_overscan() {
+  OVS=$(get_config_var disable_overscan $CONFIG)
+  if [ $OVS -eq 1 ]; then
+    echo 1
+  else
+    echo 0
   fi
 }
 
 do_overscan() {
+  DEFAULT=--defaultno
+  CURRENT=0
+  if [ $(get_overscan) -eq 0 ]; then
+      DEFAULT=
+      CURRENT=1
+  fi
   if [ "$INTERACTIVE" = True ]; then
-    whiptail --yesno "What would you like to do with overscan" 20 60 2 \
-      --yes-button Disable --no-button Enable
+    whiptail --yesno "Would you like to enable overscan?" $DEFAULT 20 60 2
     RET=$?
   else
     RET=$1
   fi
-  if [ $RET -eq 0 ] || [ $RET -eq 1 ]; then
+  if [ $RET -eq $CURRENT ]; then
     ASK_TO_REBOOT=1
-    set_overscan $RET;
+  fi
+  if [ $RET -eq 0 ] ; then
+    set_config_var disable_overscan 0 $CONFIG
+  elif [ $RET -eq 1 ]; then
+    sed $CONFIG -i -e "s/^overscan_/#overscan_/"
+    set_config_var disable_overscan 1 $CONFIG
   else
-    return 1
+    return $RET
   fi
 }
 
@@ -624,7 +664,7 @@ get_serial() {
 do_serial() {
   DEFAULT=--defaultno
   CURRENT=0
-  if [ $(get_serial) -eq 0 ] ; then
+  if [ $(get_serial) -eq 0 ]; then
       DEFAULT=
       CURRENT=1
   fi
@@ -945,7 +985,7 @@ do_camera() {
 
   DEFAULT=--defaultno
   CURRENT=0
-  if [ $(get_camera) -eq 0 ] ; then
+  if [ $(get_camera) -eq 0 ]; then
       DEFAULT=
       CURRENT=1
   fi
