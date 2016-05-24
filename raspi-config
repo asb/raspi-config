@@ -275,11 +275,16 @@ do_overscan() {
   fi
   if [ $RET -eq 0 ] ; then
     set_config_var disable_overscan 0 $CONFIG
+    STATUS=enabled
   elif [ $RET -eq 1 ]; then
     sed $CONFIG -i -e "s/^overscan_/#overscan_/"
     set_config_var disable_overscan 1 $CONFIG
+    STATUS=disabled
   else
     return $RET
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "Display overscan compensation $STATUS" 20 60 1
   fi
 }
 
@@ -585,16 +590,15 @@ do_spi() {
   fi
 
   set_config_var dtparam=spi $SETTING $CONFIG &&
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --msgbox "The SPI interface is $STATUS" 20 60 1
-  fi
-
   if ! [ -e $BLACKLIST ]; then
     touch $BLACKLIST
   fi
   sed $BLACKLIST -i -e "s/^\(blacklist[[:space:]]*spi[-_]bcm2708\)/#\1/"
-
   dtparam spi=$SETTING
+
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "The SPI interface is $STATUS" 20 60 1
+  fi
 }
 
 get_i2c() {
@@ -627,22 +631,20 @@ do_i2c() {
   fi
 
   set_config_var dtparam=i2c_arm $SETTING $CONFIG &&
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --msgbox "The ARM I2C interface is $STATUS" 20 60 1
-  fi
-
   if ! [ -e $BLACKLIST ]; then
     touch $BLACKLIST
   fi
   sed $BLACKLIST -i -e "s/^\(blacklist[[:space:]]*i2c[-_]bcm2708\)/#\1/"
-
   sed /etc/modules -i -e "s/^#[[:space:]]*\(i2c[-_]dev\)/\1/"
   if ! grep -q "^i2c[-_]dev" /etc/modules; then
     printf "i2c-dev\n" >> /etc/modules
   fi
-
   dtparam i2c_arm=$SETTING
   modprobe i2c-dev
+
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "The ARM I2C interface is $STATUS" 20 60 1
+  fi
 }
 
 get_serial() {
@@ -916,9 +918,7 @@ do_gpiosec() {
     case "$RET" in
       Private)
         rm -f /etc/systemd/system/pigpiod.service.d/public.conf
-        if [ "$INTERACTIVE" = True ]; then
-          whiptail --msgbox "Remote access to the GPIO server is disabled" 20 60 1
-        fi
+        STATUS=disabled
         ;;
       Public)
         mkdir -p /etc/systemd/system/pigpiod.service.d/
@@ -927,9 +927,7 @@ do_gpiosec() {
 ExecStart=
 ExecStart=/usr/bin/pigpiod
 EOF
-        if [ "$INTERACTIVE" = True ]; then
-          whiptail --msgbox "Remote access to the GPIO server is enabled" 20 60 1
-        fi
+        STATUS=enabled
         ;;
       *)
         whiptail --msgbox "Programmer error, unrecognised option" 20 60 2
@@ -938,6 +936,9 @@ EOF
     esac
     systemctl daemon-reload
     systemctl restart pigpiod
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "Remote access to the GPIO server is $STATUS" 20 60 1
+    fi
     return 0
   fi
 }
@@ -1106,7 +1107,7 @@ do_gldriver() {
     return 1
   fi
   if [ "$INTERACTIVE" = True ]; then
-    whiptail --yesno "Enable experimental GL driver for desktop?" 20 60 2 \
+    whiptail --yesno "Would you like the experimental GL driver for desktop to be enabled?" 20 60 2 \
       --yes-button Disable --no-button Enable
     RET=$?
   else
