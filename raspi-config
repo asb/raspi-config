@@ -845,7 +845,7 @@ do_boot_behaviour() {
   fi
 }
 
-get_boot_slow() {
+get_boot_wait() {
   if test -e /etc/systemd/system/dhcpcd.service.d/wait.conf; then
     echo 0
   else
@@ -853,40 +853,39 @@ get_boot_slow() {
   fi
 }
 
-do_wait_for_network() {
+do_boot_wait() {
   get_init_sys
   if [ $SYSTEMD -eq 0 ]; then
     whiptail --msgbox "This option can only be selected when using systemd" 20 60 2
     return 1
   fi
-  if [ "$INTERACTIVE" = True ]; then
-    RET=$(whiptail --menu "Choose boot option" 20 70 10 \
-      "Fast" "Boot without waiting for network connection" \
-      "Slow" "Wait for network connection before completing boot" \
-      3>&1 1>&2 2>&3)
-  else
-    get_init_sys
-    RET=$1
-    true
+
+  DEFAULT=--defaultno
+  if [ $(get_boot_wait) -eq 0 ]; then
+    DEFAULT=
   fi
-  if [ $? -eq 0 ]; then
-    case "$RET" in
-      Fast)
-        rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
-        ;;
-      Slow)
-        mkdir -p /etc/systemd/system/dhcpcd.service.d/
-        cat > /etc/systemd/system/dhcpcd.service.d/wait.conf << EOF
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like boot to wait until a network connection is established?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    RET=$1
+  fi
+  if [ $RET -eq 0 ]; then
+    mkdir -p /etc/systemd/system/dhcpcd.service.d/
+    cat > /etc/systemd/system/dhcpcd.service.d/wait.conf << EOF
 [Service]
 ExecStart=
 ExecStart=/sbin/dhcpcd -q -w
 EOF
-        ;;
-      *)
-        whiptail --msgbox "Programmer error, unrecognised option" 20 60 2
-        return 1
-        ;;
-    esac
+    STATUS=enabled
+  elif [ $RET -eq 1 ]; then
+    rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
+    STATUS=disabled
+  else
+    return $RET
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "Waiting for network on boot is $STATUS" 20 60 1
   fi
 }
 
@@ -898,7 +897,7 @@ get_rgpio() {
   fi
 }
 
-do_gpiosec() {
+do_rgpio() {
   get_init_sys
   if [ $SYSTEMD -eq 0 ]; then
     whiptail --msgbox "This option can only be selected when using systemd" 20 60 2
@@ -906,10 +905,8 @@ do_gpiosec() {
   fi
 
   DEFAULT=--defaultno
-  CURRENT=0
   if [ $(get_rgpio) -eq 0 ]; then
     DEFAULT=
-    CURRENT=1
   fi
   if [ "$INTERACTIVE" = True ]; then
     whiptail --yesno "Would you like the GPIO server to be accessible over the network?" $DEFAULT 20 60 2
@@ -1340,7 +1337,7 @@ do_advanced_menu() {
       A8\ *) do_audio ;;
       A9\ *) do_gldriver ;;
       AA\ *) do_onewire ;;
-      AB\ *) do_gpiosec ;;
+      AB\ *) do_rgpio ;;
       A0\ *) do_update ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
@@ -1380,7 +1377,7 @@ if [ "$INTERACTIVE" = True ]; then
         1\ *) do_expand_rootfs ;;
         2\ *) do_change_pass ;;
         3\ *) do_boot_behaviour ;;
-        4\ *) do_wait_for_network ;;
+        4\ *) do_boot_wait ;;
         5\ *) do_internationalisation_menu ;;
         6\ *) do_camera ;;
         7\ *) do_rastrack ;;
