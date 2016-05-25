@@ -648,14 +648,14 @@ do_i2c() {
 }
 
 get_serial() {
-  if ! grep -q "ttyAMA" /proc/cmdline ; then
-    if ! grep -q -E "^enable_uart=1" $CONFIG; then
+  if grep -q "ttyAMA" /proc/cmdline ; then
+    if grep -q -E "^enable_uart=0" $CONFIG; then
       echo 1
     else
       echo 0
     fi
   else
-    if ! grep -q -E "^enable_uart=0" $CONFIG; then
+    if grep -q -E "^enable_uart=1" $CONFIG; then
       echo 0
     else
       echo 1
