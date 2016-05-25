@@ -314,7 +314,7 @@ get_wifi_country() {
    grep country= /etc/wpa_supplicant/wpa_supplicant.conf | cut -d "=" -f 2
 }
 
-do_configure_wifi_country() {
+do_wifi_country() {
   oIFS="$IFS"
   if [ "$INTERACTIVE" = True ]; then
     IFS="/"
@@ -346,7 +346,7 @@ get_hostname() {
     cat /etc/hostname | tr -d " \t\n\r"
 }
 
-do_change_hostname() {
+do_hostname() {
   if [ "$INTERACTIVE" = True ]; then
     whiptail --msgbox "\
 Please note: RFCs mandate that a hostname's labels \
@@ -1309,7 +1309,7 @@ do_internationalisation_menu() {
       I1\ *) do_change_locale ;;
       I2\ *) do_change_timezone ;;
       I3\ *) do_configure_keyboard ;;
-      I4\ *) do_configure_wifi_country ;;
+      I4\ *) do_wifi_country ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
@@ -1336,7 +1336,7 @@ do_advanced_menu() {
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
       A1\ *) do_overscan ;;
-      A2\ *) do_change_hostname ;;
+      A2\ *) do_hostname ;;
       A3\ *) do_memory_split ;;
       A4\ *) do_ssh ;;
       A5\ *) do_spi ;;
