@@ -284,7 +284,7 @@ do_overscan() {
     return $RET
   fi
   if [ "$INTERACTIVE" = True ]; then
-    whiptail --msgbox "Display overscan compensation $STATUS" 20 60 1
+    whiptail --msgbox "Display overscan compensation is $STATUS" 20 60 1
   fi
 }
 
@@ -1051,33 +1051,11 @@ do_onewire() {
   fi
 }
 
-# $1 is 0 to disable driver, 1 to enable it
-set_gldriver() {
-  if [ "$1" -eq 0 ]; then # disable driver
-    sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/"
-    rm /etc/xdg/autostart/xcompmgr.desktop
-    mv /usr/share/X11/xorg.conf.d/99-fbturbo.~ /usr/share/X11/xorg.conf.d/99-fbturbo.conf
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "Desktop GL driver is disabled" 20 60 1
-    fi
-  else # enable driver
-    sed $CONFIG -i -e "s/^#dtoverlay=vc4-kms-v3d/dtoverlay=vc4-kms-v3d/"
-    if ! grep -q -E "^dtoverlay=vc4-kms-v3d" $CONFIG; then
-      printf "dtoverlay=vc4-kms-v3d\n" >> $CONFIG
-    fi
-    cat <<EOF >/etc/xdg/autostart/xcompmgr.desktop
-[Desktop Entry]
-Type=Application
-Name=xcompmgr
-Comment=Start simple compositor
-NoDisplay=true
-Exec=xcompmgr -a
-EOF
-    mv /usr/share/X11/xorg.conf.d/99-fbturbo.conf /usr/share/X11/xorg.conf.d/99-fbturbo.~
-    sed $CONFIG -i -e "s/^gpu_mem/#gpu_mem/"
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "Desktop GL driver is enabled" 20 60 1
-    fi
+get_gldriver() {
+  if grep -q -E "^dtoverlay=vc4-kms-v3d" $CONFIG; then
+    echo 0
+  else
+    echo 1
   fi
 }
 
@@ -1098,18 +1076,48 @@ do_gldriver() {
     whiptail --msgbox "xcompmgr not found - please install" 20 60 2
     return 1
   fi
+
+  DEFAULT=--defaultno
+  CURRENT=0
+  if [ $(get_gldriver) -eq 0 ]; then
+    DEFAULT=
+    CURRENT=1
+  fi
   if [ "$INTERACTIVE" = True ]; then
-    whiptail --yesno "Would you like the experimental GL driver for desktop to be enabled?" 20 60 2 \
-      --yes-button Disable --no-button Enable
+    whiptail --yesno "Would you like the experimental GL driver for desktop to be enabled?" $DEFAULT 20 60 2
     RET=$?
   else
     RET=$1
   fi
-  if [ $RET -eq 0 ] || [ $RET -eq 1 ]; then
+  if [ $RET -eq $CURRENT ]; then
     ASK_TO_REBOOT=1
-    set_gldriver $RET;
+  fi
+  if [ $RET -eq 0 ]; then # disable driver
+    sed $CONFIG -i -e "s/^#dtoverlay=vc4-kms-v3d/dtoverlay=vc4-kms-v3d/"
+    if ! grep -q -E "^dtoverlay=vc4-kms-v3d" $CONFIG; then
+      printf "dtoverlay=vc4-kms-v3d\n" >> $CONFIG
+    fi
+    cat << EOF > /etc/xdg/autostart/xcompmgr.desktop
+[Desktop Entry]
+Type=Application
+Name=xcompmgr
+Comment=Start simple compositor
+NoDisplay=true
+Exec=xcompmgr -a
+EOF
+    mv /usr/share/X11/xorg.conf.d/99-fbturbo.conf /usr/share/X11/xorg.conf.d/99-fbturbo.~
+    sed $CONFIG -i -e "s/^gpu_mem/#gpu_mem/"
+    STATUS=enabled
+  elif [ $RET -eq 1 ]; then #enable driver
+    sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/"
+    rm /etc/xdg/autostart/xcompmgr.desktop
+    mv /usr/share/X11/xorg.conf.d/99-fbturbo.~ /usr/share/X11/xorg.conf.d/99-fbturbo.conf
+    STATUS=disabled
   else
-    return 1
+    return $RET
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "The desktop GL driver is $STATUS" 20 60 1
   fi
 }
 
@@ -1317,9 +1325,9 @@ do_advanced_menu() {
     "A6 I2C" "Enable/Disable automatic loading of I2C kernel module" \
     "A7 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
     "A8 Audio" "Force audio out through HDMI or 3.5mm jack" \
-    "A9 GL Driver" "Enable/Disable experimental desktop GL driver" \
-    "AA 1-Wire" "Enable/Disable one-wire interface" \
-    "AB GPIO Server" "Enable/Disable remote access to GPIO pins" \
+    "A9 1-Wire" "Enable/Disable one-wire interface" \
+    "AA GPIO Server" "Enable/Disable remote access to GPIO pins" \
+    "AB GL Driver" "Enable/Disable experimental desktop GL driver" \
     "A0 Update" "Update this tool to the latest version" \
     3>&1 1>&2 2>&3)
   RET=$?
@@ -1335,9 +1343,9 @@ do_advanced_menu() {
       A6\ *) do_i2c ;;
       A7\ *) do_serial ;;
       A8\ *) do_audio ;;
-      A9\ *) do_gldriver ;;
-      AA\ *) do_onewire ;;
-      AB\ *) do_rgpio ;;
+      A9\ *) do_onewire ;;
+      AA\ *) do_rgpio ;;
+      AB\ *) do_gldriver ;;
       A0\ *) do_update ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
