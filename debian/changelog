@@ -1,3 +1,27 @@
+raspi-config (20160527) jessie; urgency=medium
+
+  [ Simon Long ]
+  * Function to read hostname added
+  * Function added to get wifi country
+  * Functions to detect boot behaviour added
+  * Test functions added for remote GPIO and slow boot
+  * Added some functions to read current state for use by rc_gui
+  * Requirement for reboot removed from SPI and I2C settings
+  * A lot of NOTs taken out of serial test
+  * Status indications moved to end of some functions
+  * Overscan description amended
+  * Check for fs expandability added; overscan function matches others
+  * Added more success / fail feedback to settings
+  * Global check for mountpoint and existence of /boot/config.txt
+  * Checking of initial state added for camera and 1-wire
+  * Unnecessary reboots removed
+  * Some function names changed for consistency
+  * GL driver setting aligned with other functions
+  * Functions to control remote GPIO and boot wait for network aligned
+  * Tidied function to control remote GPIO access
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 27 May 2016 11:10:11 +0100
+
 raspi-config (20160506) jessie; urgency=medium
 
   [ Axel Beckert ]
