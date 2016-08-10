@@ -792,8 +792,8 @@ do_boot_behaviour() {
           [ -e /etc/init.d/lightdm ] && update-rc.d lightdm disable 2
           sed /etc/inittab -i -e "s/1:2345:respawn:\/bin\/login -f pi tty1 <\/dev\/tty1 >\/dev\/tty1 2>&1/1:2345:respawn:\/sbin\/getty --noclear 38400 tty1/"
         fi
-        if [ -e /etc/init.d/00-splashscreen ]; then
-          update-rc.d 00-splashscreen disable
+        if [ -e /usr/share/plymouth/themes/pix/pix.script ]; then
+			sed -i /boot/cmdline.txt -e "s/rootwait quiet splash plymouth.ignore-serial-consoles/rootwait/"
         fi
         ;;
       B2*)
@@ -804,8 +804,8 @@ do_boot_behaviour() {
           [ -e /etc/init.d/lightdm ] && update-rc.d lightdm disable 2
           sed /etc/inittab -i -e "s/1:2345:respawn:\/sbin\/getty --noclear 38400 tty1/1:2345:respawn:\/bin\/login -f pi tty1 <\/dev\/tty1 >\/dev\/tty1 2>&1/"
         fi
-        if [ -e /etc/init.d/00-splashscreen ]; then
-          update-rc.d 00-splashscreen disable
+        if [ -e /usr/share/plymouth/themes/pix/pix.script ]; then
+			sed -i /boot/cmdline.txt -e "s/rootwait quiet splash plymouth.ignore-serial-consoles/rootwait/"
         fi
         ;;
       B3*)
@@ -818,8 +818,8 @@ do_boot_behaviour() {
           fi
           sed /etc/lightdm/lightdm.conf -i -e "s/^autologin-user=pi/#autologin-user=/"
           disable_raspi_config_at_boot
-          if [ -e /etc/init.d/00-splashscreen ]; then
-            update-rc.d 00-splashscreen enable
+          if [ -e /usr/share/plymouth/themes/pix/pix.script ] && ! grep -q "splash" /boot/cmdline.txt; then
+			sed -i /boot/cmdline.txt -e "s/rootwait/rootwait quiet splash plymouth.ignore-serial-consoles/"
           fi
         else
           whiptail --msgbox "Do sudo apt-get install lightdm to allow configuration of boot to desktop" 20 60 2
@@ -837,9 +837,9 @@ do_boot_behaviour() {
             fi
             sed /etc/lightdm/lightdm.conf -i -e "s/^#autologin-user=.*/autologin-user=pi/"
             disable_raspi_config_at_boot
-          if [ -e /etc/init.d/00-splashscreen ]; then
-            update-rc.d 00-splashscreen enable
-          fi
+            if [ -e /usr/share/plymouth/themes/pix/pix.script ] && ! grep -q "splash" /boot/cmdline.txt; then
+			  sed -i /boot/cmdline.txt -e "s/rootwait/rootwait quiet splash plymouth.ignore-serial-consoles/"
+            fi
           else
             whiptail --msgbox "The pi user has been removed, can't set up boot to desktop" 20 60 2
           fi
