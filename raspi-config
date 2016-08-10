@@ -560,6 +560,41 @@ do_ssh() {
   fi
 }
 
+get_vnc() {
+  if systemctl status vncserver-x11-serviced.service  | grep -q inactive; then
+    echo 1
+  else
+    echo 0
+  fi
+}
+
+do_vnc() {
+  DEFAULT=--defaultno
+  if [ $(get_vnc) -eq 0 ]; then
+    DEFAULT=
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like the VNC Server to be enabled?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    RET=$1
+  fi
+  if [ $RET -eq 0 ]; then
+    systemctl enable vncserver-x11-serviced.service &&
+    systemctl start vncserver-x11-serviced.service &&
+    STATUS=enabled
+  elif [ $RET -eq 1 ]; then
+    systemctl disable vncserver-x11-serviced.service &&
+    systemctl stop vncserver-x11-serviced.service &&
+    STATUS=disabled
+  else
+    return $RET
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "The VNC Server is $STATUS" 20 60 1
+  fi
+}
+
 get_spi() {
   if grep -q -E "^(device_tree_param|dtparam)=([^,]*,)*spi(=(on|true|yes|1))?(,.*)?$" $CONFIG; then
     echo 0
@@ -1333,13 +1368,14 @@ do_advanced_menu() {
     "A2 Hostname" "Set the visible name for this Pi on a network" \
     "A3 Memory Split" "Change the amount of memory made available to the GPU" \
     "A4 SSH" "Enable/Disable remote command line access to your Pi using SSH" \
-    "A5 SPI" "Enable/Disable automatic loading of SPI kernel module (needed for e.g. PiFace)" \
-    "A6 I2C" "Enable/Disable automatic loading of I2C kernel module" \
-    "A7 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
-    "A8 Audio" "Force audio out through HDMI or 3.5mm jack" \
-    "A9 1-Wire" "Enable/Disable one-wire interface" \
-    "AA GPIO Server" "Enable/Disable remote access to GPIO pins" \
-    "AB GL Driver" "Enable/Disable experimental desktop GL driver" \
+    "A5 VNC" "Enable/Disable graphical remote access to your Pi using RealVNC" \
+    "A6 SPI" "Enable/Disable automatic loading of SPI kernel module (needed for e.g. PiFace)" \
+    "A7 I2C" "Enable/Disable automatic loading of I2C kernel module" \
+    "A8 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
+    "A9 Audio" "Force audio out through HDMI or 3.5mm jack" \
+    "AA 1-Wire" "Enable/Disable one-wire interface" \
+    "AB GPIO Server" "Enable/Disable remote access to GPIO pins" \
+    "AC GL Driver" "Enable/Disable experimental desktop GL driver" \
     "A0 Update" "Update this tool to the latest version" \
     3>&1 1>&2 2>&3)
   RET=$?
@@ -1351,13 +1387,14 @@ do_advanced_menu() {
       A2\ *) do_hostname ;;
       A3\ *) do_memory_split ;;
       A4\ *) do_ssh ;;
-      A5\ *) do_spi ;;
-      A6\ *) do_i2c ;;
-      A7\ *) do_serial ;;
-      A8\ *) do_audio ;;
-      A9\ *) do_onewire ;;
-      AA\ *) do_rgpio ;;
-      AB\ *) do_gldriver ;;
+      A5\ *) do_vnc ;;
+      A6\ *) do_spi ;;
+      A7\ *) do_i2c ;;
+      A8\ *) do_serial ;;
+      A9\ *) do_audio ;;
+      AA\ *) do_onewire ;;
+      AB\ *) do_rgpio ;;
+      AC\ *) do_gldriver ;;
       A0\ *) do_update ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
