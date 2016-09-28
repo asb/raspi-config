@@ -982,30 +982,6 @@ EOF
   fi
 }
 
-do_rastrack() {
-  whiptail --msgbox "\
-Rastrack (http://rastrack.co.uk) is a website run by Ryan Walmsley
-for tracking where people are using Raspberry Pis around the world.
-If you have an internet connection, you can add yourself directly
-using this tool. This is just a bit of fun, not any sort of official
-registration.\
-" 20 70 1
-  if [ $? -ne 0 ]; then
-    return 0;
-  fi
-  UNAME=$(whiptail --inputbox "Username / Nickname For Rastrack Addition" 20 70 3>&1 1>&2 2>&3)
-  if [ $? -ne 0 ]; then
-    return 1;
-  fi
-  EMAIL=$(whiptail --inputbox "Email Address For Rastrack Addition" 20 70 3>&1 1>&2 2>&3)
-  if [ $? -ne 0 ]; then
-    return 1;
-  fi
-  curl --data "name=$UNAME&email=$EMAIL" http://rastrack.co.uk/api.php
-  printf "Hit enter to continue\n"
-  read TMP
-}
-
 get_camera() {
   CAM=$(get_config_var start_x $CONFIG)
   if [ $CAM -eq 1 ]; then
@@ -1421,10 +1397,9 @@ if [ "$INTERACTIVE" = True ]; then
       "4 Wait for Network at Boot" "Choose whether to wait for network connection during boot" \
       "5 Internationalisation Options" "Set up language and regional settings to match your location" \
       "6 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
-      "7 Add to Rastrack" "Add this Pi to the online Raspberry Pi Map (Rastrack)" \
-      "8 Overclock" "Configure overclocking for your Pi" \
-      "9 Advanced Options" "Configure advanced settings" \
-      "0 About raspi-config" "Information about this configuration tool" \
+      "7 Overclock" "Configure overclocking for your Pi" \
+      "8 Advanced Options" "Configure advanced settings" \
+      "9 About raspi-config" "Information about this configuration tool" \
       3>&1 1>&2 2>&3)
     RET=$?
     if [ $RET -eq 1 ]; then
@@ -1437,10 +1412,9 @@ if [ "$INTERACTIVE" = True ]; then
         4\ *) do_boot_wait ;;
         5\ *) do_internationalisation_menu ;;
         6\ *) do_camera ;;
-        7\ *) do_rastrack ;;
-        8\ *) do_overclock ;;
-        9\ *) do_advanced_menu ;;
-        0\ *) do_about ;;
+        7\ *) do_overclock ;;
+        8\ *) do_advanced_menu ;;
+        9\ *) do_about ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else
