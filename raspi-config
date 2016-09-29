@@ -827,9 +827,6 @@ do_boot_behaviour() {
           [ -e /etc/init.d/lightdm ] && update-rc.d lightdm disable 2
           sed /etc/inittab -i -e "s/1:2345:respawn:\/bin\/login -f pi tty1 <\/dev\/tty1 >\/dev\/tty1 2>&1/1:2345:respawn:\/sbin\/getty --noclear 38400 tty1/"
         fi
-        if [ -e /usr/share/plymouth/themes/pix/pix.script ]; then
-			sed -i /boot/cmdline.txt -e "s/rootwait quiet splash plymouth.ignore-serial-consoles/rootwait/"
-        fi
         ;;
       B2*)
         if [ $SYSTEMD -eq 1 ]; then
@@ -838,9 +835,6 @@ do_boot_behaviour() {
         else
           [ -e /etc/init.d/lightdm ] && update-rc.d lightdm disable 2
           sed /etc/inittab -i -e "s/1:2345:respawn:\/sbin\/getty --noclear 38400 tty1/1:2345:respawn:\/bin\/login -f pi tty1 <\/dev\/tty1 >\/dev\/tty1 2>&1/"
-        fi
-        if [ -e /usr/share/plymouth/themes/pix/pix.script ]; then
-			sed -i /boot/cmdline.txt -e "s/rootwait quiet splash plymouth.ignore-serial-consoles/rootwait/"
         fi
         ;;
       B3*)
@@ -853,9 +847,6 @@ do_boot_behaviour() {
           fi
           sed /etc/lightdm/lightdm.conf -i -e "s/^autologin-user=pi/#autologin-user=/"
           disable_raspi_config_at_boot
-          if [ -e /usr/share/plymouth/themes/pix/pix.script ] && ! grep -q "splash" /boot/cmdline.txt; then
-			sed -i /boot/cmdline.txt -e "s/rootwait/rootwait quiet splash plymouth.ignore-serial-consoles/"
-          fi
         else
           whiptail --msgbox "Do sudo apt-get install lightdm to allow configuration of boot to desktop" 20 60 2
           return 1
@@ -872,9 +863,6 @@ do_boot_behaviour() {
             fi
             sed /etc/lightdm/lightdm.conf -i -e "s/^#autologin-user=.*/autologin-user=pi/"
             disable_raspi_config_at_boot
-            if [ -e /usr/share/plymouth/themes/pix/pix.script ] && ! grep -q "splash" /boot/cmdline.txt; then
-			  sed -i /boot/cmdline.txt -e "s/rootwait/rootwait quiet splash plymouth.ignore-serial-consoles/"
-            fi
           else
             whiptail --msgbox "The pi user has been removed, can't set up boot to desktop" 20 60 2
           fi
@@ -933,6 +921,47 @@ EOF
   fi
   if [ "$INTERACTIVE" = True ]; then
     whiptail --msgbox "Waiting for network on boot is $STATUS" 20 60 1
+  fi
+}
+
+get_boot_splash() {
+  if grep -q "splash" /boot/cmdline.txt; then
+    echo 0
+  else
+    echo 1
+  fi
+}
+
+do_boot_splash() {
+  if [ ! -e /usr/share/plymouth/themes/pix/pix.script ]; then
+    whiptail --msgbox "The splash screen is not installed so cannot be activated" 20 60 2
+    return 1
+  fi
+  DEFAULT=--defaultno
+  if [ $(get_boot_splash) -eq 0 ]; then
+    DEFAULT=
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like to show the splash screen at boot?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    RET=$1
+  fi
+  if [ $RET -eq 0 ]; then
+    if ! grep -q "splash" /boot/cmdline.txt; then
+	  sed -i /boot/cmdline.txt -e "s/rootwait/rootwait quiet splash plymouth.ignore-serial-consoles/"
+	fi
+    STATUS=enabled
+  elif [ $RET -eq 1 ]; then
+    if grep -q "splash" /boot/cmdline.txt; then
+	    sed -i /boot/cmdline.txt -e "s/rootwait quiet splash plymouth.ignore-serial-consoles/rootwait/"
+	fi
+    STATUS=disabled
+  else
+    return $RET
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "Splash screen at boot is $STATUS" 20 60 1
   fi
 }
 
@@ -1377,6 +1406,24 @@ do_advanced_menu() {
   fi
 }
 
+do_boot_menu() {
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    "B1 Desktop / CLI" "Choose whether to boot into a desktop environment or the command line" \
+    "B2 Wait for Network at Boot" "Choose whether to wait for network connection during boot" \
+    "B3 Splash Screen" "Choose graphical splash screen or text boot" \
+    3>&1 1>&2 2>&3)
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    case "$FUN" in
+      B1\ *) do_boot_behaviour ;;
+      B2\ *) do_boot_wait ;;
+      B3\ *) do_boot_splash ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  fi
+}
 
 #
 # Interactive use loop
@@ -1393,13 +1440,12 @@ if [ "$INTERACTIVE" = True ]; then
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
       "1 Expand Filesystem" "Ensures that all of the SD card storage is available to the OS" \
       "2 Change User Password" "Change password for the default user (pi)" \
-      "3 Boot Options" "Choose whether to boot into a desktop environment or the command line" \
-      "4 Wait for Network at Boot" "Choose whether to wait for network connection during boot" \
-      "5 Internationalisation Options" "Set up language and regional settings to match your location" \
-      "6 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
-      "7 Overclock" "Configure overclocking for your Pi" \
-      "8 Advanced Options" "Configure advanced settings" \
-      "9 About raspi-config" "Information about this configuration tool" \
+      "3 Boot Options" "Configure options for start-up" \
+      "4 Internationalisation Options" "Set up language and regional settings to match your location" \
+      "5 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
+      "6 Overclock" "Configure overclocking for your Pi" \
+      "7 Advanced Options" "Configure advanced settings" \
+      "8 About raspi-config" "Information about this configuration tool" \
       3>&1 1>&2 2>&3)
     RET=$?
     if [ $RET -eq 1 ]; then
@@ -1408,13 +1454,12 @@ if [ "$INTERACTIVE" = True ]; then
       case "$FUN" in
         1\ *) do_expand_rootfs ;;
         2\ *) do_change_pass ;;
-        3\ *) do_boot_behaviour ;;
-        4\ *) do_boot_wait ;;
-        5\ *) do_internationalisation_menu ;;
-        6\ *) do_camera ;;
-        7\ *) do_overclock ;;
-        8\ *) do_advanced_menu ;;
-        9\ *) do_about ;;
+        3\ *) do_boot_menu ;;
+        4\ *) do_internationalisation_menu ;;
+        5\ *) do_camera ;;
+        6\ *) do_overclock ;;
+        7\ *) do_advanced_menu ;;
+        8\ *) do_about ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else
