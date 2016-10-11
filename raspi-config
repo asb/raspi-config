@@ -7,6 +7,7 @@ INTERACTIVE=True
 ASK_TO_REBOOT=0
 BLACKLIST=/etc/modprobe.d/raspi-blacklist.conf
 CONFIG=/boot/config.txt
+CMDLINE=/boot/cmdline.txt
 
 is_pione() {
    if grep -q "^Revision\s*:\s*00[0-9a-fA-F][0-9a-fA-F]$" /proc/cpuinfo; then
@@ -722,15 +723,15 @@ do_serial() {
         printf "T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100\n" >> /etc/inittab
       fi
     fi
-    if grep -q "console=ttyAMA0" /boot/cmdline.txt ; then
+    if grep -q "console=ttyAMA0" $CMDLINE ; then
       if [ -e /proc/device-tree/aliases/serial0 ]; then
-        sed -i /boot/cmdline.txt -e "s/console=ttyAMA0/console=serial0/"
+        sed -i $CMDLINE -e "s/console=ttyAMA0/console=serial0/"
       fi
-    elif ! grep -q "console=ttyAMA0" /boot/cmdline.txt && ! grep -q "console=serial0" /boot/cmdline.txt ; then
+    elif ! grep -q "console=ttyAMA0" $CMDLINE && ! grep -q "console=serial0" $CMDLINE ; then
       if [ -e /proc/device-tree/aliases/serial0 ]; then
-        sed -i /boot/cmdline.txt -e "s/root=/console=serial0,115200 root=/"
+        sed -i $CMDLINE -e "s/root=/console=serial0,115200 root=/"
       else
-        sed -i /boot/cmdline.txt -e "s/root=/console=ttyAMA0,115200 root=/"
+        sed -i $CMDLINE -e "s/root=/console=ttyAMA0,115200 root=/"
       fi
     fi
     set_config_var enable_uart 1 $CONFIG
@@ -739,8 +740,8 @@ do_serial() {
     if [ $SYSTEMD -eq 0 ]; then
       sed -i /etc/inittab -e "s|^.*:.*:respawn:.*ttyAMA0|#&|"
     fi
-    sed -i /boot/cmdline.txt -e "s/console=ttyAMA0,[0-9]\+ //"
-    sed -i /boot/cmdline.txt -e "s/console=serial0,[0-9]\+ //"
+    sed -i $CMDLINE -e "s/console=ttyAMA0,[0-9]\+ //"
+    sed -i $CMDLINE -e "s/console=serial0,[0-9]\+ //"
     set_config_var enable_uart 0 $CONFIG
     STATUS=disabled
   else
@@ -925,7 +926,7 @@ EOF
 }
 
 get_boot_splash() {
-  if grep -q "splash" /boot/cmdline.txt; then
+  if grep -q "splash" $CMDLINE ; then
     echo 0
   else
     echo 1
@@ -948,13 +949,15 @@ do_boot_splash() {
     RET=$1
   fi
   if [ $RET -eq 0 ]; then
-    if ! grep -q "splash" /boot/cmdline.txt; then
-	  sed -i /boot/cmdline.txt -e "s/rootwait/rootwait quiet splash plymouth.ignore-serial-consoles/"
+    if ! grep -q "splash" $CMDLINE ; then
+	  sed -i $CMDLINE -e "s/$/ quiet splash plymouth.ignore-serial-consoles/"
 	fi
     STATUS=enabled
   elif [ $RET -eq 1 ]; then
-    if grep -q "splash" /boot/cmdline.txt; then
-	    sed -i /boot/cmdline.txt -e "s/rootwait quiet splash plymouth.ignore-serial-consoles/rootwait/"
+    if grep -q "splash" $CMDLINE ; then
+	    sed -i $CMDLINE -e "s/ quiet//"
+	    sed -i $CMDLINE -e "s/ splash//"
+	    sed -i $CMDLINE -e "s/ plymouth.ignore-serial-consoles//"
 	fi
     STATUS=disabled
   else
