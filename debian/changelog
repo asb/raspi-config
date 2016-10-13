@@ -1,3 +1,10 @@
+raspi-config (20161013) jessie; urgency=medium
+
+  * Rastrack option removed
+  * Splash screen control added
+
+ -- Simon Long <simon@raspberrypi.org>  Thu, 13 Oct 2016 13:53:54 +0100
+
 raspi-config (20160527) jessie; urgency=medium
 
   [ Simon Long ]
