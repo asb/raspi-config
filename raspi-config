@@ -797,7 +797,7 @@ get_autologin() {
     fi
   else
     # booting to desktop - check the autologin for lightdm */
-    if grep -q "^autologin-user=" /etc/lightdm/lightdm.conf ; then
+    if grep -q "^autologin-user=pi" /etc/lightdm/lightdm.conf ; then
       echo 0
     else
       echo 1
@@ -846,7 +846,7 @@ do_boot_behaviour() {
           else
             update-rc.d lightdm enable 2
           fi
-          sed /etc/lightdm/lightdm.conf -i -e "s/^autologin-user=pi/#autologin-user=/"
+          sed /etc/lightdm/lightdm.conf -i -e "s/^autologin-user=.*/#autologin-user=/"
           disable_raspi_config_at_boot
         else
           whiptail --msgbox "Do sudo apt-get install lightdm to allow configuration of boot to desktop" 20 60 2
@@ -862,7 +862,7 @@ do_boot_behaviour() {
             else
               update-rc.d lightdm enable 2
             fi
-            sed /etc/lightdm/lightdm.conf -i -e "s/^#autologin-user=.*/autologin-user=pi/"
+            sed /etc/lightdm/lightdm.conf -i -e "s/^\(#\|\)autologin-user=.*/autologin-user=pi/"
             disable_raspi_config_at_boot
           else
             whiptail --msgbox "The pi user has been removed, can't set up boot to desktop" 20 60 2
