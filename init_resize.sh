@@ -129,7 +129,7 @@ mount -t proc proc /proc
 mount -t sysfs sys /sys
 
 mount /boot
-sed -i 's/ quiet init=.*$//' /boot/cmdline.txt
+sed -i 's| quiet init=/usr/lib/raspi-config/init_resize.sh||' /boot/cmdline.txt
 mount /boot -o remount,ro
 sync
 

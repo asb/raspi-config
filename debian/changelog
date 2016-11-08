@@ -1,3 +1,9 @@
+raspi-config (20161108) jessie; urgency=medium
+
+  * init_resize.sh: Remove clash with pix-plym-splash
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 08 Nov 2016 17:34:00 +0000
+
 raspi-config (20161102) jessie; urgency=medium
 
   * Sed processing of autologin options modified to improve robustness
