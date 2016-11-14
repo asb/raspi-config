@@ -1152,13 +1152,18 @@ do_gldriver() {
     if ! grep -q -E "^dtoverlay=vc4-kms-v3d" $CONFIG; then
       printf "dtoverlay=vc4-kms-v3d\n" >> $CONFIG
     fi
+    if grep -q "splash" $CMDLINE ; then
+	    sed -i $CMDLINE -e "s/ quiet//"
+	    sed -i $CMDLINE -e "s/ splash//"
+	    sed -i $CMDLINE -e "s/ plymouth.ignore-serial-consoles//"
+	fi
     cat << EOF > /etc/xdg/autostart/xcompmgr.desktop
 [Desktop Entry]
 Type=Application
 Name=xcompmgr
 Comment=Start simple compositor
 NoDisplay=true
-Exec=xcompmgr
+Exec=xcompmgr -a
 EOF
     mv /usr/share/X11/xorg.conf.d/99-fbturbo.conf /usr/share/X11/xorg.conf.d/99-fbturbo.~
     sed $CONFIG -i -e "s/^gpu_mem/#gpu_mem/"
