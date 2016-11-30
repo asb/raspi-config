@@ -1200,6 +1200,79 @@ do_audio() {
   fi
 }
 
+do_resolution() {
+  if [ "$INTERACTIVE" = True ]; then
+	CMODE=$(get_config_var hdmi_mode $CONFIG)
+	CGROUP=$(get_config_var hdmi_group $CONFIG)
+	if [ $CMODE -eq 0 ] ; then
+	  CSET="Default"
+	elif [ $CGROUP -eq 2 ] ; then
+	  CSET="DMT Mode "$CMODE
+	else
+	  CSET="CEA Mode "$CMODE
+	fi
+    oIFS="$IFS"
+    IFS="/"
+    cea=$(tvservice -m CEA | grep modes | sed 's/Group CEA has \([0-9]\+\) modes:/\1/')
+    dmt=$(tvservice -m DMT | grep modes | sed 's/Group DMT has \([0-9]\+\) modes:/\1/')
+    modes=$(($cea+$dmt))
+    #if [ $modes -gt 0 ] ; then
+    if tvservice -d /dev/null | grep -q Nothing ; then
+      value="Default/720x480/DMT Mode 4/640x480 60Hz 4:3/DMT Mode 9/800x600 60Hz 4:3/DMT Mode 16/1024x768 60Hz 4:3/DMT Mode 85/1280x720 60Hz 16:9/DMT Mode 35/1280x1024 60Hz 5:4/DMT Mode 51/1600x1200 60Hz 4:3/DMT Mode 82/1920x1080 60Hz 16:9/DMT Mode 77/2560x1600 60Hz 16:10/"
+	else
+      value="Default/Monitor preferred resolution/"
+      value=$value$(tvservice -m CEA | grep progressive | cut -b 12- | sed 's/mode \([0-9]\+\): \([0-9]\+\)x\([0-9]\+\) @ \([0-9]\+\)Hz \([0-9]\+\):\([0-9]\+\), clock:[0-9]\+MHz progressive/CEA Mode \1\/\2x\3 \4Hz \5:\6/' | tr '\n' '/')
+      value=$value$(tvservice -m DMT | grep progressive | cut -b 12- | sed 's/mode \([0-9]\+\): \([0-9]\+\)x\([0-9]\+\) @ \([0-9]\+\)Hz \([0-9]\+\):\([0-9]\+\), clock:[0-9]\+MHz progressive/DMT Mode \1\/\2x\3 \4Hz \5:\6/' | tr '\n' '/')
+	fi
+    RES=$(whiptail --default-item $CSET --menu "Choose screen resolution" 20 60 10 ${value} 3>&1 1>&2 2>&3)
+    STATUS=$?
+    IFS=$oIFS
+    if [ $STATUS -eq 0 ] ; then
+      GRS=$(echo "$RES" | cut -d ' ' -f 1)
+      MODE=$(echo "$RES" | cut -d ' ' -f 3)
+      if [ $GRS = "Default" ] ; then
+		MODE=0
+      elif [ $GRS = "DMT" ] ; then
+	    GROUP=2
+	  else
+	    GROUP=1
+	  fi
+	fi
+  else
+    GROUP=$1
+    MODE=$2
+    STATUS=0
+  fi
+  if [ $STATUS -eq 0 ]; then
+	if [ $MODE -eq 0 ]; then
+	  sed $CONFIG -i -e "s/^hdmi_force_hotplug/#hdmi_force_hotplug/"
+	  sed $CONFIG -i -e "s/^hdmi_group/#hdmi_group/"
+	  sed $CONFIG -i -e "s/^hdmi_mode/#hdmi_mode/"
+	else
+	  set_config_var hdmi_force_hotplug 1 $CONFIG
+	  set_config_var hdmi_group $GROUP $CONFIG
+	  set_config_var hdmi_mode $MODE $CONFIG
+	fi
+    if [ "$INTERACTIVE" = True ]; then
+	  if [ $MODE -eq 0 ] ; then
+        whiptail --msgbox "The resolution is set to default" 20 60 1
+	  else
+        whiptail --msgbox "The resolution is set to $GRS mode $MODE" 20 60 1
+      fi
+    fi
+	if [ $MODE -eq 0 ] ; then
+	  TSET="Default"
+	elif [ $GROUP -eq 2 ] ; then
+	  TSET="DMT Mode "$MODE
+	else
+	  TSET="CEA Mode "$MODE
+	fi
+	if [ "$TSET" != "$CSET" ] ; then
+	  ASK_TO_REBOOT=1
+	fi
+  fi
+}
+
 do_finish() {
   disable_raspi_config_at_boot
   if [ $ASK_TO_REBOOT -eq 1 ]; then
@@ -1355,7 +1428,7 @@ if [ -n "${OPT_MEMORY_SPLIT:-}" ]; then
 fi
 
 do_internationalisation_menu() {
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Internationalisation Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Localisation Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
     "I1 Change Locale" "Set up language and regional settings to match your location" \
     "I2 Change Timezone" "Set up timezone to match your location" \
     "I3 Change Keyboard Layout" "Set the keyboard layout to match your keyboard" \
@@ -1375,20 +1448,43 @@ do_internationalisation_menu() {
   fi
 }
 
+do_interface_menu() {
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    "P1 Camera" "Enable/Disable connection to the Raspberry Pi Camera" \
+    "P2 SSH" "Enable/Disable remote command line access to your Pi using SSH" \
+    "P3 VNC" "Enable/Disable graphical remote access to your Pi using RealVNC" \
+    "P4 SPI" "Enable/Disable automatic loading of SPI kernel module (needed for e.g. PiFace)" \
+    "P5 I2C" "Enable/Disable automatic loading of I2C kernel module" \
+    "P6 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
+    "P7 1-Wire" "Enable/Disable one-wire interface" \
+    "P8 Remote GPIO" "Enable/Disable remote access to GPIO pins" \
+    3>&1 1>&2 2>&3)
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    case "$FUN" in
+      P1\ *) do_camera ;;
+      P2\ *) do_ssh ;;
+      P3\ *) do_vnc ;;
+      P4\ *) do_spi ;;
+      P5\ *) do_i2c ;;
+      P6\ *) do_serial ;;
+      P7\ *) do_onewire ;;
+      P8\ *) do_rgpio ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  fi
+}
+
 do_advanced_menu() {
   FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
     "A1 Overscan" "You may need to configure overscan if black bars are present on display" \
     "A2 Hostname" "Set the visible name for this Pi on a network" \
     "A3 Memory Split" "Change the amount of memory made available to the GPU" \
-    "A4 SSH" "Enable/Disable remote command line access to your Pi using SSH" \
-    "A5 VNC" "Enable/Disable graphical remote access to your Pi using RealVNC" \
-    "A6 SPI" "Enable/Disable automatic loading of SPI kernel module (needed for e.g. PiFace)" \
-    "A7 I2C" "Enable/Disable automatic loading of I2C kernel module" \
-    "A8 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
-    "A9 Audio" "Force audio out through HDMI or 3.5mm jack" \
-    "AA 1-Wire" "Enable/Disable one-wire interface" \
-    "AB GPIO Server" "Enable/Disable remote access to GPIO pins" \
-    "AC GL Driver" "Enable/Disable experimental desktop GL driver" \
+    "A4 Audio" "Force audio out through HDMI or 3.5mm jack" \
+    "A5 Resolution" "Set a specific screen resolution" \
+    "A6 GL Driver" "Enable/Disable experimental desktop GL driver" \
     "A0 Update" "Update this tool to the latest version" \
     3>&1 1>&2 2>&3)
   RET=$?
@@ -1399,15 +1495,9 @@ do_advanced_menu() {
       A1\ *) do_overscan ;;
       A2\ *) do_hostname ;;
       A3\ *) do_memory_split ;;
-      A4\ *) do_ssh ;;
-      A5\ *) do_vnc ;;
-      A6\ *) do_spi ;;
-      A7\ *) do_i2c ;;
-      A8\ *) do_serial ;;
-      A9\ *) do_audio ;;
-      AA\ *) do_onewire ;;
-      AB\ *) do_rgpio ;;
-      AC\ *) do_gldriver ;;
+      A4\ *) do_audio ;;
+      A5\ *) do_resolution ;;
+      A6\ *) do_gldriver ;;
       A0\ *) do_update ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
@@ -1449,8 +1539,8 @@ if [ "$INTERACTIVE" = True ]; then
       "1 Expand Filesystem" "Ensures that all of the SD card storage is available to the OS" \
       "2 Change User Password" "Change password for the default user (pi)" \
       "3 Boot Options" "Configure options for start-up" \
-      "4 Internationalisation Options" "Set up language and regional settings to match your location" \
-      "5 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
+      "4 Localisation Options" "Set up language and regional settings to match your location" \
+      "5 Interfacing Options" "Configure connections to peripherals" \
       "6 Overclock" "Configure overclocking for your Pi" \
       "7 Advanced Options" "Configure advanced settings" \
       "8 About raspi-config" "Information about this configuration tool" \
@@ -1464,7 +1554,7 @@ if [ "$INTERACTIVE" = True ]; then
         2\ *) do_change_pass ;;
         3\ *) do_boot_menu ;;
         4\ *) do_internationalisation_menu ;;
-        5\ *) do_camera ;;
+        5\ *) do_interface_menu ;;
         6\ *) do_overclock ;;
         7\ *) do_advanced_menu ;;
         8\ *) do_about ;;
