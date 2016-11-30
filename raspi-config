@@ -1213,12 +1213,8 @@ do_resolution() {
 	fi
     oIFS="$IFS"
     IFS="/"
-    cea=$(tvservice -m CEA | grep modes | sed 's/Group CEA has \([0-9]\+\) modes:/\1/')
-    dmt=$(tvservice -m DMT | grep modes | sed 's/Group DMT has \([0-9]\+\) modes:/\1/')
-    modes=$(($cea+$dmt))
-    #if [ $modes -gt 0 ] ; then
     if tvservice -d /dev/null | grep -q Nothing ; then
-      value="Default/720x480/DMT Mode 4/640x480 60Hz 4:3/DMT Mode 9/800x600 60Hz 4:3/DMT Mode 16/1024x768 60Hz 4:3/DMT Mode 85/1280x720 60Hz 16:9/DMT Mode 35/1280x1024 60Hz 5:4/DMT Mode 51/1600x1200 60Hz 4:3/DMT Mode 82/1920x1080 60Hz 16:9/DMT Mode 77/2560x1600 60Hz 16:10/"
+      value="Default/720x480/DMT Mode 4/640x480 60Hz 4:3/DMT Mode 9/800x600 60Hz 4:3/DMT Mode 16/1024x768 60Hz 4:3/DMT Mode 85/1280x720 60Hz 16:9/DMT Mode 35/1280x1024 60Hz 5:4/DMT Mode 51/1600x1200 60Hz 4:3/DMT Mode 82/1920x1080 60Hz 16:9/"
 	else
       value="Default/Monitor preferred resolution/"
       value=$value$(tvservice -m CEA | grep progressive | cut -b 12- | sed 's/mode \([0-9]\+\): \([0-9]\+\)x\([0-9]\+\) @ \([0-9]\+\)Hz \([0-9]\+\):\([0-9]\+\), clock:[0-9]\+MHz progressive/CEA Mode \1\/\2x\3 \4Hz \5:\6/' | tr '\n' '/')
