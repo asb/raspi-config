@@ -1241,9 +1241,9 @@ do_resolution() {
   fi
   if [ $STATUS -eq 0 ]; then
 	if [ $MODE -eq 0 ]; then
-	  sed $CONFIG -i -e "s/^hdmi_force_hotplug/#hdmi_force_hotplug/"
-	  sed $CONFIG -i -e "s/^hdmi_group/#hdmi_group/"
-	  sed $CONFIG -i -e "s/^hdmi_mode/#hdmi_mode/"
+	  clear_config_var hdmi_force_hotplug $CONFIG
+	  clear_config_var hdmi_group $CONFIG
+	  clear_config_var hdmi_mode $CONFIG
 	else
 	  set_config_var hdmi_force_hotplug 1 $CONFIG
 	  set_config_var hdmi_group $GROUP $CONFIG
