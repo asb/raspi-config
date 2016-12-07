@@ -1,3 +1,15 @@
+raspi-config (20161207) jessie; urgency=medium
+
+  * Use compton for compositing with GL driver instead of xcompmgr
+
+ -- Simon Long <simon@raspberrypi.org>  Wed, 07 Dec 2016 12:43:26 +0000
+
+raspi-config (20161206) jessie; urgency=medium
+
+  * Menus reorganised; resolution setting added
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 06 Dec 2016 13:43:32 +0000
+
 raspi-config (20161114) jessie; urgency=medium
 
   * Restore -a option for xcompmgr; disable splash screen with GL driver
