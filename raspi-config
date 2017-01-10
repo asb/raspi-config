@@ -7,12 +7,17 @@ INTERACTIVE=True
 ASK_TO_REBOOT=0
 BLACKLIST=/etc/modprobe.d/raspi-blacklist.conf
 CONFIG=/boot/config.txt
-CMDLINE=/boot/cmdline.txt
 
 is_pi () {
 	grep -q BCM27 /proc/cpuinfo
 	return $?
 }
+
+if is_pi ; then
+  CMDLINE=/boot/cmdline.txt
+else
+  CMDLINE=/proc/cmdline
+fi
 
 is_pione() {
    if grep -q "^Revision\s*:\s*00[0-9a-fA-F][0-9a-fA-F]$" /proc/cpuinfo; then
@@ -689,7 +694,7 @@ do_i2c() {
 }
 
 get_serial() {
-  if grep -q "ttyAMA" /proc/cmdline ; then
+  if grep -q "ttyAMA" $CMDLINE ; then
     if grep -q -E "^enable_uart=0" $CONFIG; then
       echo 1
     else
@@ -940,7 +945,9 @@ get_boot_splash() {
 
 do_boot_splash() {
   if [ ! -e /usr/share/plymouth/themes/pix/pix.script ]; then
-    whiptail --msgbox "The splash screen is not installed so cannot be activated" 20 60 2
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "The splash screen is not installed so cannot be activated" 20 60 2
+    fi
     return 1
   fi
   DEFAULT=--defaultno
@@ -1153,11 +1160,7 @@ do_gldriver() {
     if ! grep -q -E "^dtoverlay=vc4-kms-v3d" $CONFIG; then
       printf "dtoverlay=vc4-kms-v3d\n" >> $CONFIG
     fi
-    if grep -q "splash" $CMDLINE ; then
-	    sed -i $CMDLINE -e "s/ quiet//"
-	    sed -i $CMDLINE -e "s/ splash//"
-	    sed -i $CMDLINE -e "s/ plymouth.ignore-serial-consoles//"
-	fi
+    do_boot_splash 1
     cat << EOF > /etc/xdg/autostart/xcompmgr.desktop
 [Desktop Entry]
 Type=Application
