@@ -699,36 +699,46 @@ do_i2c() {
 }
 
 get_serial() {
-  if grep -q "ttyAMA" $CMDLINE ; then
-    if grep -q -E "^enable_uart=0" $CONFIG; then
-      echo 1
-    else
-      echo 0
-    fi
+  if grep -q -E "console=(serial0|ttyAMA0|ttyS0)" $CMDLINE ; then
+    echo 0
   else
-    if grep -q -E "^enable_uart=1" $CONFIG; then
-      echo 0
-    else
-      echo 1
-    fi
+    echo 1
+  fi
+}
+
+get_serial_hw() {
+  if grep -q -E "^enable_uart=1" $CONFIG ; then
+    echo 0
+  elif grep -q -E "^enable_uart=0" $CONFIG ; then
+    echo 1
+  elif [ -e /dev/serial0 ] ; then
+    echo 0
+  else
+    echo 1
   fi
 }
 
 do_serial() {
-  DEFAULT=--defaultno
-  CURRENT=0
+  DEFAULTS=--defaultno
+  DEFAULTH=--defaultno
+  CURRENTS=0
+  CURRENTH=0
   if [ $(get_serial) -eq 0 ]; then
-      DEFAULT=
-      CURRENT=1
+      DEFAULTS=
+      CURRENTS=1
+  fi
+  if [ $(get_serial_hw) -eq 0 ]; then
+      DEFAULTH=
+      CURRENTH=1
   fi
   if [ "$INTERACTIVE" = True ]; then
-    whiptail --yesno "Would you like a login shell to be accessible over serial?" $DEFAULT 20 60 2
+    whiptail --yesno "Would you like a login shell to be accessible over serial?" $DEFAULTS 20 60 2
     RET=$?
   else
     get_init_sys
     RET=$1
   fi
-  if [ $RET -eq $CURRENT ]; then
+  if [ $RET -eq $CURRENTS ]; then
     ASK_TO_REBOOT=1
   fi
   if [ $RET -eq 0 ]; then
@@ -750,20 +760,38 @@ do_serial() {
       fi
     fi
     set_config_var enable_uart 1 $CONFIG
-    STATUS=enabled
+    SSTATUS=enabled
+    HSTATUS=enabled
   elif [ $RET -eq 1 ]; then
     if [ $SYSTEMD -eq 0 ]; then
       sed -i /etc/inittab -e "s|^.*:.*:respawn:.*ttyAMA0|#&|"
     fi
     sed -i $CMDLINE -e "s/console=ttyAMA0,[0-9]\+ //"
     sed -i $CMDLINE -e "s/console=serial0,[0-9]\+ //"
-    set_config_var enable_uart 0 $CONFIG
-    STATUS=disabled
+    SSTATUS=disabled
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --yesno "Would you like the serial port hardware to be enabled?" $DEFAULTH 20 60 2
+      RET=$?
+    else
+      RET=1
+    fi
+    if [ $RET -eq $CURRENTH ]; then
+     ASK_TO_REBOOT=1
+    fi
+    if [ $RET -eq 0 ]; then
+      set_config_var enable_uart 1 $CONFIG
+      HSTATUS=enabled
+    elif [ $RET -eq 1 ]; then
+      set_config_var enable_uart 0 $CONFIG
+      HSTATUS=disabled
+    else
+      return $RET
+    fi
   else
     return $RET
   fi
   if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "The serial interface is $STATUS" 20 60 1
+      whiptail --msgbox "The serial login shell is $SSTATUS\nThe serial interface is $HSTATUS" 20 60 1
   fi
 }
 
