@@ -49,6 +49,11 @@ get_pi_type() {
    fi
 }
 
+is_live() {
+    grep -q "boot=live" $CMDLINE
+    return $?
+}
+
 get_init_sys() {
   if command -v systemctl > /dev/null && systemctl | grep -q '\-\.mount'; then
     SYSTEMD=1
@@ -1510,11 +1515,18 @@ do_advanced_menu() {
 }
 
 do_boot_menu() {
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-    "B1 Desktop / CLI" "Choose whether to boot into a desktop environment or the command line" \
-    "B2 Wait for Network at Boot" "Choose whether to wait for network connection during boot" \
-    "B3 Splash Screen" "Choose graphical splash screen or text boot" \
-    3>&1 1>&2 2>&3)
+  if is_live ; then
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "B1 Desktop / CLI" "Choose whether to boot into a desktop environment or the command line" \
+      "B2 Wait for Network at Boot" "Choose whether to wait for network connection during boot" \
+      3>&1 1>&2 2>&3)
+  else
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "B1 Desktop / CLI" "Choose whether to boot into a desktop environment or the command line" \
+      "B2 Wait for Network at Boot" "Choose whether to wait for network connection during boot" \
+      "B3 Splash Screen" "Choose graphical splash screen or text boot" \
+      3>&1 1>&2 2>&3)
+  fi
   RET=$?
   if [ $RET -eq 1 ]; then
     return 0
