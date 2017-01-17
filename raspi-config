@@ -22,7 +22,7 @@ fi
 is_pione() {
    if grep -q "^Revision\s*:\s*00[0-9a-fA-F][0-9a-fA-F]$" /proc/cpuinfo; then
       return 0
-   elif  grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]0[0-36][0-9a-fA-F]$" /proc/cpuinfo ; then
+   elif grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]0[0-36][0-9a-fA-F]$" /proc/cpuinfo ; then
       return 0
    else
       return 1
@@ -1151,14 +1151,6 @@ do_onewire() {
   fi
 }
 
-get_gldriver() {
-  if grep -q -E "^dtoverlay=vc4-kms-v3d" $CONFIG; then
-    echo 0
-  else
-    echo 1
-  fi
-}
-
 do_gldriver() {
   if is_pione || is_pizero; then
     whiptail --msgbox "GL driver cannot be used on Pi 1 or Pi 0" 20 60 2
@@ -1172,29 +1164,69 @@ do_gldriver() {
     whiptail --msgbox "libgl1-mesa-dri not found - please install" 20 60 2
     return 1
   fi
-
-  DEFAULT=--defaultno
-  CURRENT=0
-  if [ $(get_gldriver) -eq 0 ]; then
-    DEFAULT=
-    CURRENT=1
-  fi
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --yesno "Would you like the experimental GL driver for desktop to be enabled?" $DEFAULT 20 60 2
-    RET=$?
+  GLOPT=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "GL Driver" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
+    "G1 GL (Full KMS)" "OpenGL desktop driver with full KMS" \
+    "G2 GL (Fake KMS)" "OpenGL desktop driver with fake KMS" \
+    "G3 Legacy" "Original non-GL desktop driver" \
+    3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    case "$GLOPT" in
+      G1*)
+        if ! grep -q -E "^dtoverlay=vc4-kms-v3d" $CONFIG; then
+          ASK_TO_REBOOT=1
+        fi
+		sed $CONFIG -i -e "s/^dtoverlay=vc4-fkms-v3d/#dtoverlay=vc4-fkms-v3d/"
+		sed $CONFIG -i -e "s/^#dtoverlay=vc4-kms-v3d/dtoverlay=vc4-kms-v3d/"
+		if ! grep -q -E "^dtoverlay=vc4-kms-v3d" $CONFIG; then
+			printf "dtoverlay=vc4-kms-v3d\n" >> $CONFIG
+		fi
+        STATUS="The full KMS GL driver is enabled."
+        ;;
+      G2*)
+        if ! grep -q -E "^dtoverlay=vc4-fkms-v3d" $CONFIG; then
+          ASK_TO_REBOOT=1
+        fi
+		sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/"
+		sed $CONFIG -i -e "s/^#dtoverlay=vc4-fkms-v3d/dtoverlay=vc4-fkms-v3d/"
+		if ! grep -q -E "^dtoverlay=vc4-fkms-v3d" $CONFIG; then
+			printf "dtoverlay=vc4-fkms-v3d\n" >> $CONFIG
+		fi
+        STATUS="The fake KMS GL driver is enabled."
+        ;;
+      G3*)
+        if grep -q -E "^dtoverlay=vc4-f?kms-v3d" $CONFIG; then
+          ASK_TO_REBOOT=1
+        fi
+        sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/"
+        sed $CONFIG -i -e "s/^dtoverlay=vc4-fkms-v3d/#dtoverlay=vc4-fkms-v3d/"
+        STATUS="The GL driver is disabled."
+        ;;
+      *)
+        whiptail --msgbox "Programmer error, unrecognised boot option" 20 60 2
+        return 1
+        ;;
+    esac
   else
-    RET=$1
+    return 0
   fi
-  if [ $RET -eq $CURRENT ]; then
-    ASK_TO_REBOOT=1
-  fi
-  if [ $RET -eq 0 ]; then # enable driver
-    sed $CONFIG -i -e "s/^#dtoverlay=vc4-kms-v3d/dtoverlay=vc4-kms-v3d/"
-    if ! grep -q -E "^dtoverlay=vc4-kms-v3d" $CONFIG; then
-      printf "dtoverlay=vc4-kms-v3d\n" >> $CONFIG
+  if echo "$GLOPT" | grep -q -E "1|2" ; then
+    if grep -q "splash" $CMDLINE ; then
+	    sed -i $CMDLINE -e "s/ quiet//"
+	    sed -i $CMDLINE -e "s/ splash//"
+	    sed -i $CMDLINE -e "s/ plymouth.ignore-serial-consoles//"
+	fi
+    if [ -e /usr/share/X11/xorg.conf.d/99-fbturbo.conf ] ; then
+      mv /usr/share/X11/xorg.conf.d/99-fbturbo.conf /usr/share/X11/xorg.conf.d/99-fbturbo.~
     fi
-    do_boot_splash 1
-    cat << EOF > /etc/xdg/autostart/xcompmgr.desktop
+    sed $CONFIG -i -e "s/^gpu_mem/#gpu_mem/"
+  else
+    if [ -e /usr/share/X11/xorg.conf.d/99-fbturbo.~ ] ; then
+      mv /usr/share/X11/xorg.conf.d/99-fbturbo.~ /usr/share/X11/xorg.conf.d/99-fbturbo.conf
+    fi
+  fi
+  if echo "$GLOPT" | grep -q -E "1" ; then
+    if [ ! -e /etc/xdg/autostart/xcompmgr.desktop ] ; then
+      cat << EOF > /etc/xdg/autostart/xcompmgr.desktop
 [Desktop Entry]
 Type=Application
 Name=compton
@@ -1202,24 +1234,17 @@ Comment=Start Compton compositor
 NoDisplay=true
 Exec=compton --backend glx --unredir-if-possible --glx-swap-method buffer-age --glx-no-stencil --paint-on-overlay --vsync opengl
 EOF
-    mv /usr/share/X11/xorg.conf.d/99-fbturbo.conf /usr/share/X11/xorg.conf.d/99-fbturbo.~
-    sed $CONFIG -i -e "s/^gpu_mem/#gpu_mem/"
+    fi
     if [ ! -e /usr/bin/compton ]; then
       sudo apt-get -y install compton
-     fi
-    STATUS=enabled
-  elif [ $RET -eq 1 ]; then # disable driver
-    sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/"
-    rm /etc/xdg/autostart/xcompmgr.desktop
-    mv /usr/share/X11/xorg.conf.d/99-fbturbo.~ /usr/share/X11/xorg.conf.d/99-fbturbo.conf
-    STATUS=disabled
+    fi
   else
-    return $RET
+    if [ -e /etc/xdg/autostart/xcompmgr.desktop ] ; then
+      rm /etc/xdg/autostart/xcompmgr.desktop
+    fi
   fi
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --msgbox "The desktop GL driver is $STATUS" 20 60 1
-  fi
-}
+  whiptail --msgbox "$STATUS" 20 60 1
+ }
 
 do_update() {
   apt-get update &&
