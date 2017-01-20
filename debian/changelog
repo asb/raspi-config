@@ -1,3 +1,9 @@
+raspi-config (20170120) jessie; urgency=medium
+
+  * Mods to support use on x86; fake KMS option added for GL driver
+
+ -- Simon Long <simon@raspberrypi.org>  Fri, 20 Jan 2017 14:19:18 +0000
+
 raspi-config (20161207) jessie; urgency=medium
 
   * Use compton for compositing with GL driver instead of xcompmgr
