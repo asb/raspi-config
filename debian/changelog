@@ -1,3 +1,9 @@
+raspi-config (20170127) jessie; urgency=medium
+
+  * Prevent keyboard language from being configured over SSH
+
+ -- Simon Long <simon@raspberrypi.org>  Fri, 27 Jan 2017 16:15:56 +0000
+
 raspi-config (20170120) jessie; urgency=medium
 
   * Mods to support use on x86; fake KMS option added for GL driver
