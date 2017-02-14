@@ -9,7 +9,7 @@ BLACKLIST=/etc/modprobe.d/raspi-blacklist.conf
 CONFIG=/boot/config.txt
 
 is_pi () {
-	grep -q BCM27 /proc/cpuinfo
+	grep -q "^model name\s*:\s*ARMv" /proc/cpuinfo
 	return $?
 }
 
@@ -1227,12 +1227,6 @@ do_gldriver() {
       mv /usr/share/X11/xorg.conf.d/99-fbturbo.conf /usr/share/X11/xorg.conf.d/99-fbturbo.~
     fi
     sed $CONFIG -i -e "s/^gpu_mem/#gpu_mem/"
-  else
-    if [ -e /usr/share/X11/xorg.conf.d/99-fbturbo.~ ] ; then
-      mv /usr/share/X11/xorg.conf.d/99-fbturbo.~ /usr/share/X11/xorg.conf.d/99-fbturbo.conf
-    fi
-  fi
-  if echo "$GLOPT" | grep -q -E "1" ; then
     if [ ! -e /etc/xdg/autostart/xcompmgr.desktop ] ; then
       cat << EOF > /etc/xdg/autostart/xcompmgr.desktop
 [Desktop Entry]
@@ -1247,6 +1241,9 @@ EOF
       sudo apt-get -y install compton
     fi
   else
+    if [ -e /usr/share/X11/xorg.conf.d/99-fbturbo.~ ] ; then
+      mv /usr/share/X11/xorg.conf.d/99-fbturbo.~ /usr/share/X11/xorg.conf.d/99-fbturbo.conf
+    fi
     if [ -e /etc/xdg/autostart/xcompmgr.desktop ] ; then
       rm /etc/xdg/autostart/xcompmgr.desktop
     fi
