@@ -1,3 +1,9 @@
+raspi-config (20170214) jessie; urgency=medium
+
+  * Allow compton with fake KMS driver; modified check for ARM architecture
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 14 Feb 2017 14:47:58 +0000
+
 raspi-config (20170127) jessie; urgency=medium
 
   * Prevent keyboard language from being configured over SSH
