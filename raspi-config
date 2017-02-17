@@ -820,7 +820,7 @@ disable_raspi_config_at_boot() {
 }
 
 get_boot_cli() {
-  if service lightdm status | grep -q inactive; then
+  if systemctl get-default | grep -q multi-user ; then
     echo 0
   else
     echo 1
