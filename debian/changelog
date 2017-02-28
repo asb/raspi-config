@@ -1,3 +1,9 @@
+raspi-config (20170228) jessie; urgency=medium
+
+  * Added detection of 0 W boards
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 28 Feb 2017 10:06:36 +0000
+
 raspi-config (20170214) jessie; urgency=medium
 
   * Allow compton with fake KMS driver; modified check for ARM architecture
