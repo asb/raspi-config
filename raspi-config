@@ -351,9 +351,9 @@ do_wifi_country() {
   if [ $? -eq 0 ];then
     if [ -e /etc/wpa_supplicant/wpa_supplicant.conf ]; then
         if grep -q "^country=" /etc/wpa_supplicant/wpa_supplicant.conf ; then
-            sed -i "s/^country=.*/country=$COUNTRY/g" /etc/wpa_supplicant/wpa_supplicant.conf
+            sed -i --follow-symlinks "s/^country=.*/country=$COUNTRY/g" /etc/wpa_supplicant/wpa_supplicant.conf
         else
-            sed -i "1i country=$COUNTRY" /etc/wpa_supplicant/wpa_supplicant.conf
+            sed -i --follow-symlinks "1i country=$COUNTRY" /etc/wpa_supplicant/wpa_supplicant.conf
         fi
     else
         echo "country=$COUNTRY" > /etc/wpa_supplicant/wpa_supplicant.conf
