@@ -1,3 +1,10 @@
+raspi-config (20170307) jessie; urgency=medium
+
+  * Run init_resize.sh through shellcheck
+  * Improve init_resize.sh reliability
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 07 Mar 2017 13:49:57 +0000
+
 raspi-config (20170228) jessie; urgency=medium
 
   * Added detection of 0 W boards
