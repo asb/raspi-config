@@ -1,3 +1,15 @@
+raspi-config (20170518) jessie; urgency=medium
+
+  * Improve x86 splash screen command line handling to remove spurious arguments and spaces
+
+ -- Simon Long <simon@raspberrypi.org>  Thu, 18 May 2017 13:19:27 +0100
+
+raspi-config (20170503) jessie; urgency=medium
+
+  * Correctly handle GRUB command line options for splash screen on x86
+
+ -- Simon Long <simon@raspberrypi.org>  Wed, 03 May 2017 11:30:57 +0100
+
 raspi-config (20170307) jessie; urgency=medium
 
   * Run init_resize.sh through shellcheck

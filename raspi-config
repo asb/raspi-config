@@ -980,10 +980,18 @@ EOF
 }
 
 get_boot_splash() {
-  if grep -q "splash" $CMDLINE ; then
-    echo 0
+  if is_pi ; then
+    if grep -q "splash" $CMDLINE ; then
+      echo 0
+    else
+      echo 1
+    fi
   else
-    echo 1
+    if grep -q "GRUB_CMDLINE_LINUX_DEFAULT.*splash" /etc/default/grub ; then
+      echo 0
+    else
+      echo 1
+    fi
   fi
 }
 
@@ -1011,6 +1019,8 @@ do_boot_splash() {
 		fi
 	else
 		sed -i /etc/default/grub -e "s/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1 quiet splash plymouth.ignore-serial-consoles\"/"
+		sed -i /etc/default/grub -e "s/  \+/ /g"
+		sed -i /etc/default/grub -e "s/GRUB_CMDLINE_LINUX_DEFAULT=\" /GRUB_CMDLINE_LINUX_DEFAULT=\"/"
 		update-grub
 	fi
     STATUS=enabled
@@ -1022,10 +1032,11 @@ do_boot_splash() {
 			sed -i $CMDLINE -e "s/ plymouth.ignore-serial-consoles//"
 		fi
 	else
-		sed -i /etc/default/grub -e "s/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\) quiet\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1 \2\"/"
-		sed -i /etc/default/grub -e "s/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\) splash\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1 \2\"/"
-		sed -i /etc/default/grub -e "s/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\) plymouth.ignore-serial-consoles\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1 \2\"/"
-		sed -i /etc/default/grub -e "s/GRUB_CMDLINE_LINUX_DEFAULT=\" *\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\"/"
+		sed -i /etc/default/grub -e "s/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)quiet\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1\2\"/"
+		sed -i /etc/default/grub -e "s/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)splash\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1\2\"/"
+		sed -i /etc/default/grub -e "s/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)plymouth.ignore-serial-consoles\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1\2\"/"
+		sed -i /etc/default/grub -e "s/  \+/ /g"
+		sed -i /etc/default/grub -e "s/GRUB_CMDLINE_LINUX_DEFAULT=\" /GRUB_CMDLINE_LINUX_DEFAULT=\"/"
 		update-grub
 	fi
     STATUS=disabled
