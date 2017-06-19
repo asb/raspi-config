@@ -4,4 +4,8 @@ if [ -e /etc/init.d/switch_cpu_governor ]; then
   update-rc.d switch_cpu_governor remove >/dev/null
 fi
 
+if dpkg --compare-versions "${2}" lt-nl "20170619"; then
+  update-rc.d -f raspi-config remove
+fi
+
 #DEBHELPER#

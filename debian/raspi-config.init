@@ -3,7 +3,7 @@
 # Provides:          raspi-config
 # Required-Start: udev mountkernfs $remote_fs
 # Required-Stop:
-# Default-Start: S
+# Default-Start: S 2 3 4 5
 # Default-Stop:
 # Short-Description: Switch to ondemand cpu governor (unless shift key is pressed)
 # Description:
