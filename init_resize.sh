@@ -4,6 +4,13 @@ reboot_pi () {
   umount /boot
   mount / -o remount,ro
   sync
+  if [ "$NOOBS" = "1" ]; then
+    if [ "$NEW_KERNEL" = "1" ]; then
+      reboot -f "$BOOT_PART_NUM"
+    else
+      echo "$BOOT_PART_NUM" > "/sys/module/${BCM_MODULE}/parameters/reboot_part"
+    fi
+  fi
   echo b > /proc/sysrq-trigger
   sleep 5
   exit 0
@@ -105,6 +112,18 @@ check_variables () {
   fi
 }
 
+check_kernel () {
+  local MAJOR=$(uname -r | cut -f1 -d.)
+  local MINOR=$(uname -r | cut -f2 -d.)
+  if [ "$MAJOR" -eq "4" ] && [ "$MINOR" -lt "9" ]; then
+    return 0
+  fi
+  if [ "$MAJOR" -lt "4" ]; then
+    return 0
+  fi
+  NEW_KERNEL=1
+}
+
 main () {
   get_variables
 
@@ -112,13 +131,14 @@ main () {
     return 1
   fi
 
-  if [ "$NOOBS" = "1" ]; then
+  check_kernel
+
+  if [ "$NOOBS" = "1" ] && [ "$NEW_KERNEL" != "1" ]; then
     BCM_MODULE=$(grep -e "^Hardware" /proc/cpuinfo | cut -d ":" -f 2 | tr -d " " | tr '[:upper:]' '[:lower:]')
     if ! modprobe "$BCM_MODULE"; then
       FAIL_REASON="Couldn't load BCM module $BCM_MODULE"
       return 1
     fi
-    echo "$BOOT_PART_NUM" > "/sys/module/${BCM_MODULE}/parameters/reboot_part"
   fi
 
   if [ "$ROOT_PART_END" -eq "$TARGET_END" ]; then
@@ -145,6 +165,8 @@ main () {
 
 mount -t proc proc /proc
 mount -t sysfs sys /sys
+mount -t tmpfs tmp /run
+mkdir -p /run/systemd
 
 mount /boot
 mount / -o remount,rw
