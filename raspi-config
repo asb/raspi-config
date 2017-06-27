@@ -1187,10 +1187,6 @@ do_onewire() {
 }
 
 do_gldriver() {
-  if is_pione || is_pizero; then
-    whiptail --msgbox "GL driver cannot be used on Pi 1 or Pi 0" 20 60 2
-    return 1
-  fi
   if [ ! -e /boot/overlays/vc4-kms-v3d.dtbo ]; then
     whiptail --msgbox "Driver and kernel not present on your system. Please update" 20 60 2
     return 1
@@ -1250,30 +1246,7 @@ do_gldriver() {
 	    sed -i $CMDLINE -e "s/ splash//"
 	    sed -i $CMDLINE -e "s/ plymouth.ignore-serial-consoles//"
 	fi
-    if [ -e /usr/share/X11/xorg.conf.d/99-fbturbo.conf ] ; then
-      mv /usr/share/X11/xorg.conf.d/99-fbturbo.conf /usr/share/X11/xorg.conf.d/99-fbturbo.~
-    fi
     sed $CONFIG -i -e "s/^gpu_mem/#gpu_mem/"
-    if [ ! -e /etc/xdg/autostart/xcompmgr.desktop ] ; then
-      cat << EOF > /etc/xdg/autostart/xcompmgr.desktop
-[Desktop Entry]
-Type=Application
-Name=compton
-Comment=Start Compton compositor
-NoDisplay=true
-Exec=compton --backend glx --unredir-if-possible --glx-swap-method buffer-age --glx-no-stencil --paint-on-overlay --vsync opengl
-EOF
-    fi
-    if [ ! -e /usr/bin/compton ]; then
-      sudo apt-get -y install compton
-    fi
-  else
-    if [ -e /usr/share/X11/xorg.conf.d/99-fbturbo.~ ] ; then
-      mv /usr/share/X11/xorg.conf.d/99-fbturbo.~ /usr/share/X11/xorg.conf.d/99-fbturbo.conf
-    fi
-    if [ -e /etc/xdg/autostart/xcompmgr.desktop ] ; then
-      rm /etc/xdg/autostart/xcompmgr.desktop
-    fi
   fi
   whiptail --msgbox "$STATUS" 20 60 1
  }
