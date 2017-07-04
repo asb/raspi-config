@@ -1,3 +1,9 @@
+raspi-config (20170704) stretch; urgency=medium
+
+  * Remove unnecessary sudo from apt-get
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 04 Jul 2017 10:28:55 +0100
+
 raspi-config (20170627) stretch; urgency=medium
 
   * Change configuration for GL driver - no compton, keep fbturbo, allow on Pi 1 and Pi 0
