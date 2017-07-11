@@ -1,3 +1,10 @@
+raspi-config (20170711) stretch; urgency=medium
+
+  * Fix wait for network option
+  * Bump compat level to 9
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 11 Jul 2017 11:47:34 +0100
+
 raspi-config (20170704) stretch; urgency=medium
 
   * Remove unnecessary sudo from apt-get
