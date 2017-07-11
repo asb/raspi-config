@@ -1,6 +1,7 @@
 raspi-config (20170712) UNRELEASED; urgency=medium
 
   * Add pi model as backtitle
+  * Define memory split units
 
  -- Serge Schneider <serge@raspberrypi.org>  Tue, 11 Jul 2017 12:20:26 +0100
 
