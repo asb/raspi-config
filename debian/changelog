@@ -1,3 +1,9 @@
+raspi-config (20170712) UNRELEASED; urgency=medium
+
+  * Add pi model as backtitle
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 11 Jul 2017 12:20:26 +0100
+
 raspi-config (20170711) stretch; urgency=medium
 
   * Fix wait for network option
