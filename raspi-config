@@ -1342,7 +1342,8 @@ EOF
     printf "Setting keyboard layout to %s based on os_config.json from NOOBS. May take a while\n" "$NOOBSKEYBOARD"
     sed -i /etc/default/keyboard -e "s/^XKBLAYOUT.*/XKBLAYOUT=\"$NOOBSKEYBOARD\"/"
     dpkg-reconfigure -f noninteractive keyboard-configuration
-    invoke-rc.d keyboard-setup start
+    setupcon -k --force
+    udevadm trigger -p ID_INPUT_KEY=1
   fi
   return 0
 }

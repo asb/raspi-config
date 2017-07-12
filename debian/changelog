@@ -1,16 +1,14 @@
 raspi-config (20170714) stretch; urgency=medium
 
+  [Simon Long]
   * Autologin operations now all use current user rather than defaulting to pi
   * initd support removed
-
- -- Simon Long <simon@raspberrypi.org>  Fri, 14 Jul 2017 10:26:23 +0100
-
-raspi-config (20170712) stretch; urgency=medium
-
+  [Serge Schneider]
   * Add pi model as backtitle
   * Define memory split units
+  * Fix NOOBS config keyboard setup
 
- -- Serge Schneider <serge@raspberrypi.org>  Tue, 11 Jul 2017 12:20:26 +0100
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 14 Jul 2017 12:34:21 +0100
 
 raspi-config (20170711) stretch; urgency=medium
 
