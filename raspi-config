@@ -1150,7 +1150,7 @@ do_gldriver() {
   else
     return 0
   fi
-  if echo "$GLOPT" | grep -q -E "1|2" ; then
+  if echo "$GLOPT" | grep -q -E "1" ; then
     if grep -q "splash" $CMDLINE ; then
 	    sed -i $CMDLINE -e "s/ quiet//"
 	    sed -i $CMDLINE -e "s/ splash//"

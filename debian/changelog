@@ -1,3 +1,9 @@
+raspi-config (20170803) stretch; urgency=medium
+
+  * Allow splash screen with fake KMS.
+
+ -- Simon Long <simon@raspberrypi.org>  Thu, 03 Aug 2017 10:11:08 +0100
+
 raspi-config (20170714) stretch; urgency=medium
 
   [Simon Long]
