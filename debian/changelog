@@ -1,6 +1,6 @@
 raspi-config (20170811) stretch; urgency=medium
 
-  * Enable and disable pigpiod daemon with remote access
+  * Only restart pigpio daemon if it is running
 
  -- Simon Long <simon@raspberrypi.org>  Fri, 11 Aug 2017 14:40:50 +0100
 

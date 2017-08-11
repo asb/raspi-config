@@ -990,18 +990,16 @@ do_rgpio() {
 ExecStart=
 ExecStart=/usr/bin/pigpiod
 EOF
-    systemctl daemon-reload
-    systemctl restart pigpiod
-    systemctl enable pigpiod
     STATUS=enabled
   elif [ $RET -eq 1 ]; then
     rm -f /etc/systemd/system/pigpiod.service.d/public.conf
-    systemctl daemon-reload
-    systemctl stop pigpiod
-    systemctl disable pigpiod
     STATUS=disabled
   else
     return $RET
+  fi
+  systemctl daemon-reload
+  if systemctl -q is-enabled pigpiod ; then
+    systemctl restart pigpiod
   fi
   if [ "$INTERACTIVE" = True ]; then
     whiptail --msgbox "Remote access to the GPIO server is $STATUS" 20 60 1
@@ -1453,7 +1451,7 @@ do_interface_menu() {
       "P5 I2C" "Enable/Disable automatic loading of I2C kernel module" \
       "P6 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
       "P7 1-Wire" "Enable/Disable one-wire interface" \
-      "P8 GPIO Server" "Enable/Disable remote access to GPIO pins" \
+      "P8 Remote GPIO" "Enable/Disable remote access to GPIO pins" \
       3>&1 1>&2 2>&3)
     RET=$?
     if [ $RET -eq 1 ]; then
