@@ -1,3 +1,9 @@
+raspi-config (20170926) stretch; urgency=medium
+
+  * Add option to enable predictable network interface names
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 26 Sep 2017 12:32:25 +0100
+
 raspi-config (20170811) stretch; urgency=medium
 
   * Only restart pigpio daemon if it is running

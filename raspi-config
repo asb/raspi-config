@@ -1163,6 +1163,45 @@ do_gldriver() {
   whiptail --msgbox "$STATUS" 20 60 1
  }
 
+get_net_names() {
+  if grep -q "net.ifnames=0" $CMDLINE || [ "$(readlink -f /etc/systemd/network/99-default.link)" = "/dev/null" ] ; then
+    echo 1
+  else
+    echo 0
+  fi
+}
+
+do_net_names () {
+  DEFAULT=--defaultno
+  CURRENT=0
+  if [ $(get_net_names) -eq 0 ]; then
+    DEFAULT=
+    CURRENT=1
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like to enable predictable network interface names?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    RET=$1
+  fi
+  if [ $RET -eq $CURRENT ]; then
+    ASK_TO_REBOOT=1
+  fi
+  if [ $RET -eq 0 ]; then
+	sed -i $CMDLINE -e "s/net.ifnames=0 *//"
+	rm -f /etc/systemd/network/99-default.link
+    STATUS=enabled
+  elif [ $RET -eq 1 ]; then
+	ln -sf /dev/null /etc/systemd/network/99-default.link
+    STATUS=disabled
+  else
+    return $RET
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "Predictable network interface names are $STATUS" 20 60 1
+  fi
+ }
+
 do_update() {
   apt-get update &&
   apt-get install raspi-config &&
@@ -1480,6 +1519,7 @@ do_advanced_menu() {
     "A4 Audio" "Force audio out through HDMI or 3.5mm jack" \
     "A5 Resolution" "Set a specific screen resolution" \
     "A6 GL Driver" "Enable/Disable experimental desktop GL driver" \
+    "A7 Network interface names" "Enable/Disable predictable network interface names" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -1492,6 +1532,7 @@ do_advanced_menu() {
       A4\ *) do_audio ;;
       A5\ *) do_resolution ;;
       A6\ *) do_gldriver ;;
+      A7\ *) do_net_names ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
