@@ -1294,6 +1294,99 @@ do_resolution() {
   fi
 }
 
+list_wlan_interfaces() {
+  for dir in /sys/class/net/*/wireless; do
+    if [ -d "$dir" ]; then
+      basename "$(dirname "$dir")"
+    fi
+  done
+}
+
+do_wifi_ssid_passphrase() {
+  RET=0
+  IFACE_LIST="$(list_wlan_interfaces)"
+  IFACE="$(echo "$IFACE_LIST" | head -n 1)"
+
+  if [ -z "$IFACE" ]; then
+    whiptail --msgbox "No wireless interface found" 20 60
+    return 1
+  fi
+
+  if ! wpa_cli -i "$IFACE" status > /dev/null 2>&1; then
+    whiptail --msgbox "Could not communicate with wpa_supplicant" 20 60
+    return 1
+  fi
+
+  SSID=
+  while [ -z "$SSID" ]; do
+    SSID=$(whiptail --inputbox "Please enter SSID" 20 60 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+      return 0
+    elif [ -z "$SSID" ]; then
+      whiptail --msgbox "SSID cannot be empty. Please try again." 20 60
+    fi
+  done
+
+  while true; do
+    PASSPHRASE=$(whiptail --passwordbox "Please enter passphrase. Leave it empty if none." 20 60 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+      return 0
+    else
+      break
+    fi
+  done
+
+  # Escape special characters for embedding in regex below
+  local ssid=$(echo "$SSID" \
+   | sed 's;\\;\\\\;g' \
+   | sed -e 's;\.;\\\.;g' \
+         -e 's;\*;\\\*;g' \
+         -e 's;\+;\\\+;g' \
+         -e 's;\?;\\\?;g' \
+         -e 's;\^;\\\^;g' \
+         -e 's;\$;\\\$;g' \
+         -e 's;\/;\\\/;g' \
+         -e 's;\[;\\\[;g' \
+         -e 's;\];\\\];g' \
+         -e 's;{;\\{;g'   \
+         -e 's;};\\};g'   \
+         -e 's;(;\\(;g'   \
+         -e 's;);\\);g'   \
+         -e 's;";\\\\\";g')
+
+  wpa_cli -i "$IFACE" list_networks \
+   | tail -n +2 | cut -f -2 | grep -P "\t$ssid$" | cut -f1 \
+   | while read ID; do
+    wpa_cli -i "$IFACE" remove_network "$ID" > /dev/null 2>&1
+  done
+
+  ID="$(wpa_cli -i "$IFACE" add_network)"
+  wpa_cli -i "$IFACE" set_network "$ID" ssid "\"$SSID\"" 2>&1 | grep -q "OK"
+  RET=$((RET + $?))
+
+  if [ -z "$PASSPHRASE" ]; then
+    wpa_cli -i "$IFACE" set_network "$ID" key_mgmt NONE 2>&1 | grep -q "OK"
+    RET=$((RET + $?))
+  else
+    wpa_cli -i "$IFACE" set_network "$ID" psk "\"$PASSPHRASE\"" 2>&1 | grep -q "OK"
+    RET=$((RET + $?))
+  fi
+
+  if [ $RET -eq 0 ]; then
+    wpa_cli -i "$IFACE" enable_network "$ID" > /dev/null 2>&1
+  else
+    wpa_cli -i "$IFACE" remove_network "$ID" > /dev/null 2>&1
+    whiptail --msgbox "Failed to set SSID or passphrase" 20 60
+  fi
+  wpa_cli -i "$IFACE" save_config > /dev/null 2>&1
+
+  echo "$IFACE_LIST" | while read IFACE; do
+    wpa_cli -i "$IFACE" reconfigure > /dev/null 2>&1
+  done
+
+  return $RET
+}
+
 do_finish() {
   disable_raspi_config_at_boot
   if [ $ASK_TO_REBOOT -eq 1 ]; then
@@ -1519,7 +1612,6 @@ do_advanced_menu() {
     "A4 Audio" "Force audio out through HDMI or 3.5mm jack" \
     "A5 Resolution" "Set a specific screen resolution" \
     "A6 GL Driver" "Enable/Disable experimental desktop GL driver" \
-    "A7 Network interface names" "Enable/Disable predictable network interface names" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -1532,7 +1624,6 @@ do_advanced_menu() {
       A4\ *) do_audio ;;
       A5\ *) do_resolution ;;
       A6\ *) do_gldriver ;;
-      A7\ *) do_net_names ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
@@ -1564,6 +1655,25 @@ do_boot_menu() {
   fi
 }
 
+do_network_menu() {
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Network Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    "N1 Hostname" "Set the visible name for this Pi on a network" \
+    "N2 Wi-fi" "Enter SSID and passphrase" \
+    "N3 Network interface names" "Enable/Disable predictable network interface names" \
+    3>&1 1>&2 2>&3)
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    case "$FUN" in
+      N1\ *) do_hostname ;;
+      N2\ *) do_wifi_ssid_passphrase ;;
+      N3\ *) do_net_names ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  fi
+}
+
 #
 # Interactive use loop
 #
@@ -1578,7 +1688,7 @@ if [ "$INTERACTIVE" = True ]; then
 	if is_pi ; then
       FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --backtitle "$(cat /proc/device-tree/model)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "1 Change User Password" "Change password for the current user" \
-        "2 Hostname" "Set the visible name for this Pi on a network" \
+        "2 Network Options" "Configure network settings" \
         "3 Boot Options" "Configure options for start-up" \
         "4 Localisation Options" "Set up language and regional settings to match your location" \
         "5 Interfacing Options" "Configure connections to peripherals" \
@@ -1604,7 +1714,7 @@ if [ "$INTERACTIVE" = True ]; then
     elif [ $RET -eq 0 ]; then
       case "$FUN" in
         1\ *) do_change_pass ;;
-        2\ *) do_hostname ;;
+        2\ *) do_network_menu ;;
         3\ *) do_boot_menu ;;
         4\ *) do_internationalisation_menu ;;
         5\ *) do_interface_menu ;;
