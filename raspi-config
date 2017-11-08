@@ -1309,17 +1309,21 @@ do_wifi_ssid_passphrase() {
   IFACE="$(echo "$IFACE_LIST" | head -n 1)"
 
   if [ -z "$IFACE" ]; then
-    whiptail --msgbox "No wireless interface found" 20 60
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "No wireless interface found" 20 60
+    fi
     return 1
   fi
 
   if ! wpa_cli -i "$IFACE" status > /dev/null 2>&1; then
-    whiptail --msgbox "Could not communicate with wpa_supplicant" 20 60
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "Could not communicate with wpa_supplicant" 20 60
+    fi
     return 1
   fi
 
-  SSID=
-  while [ -z "$SSID" ]; do
+  SSID="$1"
+  while [ -z "$SSID" ] && [ "$INTERACTIVE" = True ]; do
     SSID=$(whiptail --inputbox "Please enter SSID" 20 60 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       return 0
@@ -1328,7 +1332,8 @@ do_wifi_ssid_passphrase() {
     fi
   done
 
-  while true; do
+  PASSPHRASE="$2"
+  while [ "$INTERACTIVE" = True ]; do
     PASSPHRASE=$(whiptail --passwordbox "Please enter passphrase. Leave it empty if none." 20 60 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       return 0
@@ -1338,7 +1343,7 @@ do_wifi_ssid_passphrase() {
   done
 
   # Escape special characters for embedding in regex below
-  local ssid=$(echo "$SSID" \
+  local ssid="$(echo "$SSID" \
    | sed 's;\\;\\\\;g' \
    | sed -e 's;\.;\\\.;g' \
          -e 's;\*;\\\*;g' \
@@ -1353,7 +1358,7 @@ do_wifi_ssid_passphrase() {
          -e 's;};\\};g'   \
          -e 's;(;\\(;g'   \
          -e 's;);\\);g'   \
-         -e 's;";\\\\\";g')
+         -e 's;";\\\\\";g')"
 
   wpa_cli -i "$IFACE" list_networks \
    | tail -n +2 | cut -f -2 | grep -P "\t$ssid$" | cut -f1 \
@@ -1377,7 +1382,9 @@ do_wifi_ssid_passphrase() {
     wpa_cli -i "$IFACE" enable_network "$ID" > /dev/null 2>&1
   else
     wpa_cli -i "$IFACE" remove_network "$ID" > /dev/null 2>&1
-    whiptail --msgbox "Failed to set SSID or passphrase" 20 60
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "Failed to set SSID or passphrase" 20 60
+    fi
   fi
   wpa_cli -i "$IFACE" save_config > /dev/null 2>&1
 
@@ -1484,7 +1491,7 @@ EOF
 }
 
 nonint() {
-    $*
+  "$@"
 }
 
 #
@@ -1516,7 +1523,8 @@ do
     ;;
   nonint)
     INTERACTIVE=False
-    $@
+    "$@"
+    exit $?
     ;;
   *)
     # unknown option
