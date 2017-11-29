@@ -287,6 +287,66 @@ do_overscan() {
   fi
 }
 
+get_pixdub() {
+  FBW=$(get_config_var framebuffer_width $CONFIG)
+  if [ $FBW -eq 0 ]; then
+    echo 1
+  else
+    echo 0
+  fi
+}
+
+is_number() {
+  case $1 in
+    ''|*[!0-9]*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+do_pixdub() {
+  DEFAULT=--defaultno
+  CURRENT=0
+  if [ $(get_pixdub) -eq 0 ]; then
+      DEFAULT=
+      CURRENT=1
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like to enable pixel doubling?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    RET=$1
+  fi
+  if [ $RET -eq 0 ] ; then
+	XVAL=$(xrandr 2>&1 | grep current | cut -f2 -d, | cut -f3 -d' ')
+	YVAL=$(xrandr 2>&1 | grep current | cut -f2 -d, | cut -f5 -d' ')
+	if is_number $XVAL || is_number $YVAL ; then
+      if [ "$INTERACTIVE" = True ]; then
+        whiptail --msgbox "Could not read current screen dimensions - unable to enable pixel doubling" 20 60 1
+      fi
+	  return 1
+	fi
+	NEWX=`expr $XVAL / 2`
+	NEWY=`expr $YVAL / 2`
+    set_config_var framebuffer_width $NEWX $CONFIG
+    set_config_var framebuffer_height $NEWY $CONFIG
+    set_config_var scaling_kernel 8 $CONFIG
+    STATUS=enabled
+  elif [ $RET -eq 1 ]; then
+    clear_config_var framebuffer_width $CONFIG
+    clear_config_var framebuffer_height $CONFIG
+    clear_config_var scaling_kernel $CONFIG
+    STATUS=disabled
+  else
+    return $RET
+  fi
+  if [ $RET -eq $CURRENT ]; then
+    ASK_TO_REBOOT=1
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "Pixel doubling is $STATUS" 20 60 1
+  fi
+}
+
 do_change_pass() {
   whiptail --msgbox "You will now be asked to enter a new password for the $SUDO_USER user" 20 60 1
   passwd $SUDO_USER &&
@@ -1632,7 +1692,8 @@ do_advanced_menu() {
     "A3 Memory Split" "Change the amount of memory made available to the GPU" \
     "A4 Audio" "Force audio out through HDMI or 3.5mm jack" \
     "A5 Resolution" "Set a specific screen resolution" \
-    "A6 GL Driver" "Enable/Disable experimental desktop GL driver" \
+    "A6 Pixel Doubling" "Enable/Disable 2x2 pixel mapping" \
+    "A7 GL Driver" "Enable/Disable experimental desktop GL driver" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -1644,7 +1705,8 @@ do_advanced_menu() {
       A3\ *) do_memory_split ;;
       A4\ *) do_audio ;;
       A5\ *) do_resolution ;;
-      A6\ *) do_gldriver ;;
+      A6\ *) do_pixdub ;;
+      A7\ *) do_gldriver ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
