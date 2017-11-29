@@ -288,11 +288,19 @@ do_overscan() {
 }
 
 get_pixdub() {
-  FBW=$(get_config_var framebuffer_width $CONFIG)
-  if [ $FBW -eq 0 ]; then
-    echo 1
+  if is_pi ; then
+    FBW=$(get_config_var framebuffer_width $CONFIG)
+    if [ $FBW -eq 0 ]; then
+      echo 1
+    else
+      echo 0
+    fi
   else
-    echo 0
+    if [ -e /etc/profile.d/pd.sh ] ; then
+      echo 0
+    else
+      echo 1
+    fi
   fi
 }
 
@@ -316,28 +324,46 @@ do_pixdub() {
   else
     RET=$1
   fi
-  if [ $RET -eq 0 ] ; then
-	XVAL=$(xrandr 2>&1 | grep current | cut -f2 -d, | cut -f3 -d' ')
-	YVAL=$(xrandr 2>&1 | grep current | cut -f2 -d, | cut -f5 -d' ')
-	if is_number $XVAL || is_number $YVAL ; then
-      if [ "$INTERACTIVE" = True ]; then
-        whiptail --msgbox "Could not read current screen dimensions - unable to enable pixel doubling" 20 60 1
-      fi
-	  return 1
-	fi
-	NEWX=`expr $XVAL / 2`
-	NEWY=`expr $YVAL / 2`
-    set_config_var framebuffer_width $NEWX $CONFIG
-    set_config_var framebuffer_height $NEWY $CONFIG
-    set_config_var scaling_kernel 8 $CONFIG
-    STATUS=enabled
-  elif [ $RET -eq 1 ]; then
-    clear_config_var framebuffer_width $CONFIG
-    clear_config_var framebuffer_height $CONFIG
-    clear_config_var scaling_kernel $CONFIG
-    STATUS=disabled
+  if is_pi ; then
+    if [ $RET -eq 0 ] ; then
+	  XVAL=$(xrandr 2>&1 | grep current | cut -f2 -d, | cut -f3 -d' ')
+	  YVAL=$(xrandr 2>&1 | grep current | cut -f2 -d, | cut -f5 -d' ')
+	  if is_number $XVAL || is_number $YVAL ; then
+        if [ "$INTERACTIVE" = True ]; then
+          whiptail --msgbox "Could not read current screen dimensions - unable to enable pixel doubling" 20 60 1
+        fi
+	    return 1
+	  fi
+	  NEWX=`expr $XVAL / 2`
+	  NEWY=`expr $YVAL / 2`
+      set_config_var framebuffer_width $NEWX $CONFIG
+      set_config_var framebuffer_height $NEWY $CONFIG
+      set_config_var scaling_kernel 8 $CONFIG
+      STATUS=enabled
+    elif [ $RET -eq 1 ]; then
+      clear_config_var framebuffer_width $CONFIG
+      clear_config_var framebuffer_height $CONFIG
+      clear_config_var scaling_kernel $CONFIG
+      STATUS=disabled
+    else
+      return $RET
+    fi
   else
-    return $RET
+    if [ -e /etc/profile.d/pd.sh ] ; then
+      rm /etc/profile.d/pd.sh
+    fi
+    if [ $RET -eq 0 ] ; then
+      DEV=$(xrandr | grep -w connected | cut -f1 -d' ')
+      for item in $DEV
+      do
+        echo xrandr --output $item --scale 0.5x0.5 >> /etc/profile.d/pd.sh
+      done
+      STATUS=enabled
+    elif [ $RET -eq 1 ]; then
+      STATUS=disabled
+    else
+      return $RET
+    fi
   fi
   if [ $RET -eq $CURRENT ]; then
     ASK_TO_REBOOT=1
@@ -1653,35 +1679,31 @@ do_internationalisation_menu() {
 }
 
 do_interface_menu() {
-  if ! is_pi ; then
-    do_ssh
-  else
-    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "P1 Camera" "Enable/Disable connection to the Raspberry Pi Camera" \
-      "P2 SSH" "Enable/Disable remote command line access to your Pi using SSH" \
-      "P3 VNC" "Enable/Disable graphical remote access to your Pi using RealVNC" \
-      "P4 SPI" "Enable/Disable automatic loading of SPI kernel module" \
-      "P5 I2C" "Enable/Disable automatic loading of I2C kernel module" \
-      "P6 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
-      "P7 1-Wire" "Enable/Disable one-wire interface" \
-      "P8 Remote GPIO" "Enable/Disable remote access to GPIO pins" \
-      3>&1 1>&2 2>&3)
-    RET=$?
-    if [ $RET -eq 1 ]; then
-      return 0
-    elif [ $RET -eq 0 ]; then
-      case "$FUN" in
-        P1\ *) do_camera ;;
-        P2\ *) do_ssh ;;
-        P3\ *) do_vnc ;;
-        P4\ *) do_spi ;;
-        P5\ *) do_i2c ;;
-        P6\ *) do_serial ;;
-        P7\ *) do_onewire ;;
-        P8\ *) do_rgpio ;;
-        *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-      esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
-    fi
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    "P1 Camera" "Enable/Disable connection to the Raspberry Pi Camera" \
+    "P2 SSH" "Enable/Disable remote command line access to your Pi using SSH" \
+    "P3 VNC" "Enable/Disable graphical remote access to your Pi using RealVNC" \
+    "P4 SPI" "Enable/Disable automatic loading of SPI kernel module" \
+    "P5 I2C" "Enable/Disable automatic loading of I2C kernel module" \
+    "P6 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
+    "P7 1-Wire" "Enable/Disable one-wire interface" \
+    "P8 Remote GPIO" "Enable/Disable remote access to GPIO pins" \
+    3>&1 1>&2 2>&3)
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    case "$FUN" in
+      P1\ *) do_camera ;;
+      P2\ *) do_ssh ;;
+      P3\ *) do_vnc ;;
+      P4\ *) do_spi ;;
+      P5\ *) do_i2c ;;
+      P6\ *) do_serial ;;
+      P7\ *) do_onewire ;;
+      P8\ *) do_rgpio ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
 }
 
@@ -1783,10 +1805,11 @@ if [ "$INTERACTIVE" = True ]; then
     else
       FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "1 Change User Password" "Change password for the current user" \
-        "2 Hostname" "Set the visible name for this PC on a network" \
+        "2 Network Options" "Configure network settings" \
         "3 Boot Options" "Configure options for start-up" \
         "4 Localisation Options" "Set up language and regional settings to match your location" \
         "5 SSH" "Enable/Disable remote command line access to your PC using SSH" \
+        "6 Pixel Doubling" "Enable/Disable 2x2 pixel mapping" \
         "8 Update" "Update this tool to the latest version" \
         "9 About raspi-config" "Information about this configuration tool" \
         3>&1 1>&2 2>&3)
@@ -1795,18 +1818,32 @@ if [ "$INTERACTIVE" = True ]; then
     if [ $RET -eq 1 ]; then
       do_finish
     elif [ $RET -eq 0 ]; then
-      case "$FUN" in
-        1\ *) do_change_pass ;;
-        2\ *) do_network_menu ;;
-        3\ *) do_boot_menu ;;
-        4\ *) do_internationalisation_menu ;;
-        5\ *) do_interface_menu ;;
-        6\ *) do_overclock ;;
-        7\ *) do_advanced_menu ;;
-        8\ *) do_update ;;
-        9\ *) do_about ;;
-        *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-      esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+      if is_pi ; then
+        case "$FUN" in
+          1\ *) do_change_pass ;;
+          2\ *) do_network_menu ;;
+          3\ *) do_boot_menu ;;
+          4\ *) do_internationalisation_menu ;;
+          5\ *) do_interface_menu ;;
+          6\ *) do_overclock ;;
+          7\ *) do_advanced_menu ;;
+          8\ *) do_update ;;
+          9\ *) do_about ;;
+          *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+        esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+      else
+        case "$FUN" in
+          1\ *) do_change_pass ;;
+          2\ *) do_network_menu ;;
+          3\ *) do_boot_menu ;;
+          4\ *) do_internationalisation_menu ;;
+          5\ *) do_ssh ;;
+          6\ *) do_pixdub ;;
+          8\ *) do_update ;;
+          9\ *) do_about ;;
+          *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+        esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+      fi
     else
       exit 1
     fi
