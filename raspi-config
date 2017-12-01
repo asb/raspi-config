@@ -1783,10 +1783,6 @@ do_network_menu() {
 # Interactive use loop
 #
 if [ "$INTERACTIVE" = True ]; then
-  if is_pi && ! mountpoint -q /boot; then
-    whiptail --msgbox "The boot partition is not mounted - cannot configure. Note that raspi-config is intended for use on Raspbian only and cannot be guaranteed to work on other operating systems." 20 60 1
-    exit 1
-  fi
   [ -e $CONFIG ] || touch $CONFIG
   calc_wt_size
   while true; do
