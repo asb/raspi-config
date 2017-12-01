@@ -1,3 +1,9 @@
+raspi-config (20171201) stretch; urgency=medium
+
+  * Add pixel doubling option
+
+ -- Simon Long <simon@raspberrypi.org>  Fri, 01 Dec 2017 08:05:53 +0000
+
 raspi-config (20171127) stretch; urgency=medium
 
   * Allow entering SSID and passphrase (#68)
