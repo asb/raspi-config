@@ -9,8 +9,12 @@ BLACKLIST=/etc/modprobe.d/raspi-blacklist.conf
 CONFIG=/boot/config.txt
 
 is_pi () {
-  grep -q "^model name\s*:\s*ARMv" /proc/cpuinfo
-  return $?
+  ARCH=$(dpkg --print-architecture)
+  if [ "$ARCH" = "armhf" ] ; then
+    return 0
+  else
+    return 1
+  fi
 }
 
 if is_pi ; then

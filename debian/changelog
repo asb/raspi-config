@@ -1,3 +1,13 @@
+raspi-config (20171127) stretch; urgency=medium
+
+  * Allow entering SSID and passphrase (#68)
+  * Console keyboard layout changes effective immediately (#67)
+  * Formatting fixes (#70)
+  * Add non-interactive timezone, locale and keyboard configuration
+  * Modify architecture test for piserver
+
+ -- Simon Long <simon@raspberrypi.org>  Mon, 27 Nov 2017 10:14:37 +0000
+
 raspi-config (20170926) stretch; urgency=medium
 
   * Add option to enable predictable network interface names
