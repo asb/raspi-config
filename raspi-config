@@ -447,10 +447,15 @@ do_wifi_country() {
     else
         echo "country=$COUNTRY" > /etc/wpa_supplicant/wpa_supplicant.conf
     fi
+    if ! iw reg set "$COUNTRY" 2> /dev/null; then
+        ASK_TO_REBOOT=1
+    fi
+    if [ -f /run/wifi-country-unset ] && hash rfkill 2> /dev/null; then
+        rfkill unblock wifi
+    fi
     if [ "$INTERACTIVE" = True ]; then
         whiptail --msgbox "Wi-fi country set to $COUNTRY" 20 60 1
     fi
-    ASK_TO_REBOOT=1
   fi
   IFS=$oIFS
 }

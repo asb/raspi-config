@@ -1,3 +1,9 @@
+raspi-config (20180228) stretch; urgency=medium
+
+  * Setting Wi-Fi country no longer requires a reboot
+
+ -- Serge Schneider <serge@raspberrypi.org>  Wed, 28 Feb 2018 17:28:50 +0000
+
 raspi-config (20171201) stretch; urgency=medium
 
   * Add pixel doubling option
