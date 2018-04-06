@@ -1444,6 +1444,10 @@ do_wifi_ssid_passphrase() {
     return 1
   fi
 
+  if [ "$INTERACTIVE" = True ] && [ -z "$(get_wifi_country)" ]; then
+    do_wifi_country
+  fi
+
   SSID="$1"
   while [ -z "$SSID" ] && [ "$INTERACTIVE" = True ]; do
     SSID=$(whiptail --inputbox "Please enter SSID" 20 60 3>&1 1>&2 2>&3)
