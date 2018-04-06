@@ -1,3 +1,9 @@
+raspi-config (20180406+1) stretch; urgency=medium
+
+  * Fix Wi-Fi country setting
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 06 Apr 2018 14:28:02 +0100
+
 raspi-config (20180406) stretch; urgency=medium
 
   * Set Wi-Fi country while connecting to SSID
