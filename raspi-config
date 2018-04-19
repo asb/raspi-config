@@ -152,7 +152,7 @@ end
 EOF
 }
 
-# $1 is 0 to disable overscan, 1 to disable it
+# $1 is 0 to disable overscan, 1 to enable it
 set_overscan() {
   # Stop if /boot is not a mountpoint
   if ! mountpoint -q /boot; then
