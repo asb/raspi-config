@@ -868,7 +868,7 @@ do_serial() {
     set_config_var enable_uart 1 $CONFIG
     SSTATUS=enabled
     HSTATUS=enabled
-  elif [ $RET -eq 1 ]; then
+  elif [ $RET -eq 1 ] || [ $RET -eq 2 ]; then
     sed -i $CMDLINE -e "s/console=ttyAMA0,[0-9]\+ //"
     sed -i $CMDLINE -e "s/console=serial0,[0-9]\+ //"
     SSTATUS=disabled
@@ -876,7 +876,7 @@ do_serial() {
       whiptail --yesno "Would you like the serial port hardware to be enabled?" $DEFAULTH 20 60 2
       RET=$?
     else
-      RET=1
+      RET=$((2-$RET))
     fi
     if [ $RET -eq $CURRENTH ]; then
      ASK_TO_REBOOT=1
