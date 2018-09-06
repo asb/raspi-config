@@ -40,7 +40,7 @@ do_expand_rootfs() {
   fi
 
   ROOT_PART=$(readlink /dev/root)
-  PART_NUM=${ROOT_PART#mmcblk0p}
+  PART_NUM=${ROOT_PART#/dev/mmcblk0p}
   if [ "$PART_NUM" = "$ROOT_PART" ]; then
     whiptail --msgbox "/dev/root is not an SD card. Don't know how to expand" 20 60 2
     return 0
