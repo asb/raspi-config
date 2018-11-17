@@ -972,6 +972,7 @@ do_boot_behaviour() {
         if [ -e /etc/init.d/lightdm ]; then
           systemctl set-default graphical.target
           ln -fs /etc/systemd/system/autologin@.service /etc/systemd/system/getty.target.wants/getty@tty1.service
+          sed /etc/systemd/system/autologin@.service -i -e "s#^ExecStart=-/sbin/agetty --autologin [^[:space:]]*#ExecStart=-/sbin/agetty --autologin $SUDO_USER#"
           sed /etc/lightdm/lightdm.conf -i -e "s/^\(#\|\)autologin-user=.*/autologin-user=$SUDO_USER/"
           disable_raspi_config_at_boot
         else
