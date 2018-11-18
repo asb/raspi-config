@@ -1,3 +1,9 @@
+raspi-config (20181118) stretch; urgency=medium
+
+  * Set TTY autologin correctly when using desktop autologin
+
+ -- Simon Long <simon@raspberrypi.org>  Sun, 18 Nov 2018 10:59:01 +0000
+
 raspi-config (20180518) stretch; urgency=medium
 
   * Add separate settings for serial hardware and console
