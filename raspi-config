@@ -918,8 +918,8 @@ get_boot_cli() {
 
 get_autologin() {
   if [ $(get_boot_cli) -eq 0 ]; then
-    # booting to CLI - check the autologin in getty or initd */
-    if grep -q autologin /etc/systemd/system/getty.target.wants/getty@tty1.service ; then
+    # booting to CLI - is there an autologin conf file? */
+    if [ -e /etc/systemd/system/getty@tty1.service.d/autologin.conf ] ; then
       echo 0
     else
       echo 1
