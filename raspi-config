@@ -66,6 +66,11 @@ is_ssh() {
   fi
 }
 
+deb_ver () {
+  ver=`cat /etc/debian_version | cut -d . -f 1`
+  echo $ver
+}
+
 calc_wt_size() {
   # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
   # output from tput. However in this case, tput detects neither stdout or 
@@ -918,14 +923,20 @@ get_boot_cli() {
 
 get_autologin() {
   if [ $(get_boot_cli) -eq 0 ]; then
-    # booting to CLI - is there an autologin conf file? */
+    # booting to CLI
+    # stretch or buster - is there an autologin conf file?
     if [ -e /etc/systemd/system/getty@tty1.service.d/autologin.conf ] ; then
       echo 0
     else
-      echo 1
+      # stretch or earlier - check the getty service symlink for autologin
+      if [ $(deb_ver) -le 9 ] && grep -q autologin /etc/systemd/system/getty.target.wants/getty@tty1.service ; then
+        echo 0
+      else
+        echo 1
+      fi
     fi
   else
-    # booting to desktop - check the autologin for lightdm */
+    # booting to desktop - check the autologin for lightdm
     if grep -q "^autologin-user=" /etc/lightdm/lightdm.conf ; then
       echo 0
     else
