@@ -1,3 +1,9 @@
+raspi-config (20190219) stretch; urgency=medium
+
+  * Update autologin behaviour for compatibility with buster
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 19 Feb 2019 10:07:01 +0000
+
 raspi-config (20181118) stretch; urgency=medium
 
   * Set TTY autologin correctly when using desktop autologin
