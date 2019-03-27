@@ -970,7 +970,7 @@ do_boot_behaviour() {
         cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty --autologin $SUDO_USER --noclear %I $TERM
+ExecStart=-/sbin/agetty --autologin $SUDO_USER --noclear %I \$TERM
 EOF
         ;;
       B3*)
@@ -992,7 +992,7 @@ EOF
           cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty --autologin $SUDO_USER --noclear %I $TERM
+ExecStart=-/sbin/agetty --autologin $SUDO_USER --noclear %I \$TERM
 EOF
           sed /etc/lightdm/lightdm.conf -i -e "s/^\(#\|\)autologin-user=.*/autologin-user=$SUDO_USER/"
           disable_raspi_config_at_boot
