@@ -1,3 +1,9 @@
+raspi-config (20190423) stretch; urgency=medium
+
+  * Change autologin $TERM; tweaks to overclock wording
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 23 Apr 2019 08:19:08 +0100
+
 raspi-config (20190219) stretch; urgency=medium
 
   * Update autologin behaviour for compatibility with buster
