@@ -1314,7 +1314,46 @@ do_gldriver() {
     sed $CONFIG -i -e "s/^gpu_mem/#gpu_mem/"
   fi
   whiptail --msgbox "$STATUS" 20 60 1
- }
+}
+
+do_compton() {
+  DEFAULT=--defaultno
+  CURRENT=0
+  if [ -e /etc/xdg/autostart/compton.desktop ]; then
+    DEFAULT=
+    CURRENT=1
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like the Compton composition manager to be enabled?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    RET=$1
+  fi
+  if [ $RET -eq $CURRENT ]; then
+    ASK_TO_REBOOT=1
+  fi
+  if [ $RET -eq 0 ]; then
+    cat << EOF > /etc/xdg/autostart/compton.desktop
+[Desktop Entry]
+Type=Application
+Name=compton
+Comment=Start Compton compositor
+NoDisplay=true
+Exec=compton --backend glx --unredir-if-possible --glx-swap-method buffer-age --glx-no-stencil --paint-on-overlay --vsync opengl
+EOF
+    STATUS=enabled
+  elif [ $RET -eq 1 ]; then
+    if [ -e /etc/xdg/autostart/compton.desktop ]; then
+      rm /etc/xdg/autostart/compton.desktop
+    fi
+    STATUS=disabled
+  else
+    return $RET
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "The Compton composition manager is $STATUS" 20 60 1
+  fi
+}
 
 get_net_names() {
   if grep -q "net.ifnames=0" $CMDLINE || [ "$(readlink -f /etc/systemd/network/99-default.link)" = "/dev/null" ] ; then
@@ -1755,6 +1794,7 @@ do_advanced_menu() {
     "A5 Resolution" "Set a specific screen resolution" \
     "A6 Pixel Doubling" "Enable/Disable 2x2 pixel mapping" \
     "A7 GL Driver" "Enable/Disable experimental desktop GL driver" \
+    "A8 Compositor" "Enable/Disable Compton composition manager" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -1768,6 +1808,7 @@ do_advanced_menu() {
       A5\ *) do_resolution ;;
       A6\ *) do_pixdub ;;
       A7\ *) do_gldriver ;;
+      A8\ *) do_compton ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi

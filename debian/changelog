@@ -1,3 +1,9 @@
+raspi-config (20190424) stretch; urgency=medium
+
+  * Add Compton option to advanced options
+
+ -- Simon Long <simon@raspberrypi.org>  Wed, 24 Apr 2019 13:45:54 +0100
+
 raspi-config (20190423) stretch; urgency=medium
 
   * Change autologin $TERM; tweaks to overclock wording
