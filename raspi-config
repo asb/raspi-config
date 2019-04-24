@@ -1333,6 +1333,9 @@ do_compton() {
     ASK_TO_REBOOT=1
   fi
   if [ $RET -eq 0 ]; then
+    if [ ! -e /usr/bin/compton ] ; then
+      apt-get -y install compton
+    fi
     cat << EOF > /etc/xdg/autostart/compton.desktop
 [Desktop Entry]
 Type=Application
