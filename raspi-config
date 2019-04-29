@@ -676,6 +676,7 @@ do_ssh() {
     RET=$1
   fi
   if [ $RET -eq 0 ]; then
+    ssh-keygen -A &&
     update-rc.d ssh enable &&
     invoke-rc.d ssh start &&
     STATUS=enabled
