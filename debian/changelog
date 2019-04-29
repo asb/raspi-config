@@ -1,3 +1,9 @@
+raspi-config (20190429) buster; urgency=medium
+
+  * Update do_wifi_country
+    - Enable wifi regardless of whether /run/wifi-country-unset exists
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 29 Apr 2019 14:52:56 +0100
+
 raspi-config (20190424) stretch; urgency=medium
 
   * Add Compton option to advanced options

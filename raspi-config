@@ -460,16 +460,16 @@ do_wifi_country() {
   fi
   if [ $? -eq 0 ];then
     wpa_cli -i "$IFACE" set country "$COUNTRY"
+    wpa_cli -i "$IFACE" save_config > /dev/null 2>&1
     if ! iw reg set "$COUNTRY" 2> /dev/null; then
         ASK_TO_REBOOT=1
     fi
-    if [ -f /run/wifi-country-unset ] && hash rfkill 2> /dev/null; then
+    if hash rfkill 2> /dev/null; then
         rfkill unblock wifi
     fi
     if [ "$INTERACTIVE" = True ]; then
         whiptail --msgbox "Wi-fi country set to $COUNTRY" 20 60 1
     fi
-    wpa_cli -i "$IFACE" save_config > /dev/null 2>&1
   fi
 }
 
