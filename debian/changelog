@@ -1,3 +1,9 @@
+raspi-config (20190502) buster; urgency=medium
+
+  * Use wpa_cli to check WiFi country setting
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 02 May 2019 13:22:49 +0100
+
 raspi-config (20190429) buster; urgency=medium
 
   * Update do_wifi_country
