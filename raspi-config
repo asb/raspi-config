@@ -429,6 +429,7 @@ do_change_timezone() {
 }
 
 get_wifi_country() {
+  CODE=${1:-0}
   IFACE="$(list_wlan_interfaces | head -n 1)"
   if [ -z "$IFACE" ]; then
     if [ "$INTERACTIVE" = True ]; then
@@ -447,7 +448,10 @@ get_wifi_country() {
   if [ "$COUNTRY" = "FAIL" ]; then
     return 1
   fi
-  echo "$COUNTRY"
+  if [ $CODE = 0 ]; then
+    echo "$COUNTRY"
+  fi
+  return 0
 }
 
 do_wifi_country() {
@@ -1335,15 +1339,15 @@ do_gldriver() {
   whiptail --msgbox "$STATUS" 20 60 1
 }
 
-do_compton() {
+do_xcompmgr() {
   DEFAULT=--defaultno
   CURRENT=0
-  if [ -e /etc/xdg/autostart/compton.desktop ]; then
+  if [ -e /etc/xdg/autostart/xcompmgr.desktop ]; then
     DEFAULT=
     CURRENT=1
   fi
   if [ "$INTERACTIVE" = True ]; then
-    whiptail --yesno "Would you like the Compton composition manager to be enabled?" $DEFAULT 20 60 2
+    whiptail --yesno "Would you like the xcompmgr composition manager to be enabled?" $DEFAULT 20 60 2
     RET=$?
   else
     RET=$1
@@ -1352,28 +1356,28 @@ do_compton() {
     ASK_TO_REBOOT=1
   fi
   if [ $RET -eq 0 ]; then
-    if [ ! -e /usr/bin/compton ] ; then
-      apt-get -y install compton
+    if [ ! -e /usr/bin/xcompmgr ] ; then
+      apt-get -y install xcompmgr
     fi
-    cat << EOF > /etc/xdg/autostart/compton.desktop
+    cat << EOF > /etc/xdg/autostart/xcompmgr.desktop
 [Desktop Entry]
 Type=Application
-Name=compton
-Comment=Start Compton compositor
+Name=xcompmgr
+Comment=Start xcompmgr compositor
 NoDisplay=true
-Exec=compton --backend glx --unredir-if-possible --glx-swap-method buffer-age --glx-no-stencil --paint-on-overlay --vsync opengl
+Exec=xcompmgr -a
 EOF
     STATUS=enabled
   elif [ $RET -eq 1 ]; then
-    if [ -e /etc/xdg/autostart/compton.desktop ]; then
-      rm /etc/xdg/autostart/compton.desktop
+    if [ -e /etc/xdg/autostart/xcompmgr.desktop ]; then
+      rm /etc/xdg/autostart/xcompmgr.desktop
     fi
     STATUS=disabled
   else
     return $RET
   fi
   if [ "$INTERACTIVE" = True ]; then
-    whiptail --msgbox "The Compton composition manager is $STATUS" 20 60 1
+    whiptail --msgbox "The xcompmgr composition manager is $STATUS" 20 60 1
   fi
 }
 
@@ -1816,7 +1820,7 @@ do_advanced_menu() {
     "A5 Resolution" "Set a specific screen resolution" \
     "A6 Pixel Doubling" "Enable/Disable 2x2 pixel mapping" \
     "A7 GL Driver" "Enable/Disable experimental desktop GL driver" \
-    "A8 Compositor" "Enable/Disable Compton composition manager" \
+    "A8 Compositor" "Enable/Disable xcompmgr composition manager" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -1830,7 +1834,7 @@ do_advanced_menu() {
       A5\ *) do_resolution ;;
       A6\ *) do_pixdub ;;
       A7\ *) do_gldriver ;;
-      A8\ *) do_compton ;;
+      A8\ *) do_xcompmgr ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi

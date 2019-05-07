@@ -1,3 +1,11 @@
+raspi-config (20190507) buster; urgency=medium
+
+  [ Simon Long ]
+  * Switch from compton to xcompmgr
+  * Tweak get_wifi_country to work with the desktop applet
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 07 May 2019 16:03:15 +0100
+
 raspi-config (20190502) buster; urgency=medium
 
   * Use wpa_cli to check WiFi country setting
