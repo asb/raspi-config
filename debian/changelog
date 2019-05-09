@@ -1,3 +1,9 @@
+raspi-config (20190509) buster; urgency=medium
+
+  * init_resize.sh: Remove sdhci.debug_quirks2=4 from /boot/cmdline.txt
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 09 May 2019 13:38:34 +0100
+
 raspi-config (20190507) buster; urgency=medium
 
   [ Simon Long ]
