@@ -66,6 +66,14 @@ is_ssh() {
   fi
 }
 
+is_fkms() {
+  if grep -q okay /proc/device-tree/soc/v3d@7ec00000/status 2> /dev/null || grep -q okay /proc/device-tree/soc/firmwarekms@7e600000/status 2> /dev/null ; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 deb_ver () {
   ver=`cat /etc/debian_version | cut -d . -f 1`
   echo $ver
@@ -317,6 +325,12 @@ is_number() {
 }
 
 do_pixdub() {
+  if is_fkms ; then
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "Pixel doubling cannot be used with the GL driver" 20 60 1
+    fi
+    return 1
+  fi
   DEFAULT=--defaultno
   CURRENT=0
   if [ $(get_pixdub) -eq 0 ]; then

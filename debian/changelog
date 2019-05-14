@@ -1,3 +1,11 @@
+raspi-config (20190514) buster; urgency=medium
+
+  [ Simon Long ]
+  * Add FKMS check
+  * Disable pixel doubling when FKMS is enabled
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 14 May 2019 15:38:17 +0100
+
 raspi-config (20190509) buster; urgency=medium
 
   * init_resize.sh: Remove sdhci.debug_quirks2=4 from /boot/cmdline.txt
