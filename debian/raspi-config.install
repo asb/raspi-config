@@ -1,3 +1,4 @@
 raspi-config /usr/bin
 autologin@.service /etc/systemd/system
 init_resize.sh /usr/lib/raspi-config
+cmstart.sh /usr/lib/raspi-config

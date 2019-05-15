@@ -1,3 +1,17 @@
+raspi-config (20190607) buster; urgency=medium
+
+  [ Simon Long ]
+  * Only run xcompmgr if FKMS is enabled
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 07 Jun 2019 16:11:11 +0100
+
+raspi-config (20190520) buster; urgency=medium
+
+  [ Simon Long ]
+  * Add Pi 4 video options
+
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 20 May 2019 11:01:12 +0100
+
 raspi-config (20190514) buster; urgency=medium
 
   [ Simon Long ]

@@ -43,6 +43,11 @@ is_pizero() {
    return $?
 }
 
+is_pifour() {
+   grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]11[0-9a-fA-F]$" /proc/cpuinfo
+   return $?
+}
+
 get_pi_type() {
    if is_pione; then
       echo 1
@@ -270,6 +275,12 @@ get_overscan() {
 }
 
 do_overscan() {
+  if is_fkms ; then
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "Overscan cannot be set with the GL driver" 20 60 1
+    fi
+    return 1
+  fi
   DEFAULT=--defaultno
   CURRENT=0
   if [ $(get_overscan) -eq 0 ]; then
@@ -982,6 +993,75 @@ get_autologin() {
   fi
 }
 
+get_pi4video () {
+  if grep -q "^hdmi_enable_4k=1" $CONFIG ; then
+    echo 1
+  elif grep -q "^hdmi_ignore_composite=0" $CONFIG ; then
+    echo 2
+  else
+    echo 0
+  fi
+}
+
+do_pi4video() {
+  if ! is_pifour ; then
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "This option can only be used on a Pi 4" 20 60 1
+    fi
+    return 1
+  fi
+  CURRENT=$(get_pi4video)
+  if [ "$INTERACTIVE" = True ]; then
+    VIDOPT=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Pi 4 Video Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
+      "V1 Enable 4K HDMI" "Enable 4K resolution on HDMI outputs (disables analog)" \
+      "V2 Enable analog TV output" "Enable composite video output (disables 4K)" \
+      "V3 Disable both 4K and analog" "Disable 4K HDMI and composite video" \
+      3>&1 1>&2 2>&3)
+  else
+    VIDOPT=$1
+    true
+  fi
+  if [ $? -eq 0 ]; then
+    case "$VIDOPT" in
+      V1*)
+        sed $CONFIG -i -e "s/^#\?hdmi_enable_4k=.*/hdmi_enable_4k=1/"
+        sed $CONFIG -i -e "s/^hdmi_ignore_composite=/#hdmi_ignore_composite=/"
+        if ! grep -q "hdmi_enable_4k" $CONFIG ; then
+            sed $CONFIG -i -e "\$ahdmi_enable_4k=1"
+        fi
+        STATUS="4k HDMI enabled"
+        OPT=1
+        ;;
+      V2*)
+        sed $CONFIG -i -e "s/^#\?hdmi_ignore_composite=.*/hdmi_ignore_composite=0/"
+        sed $CONFIG -i -e "s/^hdmi_enable_4k=/#hdmi_enable_4k=/"
+        if ! grep -q "hdmi_ignore_composite" $CONFIG ; then
+            sed $CONFIG -i -e "\$ahdmi_ignore_composite=0"
+        fi
+        STATUS="analog TV enabled"
+        OPT=2
+        ;;
+      V3*)
+        sed $CONFIG -i -e "s/^hdmi_enable_4k=/#hdmi_enable_4k=/"
+        sed $CONFIG -i -e "s/^hdmi_ignore_composite=/#hdmi_ignore_composite=/"
+        STATUS="4K and analog disabled"
+        OPT=0
+        ;;
+      *)
+        whiptail --msgbox "Programmer error, unrecognised video option" 20 60 2
+        return 1
+        ;;
+    esac
+    if [ $OPT -ne $CURRENT ]; then
+      ASK_TO_REBOOT=1
+    fi
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "Pi 4 video output option is $STATUS" 20 60 1
+    fi
+  fi
+}
+
+
 do_boot_behaviour() {
   if [ "$INTERACTIVE" = True ]; then
     BOOTOPT=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
@@ -1297,42 +1377,49 @@ do_gldriver() {
     whiptail --msgbox "libgl1-mesa-dri not found - please install" 20 60 2
     return 1
   fi
+  if is_pifour ; then
   GLOPT=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "GL Driver" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
-    "G1 GL (Full KMS)" "OpenGL desktop driver with full KMS" \
+    "G1 Legacy" "Original non-GL desktop driver" \
     "G2 GL (Fake KMS)" "OpenGL desktop driver with fake KMS" \
-    "G3 Legacy" "Original non-GL desktop driver" \
     3>&1 1>&2 2>&3)
+  else
+  GLOPT=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "GL Driver" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
+    "G1 Legacy" "Original non-GL desktop driver" \
+    "G2 GL (Fake KMS)" "OpenGL desktop driver with fake KMS" \
+    "G3 GL (Full KMS)" "OpenGL desktop driver with full KMS" \
+    3>&1 1>&2 2>&3)
+  fi
   if [ $? -eq 0 ]; then
     case "$GLOPT" in
       G1*)
-        if ! grep -q -E "^dtoverlay=vc4-kms-v3d" $CONFIG; then
+        if grep -q -E "^dtoverlay=vc4-f?kms-v3d" $CONFIG; then
           ASK_TO_REBOOT=1
         fi
-        sed $CONFIG -i -e "s/^dtoverlay=vc4-fkms-v3d/#dtoverlay=vc4-fkms-v3d/"
-        sed $CONFIG -i -e "s/^#dtoverlay=vc4-kms-v3d/dtoverlay=vc4-kms-v3d/"
-        if ! grep -q -E "^dtoverlay=vc4-kms-v3d" $CONFIG; then
-          printf "dtoverlay=vc4-kms-v3d\n" >> $CONFIG
-        fi
-        STATUS="The full KMS GL driver is enabled."
+        sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/g"
+        sed $CONFIG -i -e "s/^dtoverlay=vc4-fkms-v3d/#dtoverlay=vc4-fkms-v3d/g"
+        STATUS="The GL driver is disabled."
         ;;
       G2*)
-        if ! grep -q -E "^dtoverlay=vc4-fkms-v3d" $CONFIG; then
+        if ! sed -n "/\[pi4\]/,/\[/ !p" $CONFIG | grep -q "^dtoverlay=vc4-fkms-v3d" ; then
           ASK_TO_REBOOT=1
         fi
-        sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/"
-        sed $CONFIG -i -e "s/^#dtoverlay=vc4-fkms-v3d/dtoverlay=vc4-fkms-v3d/"
-        if ! grep -q -E "^dtoverlay=vc4-fkms-v3d" $CONFIG; then
-          printf "dtoverlay=vc4-fkms-v3d\n" >> $CONFIG
+        sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/g"
+        sed $CONFIG -i -e "s/^#dtoverlay=vc4-fkms-v3d/dtoverlay=vc4-fkms-v3d/g"
+        if ! sed -n "/\[pi4\]/,/\[/ !p" $CONFIG | grep -q "^dtoverlay=vc4-fkms-v3d" ; then
+          printf "[all]\ndtoverlay=vc4-fkms-v3d\n" >> $CONFIG
         fi
         STATUS="The fake KMS GL driver is enabled."
         ;;
       G3*)
-        if grep -q -E "^dtoverlay=vc4-f?kms-v3d" $CONFIG; then
+        if ! sed -n "/\[pi4\]/,/\[/ !p" $CONFIG | grep -q "^dtoverlay=vc4-kms-v3d" ; then
           ASK_TO_REBOOT=1
         fi
-        sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/"
-        sed $CONFIG -i -e "s/^dtoverlay=vc4-fkms-v3d/#dtoverlay=vc4-fkms-v3d/"
-        STATUS="The GL driver is disabled."
+        sed $CONFIG -i -e "s/^dtoverlay=vc4-fkms-v3d/#dtoverlay=vc4-fkms-v3d/g"
+        sed $CONFIG -i -e "s/^#dtoverlay=vc4-kms-v3d/dtoverlay=vc4-kms-v3d/g"
+        if ! sed -n "/\[pi4\]/,/\[/ !p" $CONFIG | grep -q "^dtoverlay=vc4-kms-v3d" ; then
+          printf "[all]\ndtoverlay=vc4-kms-v3d\n" >> $CONFIG
+        fi
+        STATUS="The full KMS GL driver is enabled."
         ;;
       *)
         whiptail --msgbox "Programmer error, unrecognised boot option" 20 60 2
@@ -1379,7 +1466,7 @@ Type=Application
 Name=xcompmgr
 Comment=Start xcompmgr compositor
 NoDisplay=true
-Exec=xcompmgr -a
+Exec=/usr/lib/raspi-config/cmstart.sh
 EOF
     STATUS=enabled
   elif [ $RET -eq 1 ]; then
@@ -1835,6 +1922,7 @@ do_advanced_menu() {
     "A6 Pixel Doubling" "Enable/Disable 2x2 pixel mapping" \
     "A7 GL Driver" "Enable/Disable experimental desktop GL driver" \
     "A8 Compositor" "Enable/Disable xcompmgr composition manager" \
+    "A9 Pi 4 Video Output" "Video output options for Pi 4" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -1849,6 +1937,7 @@ do_advanced_menu() {
       A6\ *) do_pixdub ;;
       A7\ *) do_gldriver ;;
       A8\ *) do_xcompmgr ;;
+      A9\ *) do_pi4video ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
