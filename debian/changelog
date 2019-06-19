@@ -1,3 +1,11 @@
+raspi-config (20190619) buster; urgency=medium
+
+  [ Simon Long ]
+  * Fix composite output options for Pi 4
+  * Keep splash screen settings when changing GPU options
+
+ -- Serge Schneider <serge@raspberrypi.org>  Wed, 19 Jun 2019 15:49:38 +0100
+
 raspi-config (20190607) buster; urgency=medium
 
   [ Simon Long ]

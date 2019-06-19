@@ -996,7 +996,7 @@ get_autologin() {
 get_pi4video () {
   if grep -q "^hdmi_enable_4k=1" $CONFIG ; then
     echo 1
-  elif grep -q "^hdmi_ignore_composite=0" $CONFIG ; then
+  elif grep -q "^enable_tvout=1" $CONFIG ; then
     echo 2
   else
     echo 0
@@ -1025,7 +1025,7 @@ do_pi4video() {
     case "$VIDOPT" in
       V1*)
         sed $CONFIG -i -e "s/^#\?hdmi_enable_4k=.*/hdmi_enable_4k=1/"
-        sed $CONFIG -i -e "s/^hdmi_ignore_composite=/#hdmi_ignore_composite=/"
+        sed $CONFIG -i -e "s/^enable_tvout=/#enable_tvout=/"
         if ! grep -q "hdmi_enable_4k" $CONFIG ; then
             sed $CONFIG -i -e "\$ahdmi_enable_4k=1"
         fi
@@ -1033,17 +1033,17 @@ do_pi4video() {
         OPT=1
         ;;
       V2*)
-        sed $CONFIG -i -e "s/^#\?hdmi_ignore_composite=.*/hdmi_ignore_composite=0/"
+        sed $CONFIG -i -e "s/^#\?enable_tvout=.*/enable_tvout=1/"
         sed $CONFIG -i -e "s/^hdmi_enable_4k=/#hdmi_enable_4k=/"
-        if ! grep -q "hdmi_ignore_composite" $CONFIG ; then
-            sed $CONFIG -i -e "\$ahdmi_ignore_composite=0"
+        if ! grep -q "enable_tvout" $CONFIG ; then
+            sed $CONFIG -i -e "\$aenable_tvout=1"
         fi
         STATUS="analog TV enabled"
         OPT=2
         ;;
       V3*)
         sed $CONFIG -i -e "s/^hdmi_enable_4k=/#hdmi_enable_4k=/"
-        sed $CONFIG -i -e "s/^hdmi_ignore_composite=/#hdmi_ignore_composite=/"
+        sed $CONFIG -i -e "s/^enable_tvout=/#enable_tvout=/"
         STATUS="4K and analog disabled"
         OPT=0
         ;;
@@ -1428,14 +1428,6 @@ do_gldriver() {
     esac
   else
     return 0
-  fi
-  if echo "$GLOPT" | grep -q -E "1" ; then
-    if grep -q "splash" $CMDLINE ; then
-      sed -i $CMDLINE -e "s/ quiet//"
-      sed -i $CMDLINE -e "s/ splash//"
-      sed -i $CMDLINE -e "s/ plymouth.ignore-serial-consoles//"
-    fi
-    sed $CONFIG -i -e "s/^gpu_mem/#gpu_mem/"
   fi
   whiptail --msgbox "$STATUS" 20 60 1
 }
