@@ -468,7 +468,7 @@ get_wifi_country() {
     fi
     return 1
   fi
-  wpa_cli -i "$IFACE" reconfigure > /dev/null 2>&1
+  wpa_cli -i "$IFACE" save_config > /dev/null 2>&1
   COUNTRY="$(wpa_cli -i "$IFACE" get country)"
   if [ "$COUNTRY" = "FAIL" ]; then
     return 1

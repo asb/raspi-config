@@ -1,3 +1,10 @@
+raspi-config (20190620) buster; urgency=medium
+
+  * get_wifi_country: call save_config instead of reconfigure
+    - Prevents WiFi from disconnecting
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 20 Jun 2019 20:01:06 +0100
+
 raspi-config (20190619) buster; urgency=medium
 
   [ Simon Long ]
