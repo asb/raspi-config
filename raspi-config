@@ -994,7 +994,7 @@ get_autologin() {
 }
 
 get_pi4video () {
-  if grep -q "^hdmi_enable_4k=1" $CONFIG ; then
+  if grep -q "^hdmi_enable_4kp60=1" $CONFIG ; then
     echo 1
   elif grep -q "^enable_tvout=1" $CONFIG ; then
     echo 2
@@ -1013,9 +1013,9 @@ do_pi4video() {
   CURRENT=$(get_pi4video)
   if [ "$INTERACTIVE" = True ]; then
     VIDOPT=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Pi 4 Video Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
-      "V1 Enable 4K HDMI" "Enable 4K resolution on HDMI outputs (disables analog)" \
-      "V2 Enable analog TV output" "Enable composite video output (disables 4K)" \
-      "V3 Disable both 4K and analog" "Disable 4K HDMI and composite video" \
+      "V1 Enable 4Kp60 HDMI" "Enable 4Kp60 resolution on HDMI0 (disables analog)" \
+      "V2 Enable analog TV output" "Enable composite video output (disables 4Kp60)" \
+      "V3 Disable both 4Kp60 and analog" "Disable 4Kp60 HDMI and composite video" \
       3>&1 1>&2 2>&3)
   else
     VIDOPT=$1
@@ -1024,17 +1024,17 @@ do_pi4video() {
   if [ $? -eq 0 ]; then
     case "$VIDOPT" in
       V1*)
-        sed $CONFIG -i -e "s/^#\?hdmi_enable_4k=.*/hdmi_enable_4k=1/"
+        sed $CONFIG -i -e "s/^#\?hdmi_enable_4kp60=.*/hdmi_enable_4kp60=1/"
         sed $CONFIG -i -e "s/^enable_tvout=/#enable_tvout=/"
-        if ! grep -q "hdmi_enable_4k" $CONFIG ; then
-            sed $CONFIG -i -e "\$ahdmi_enable_4k=1"
+        if ! grep -q "hdmi_enable_4kp60" $CONFIG ; then
+            sed $CONFIG -i -e "\$ahdmi_enable_4kp60=1"
         fi
-        STATUS="4k HDMI enabled"
+        STATUS="4Kp60 HDMI enabled"
         OPT=1
         ;;
       V2*)
         sed $CONFIG -i -e "s/^#\?enable_tvout=.*/enable_tvout=1/"
-        sed $CONFIG -i -e "s/^hdmi_enable_4k=/#hdmi_enable_4k=/"
+        sed $CONFIG -i -e "s/^hdmi_enable_4kp60=/#hdmi_enable_4kp60=/"
         if ! grep -q "enable_tvout" $CONFIG ; then
             sed $CONFIG -i -e "\$aenable_tvout=1"
         fi
@@ -1042,7 +1042,7 @@ do_pi4video() {
         OPT=2
         ;;
       V3*)
-        sed $CONFIG -i -e "s/^hdmi_enable_4k=/#hdmi_enable_4k=/"
+        sed $CONFIG -i -e "s/^hdmi_enable_4kp60=/#hdmi_enable_4kp60=/"
         sed $CONFIG -i -e "s/^enable_tvout=/#enable_tvout=/"
         STATUS="4K and analog disabled"
         OPT=0
