@@ -275,12 +275,6 @@ get_overscan() {
 }
 
 do_overscan() {
-  if is_fkms ; then
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "Overscan cannot be set with the GL driver" 20 60 1
-    fi
-    return 1
-  fi
   DEFAULT=--defaultno
   CURRENT=0
   if [ $(get_overscan) -eq 0 ]; then

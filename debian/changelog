@@ -1,3 +1,9 @@
+raspi-config (20190917) buster; urgency=medium
+
+  * Enable overscan for FKMS
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 17 Sep 2019 15:34:56 +0100
+
 raspi-config (20190709) buster; urgency=medium
 
   * Rename hdmi_enable_4k to hdmi_enable_4kp60
