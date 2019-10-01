@@ -1787,6 +1787,230 @@ do_apply_os_config() {
   return 0
 }
 
+get_overlay_now() {
+  grep -q "boot=overlay" /proc/cmdline
+}
+
+get_overlay_conf() {
+  grep -q "boot=overlay" /boot/cmdline.txt
+}
+
+get_bootro_now() {
+ findmnt /boot | grep -q " ro,"
+}
+
+get_bootro_conf() {
+  grep /boot /etc/fstab | grep -q "defaults.*,ro "
+}
+
+enable_overlayfs() {
+  KERN=$(uname -r)
+  INITRD=initrd.img-"$KERN"-overlay
+
+  # mount the boot partition as writable if it isn't already
+  if get_bootro_now ; then
+    if ! mount -o remount,rw /boot 2>/dev/null ; then
+      echo "Unable to mount boot partition as writable - cannot enable"
+      return
+    fi
+    BOOTRO=yes
+  else
+    BOOTRO=no
+  fi
+
+  # check that the modified initramfs is available for the current kernel version
+  if [ ! -e /boot/"$INITRD" ]; then
+    # generate the modified initramfs - check that the overlay file is available
+    if [ ! -e /etc/initramfs-tools/scripts/overlay ]; then
+      cat > /etc/initramfs-tools/scripts/overlay << 'EOF'
+# Local filesystem mounting			-*- shell-script -*-
+
+#
+# This script overrides local_mount_root() in /scripts/local
+# and mounts root as a read-only filesystem with a temporary (rw)
+# overlay filesystem.
+#
+
+. /scripts/local
+
+local_mount_root()
+{
+	local_top
+	local_device_setup "${ROOT}" "root file system"
+	ROOT="${DEV}"
+
+	# Get the root filesystem type if not set
+	if [ -z "${ROOTFSTYPE}" ]; then
+		FSTYPE=$(get_fstype "${ROOT}")
+	else
+		FSTYPE=${ROOTFSTYPE}
+	fi
+
+	local_premount
+
+	# CHANGES TO THE ORIGINAL FUNCTION BEGIN HERE
+	# N.B. this code still lacks error checking
+
+	modprobe ${FSTYPE}
+	checkfs ${ROOT} root "${FSTYPE}"
+
+	# Create directories for root and the overlay
+	mkdir /lower /upper
+
+	# Mount read-only root to /lower
+	if [ "${FSTYPE}" != "unknown" ]; then
+		mount -r -t ${FSTYPE} ${ROOTFLAGS} ${ROOT} /lower
+	else
+		mount -r ${ROOTFLAGS} ${ROOT} /lower
+	fi
+
+	modprobe overlay
+
+	# Mount a tmpfs for the overlay in /upper
+	mount -t tmpfs tmpfs /upper
+	mkdir /upper/data /upper/work
+
+	# Mount the final overlay-root in $rootmnt
+	mount -t overlay \
+	    -olowerdir=/lower,upperdir=/upper/data,workdir=/upper/work \
+	    overlay ${rootmnt}
+}
+EOF
+    fi
+
+    # add the overlay to the list of modules
+    if ! grep overlay /etc/initramfs-tools/modules > /dev/null; then
+      echo overlay >> /etc/initramfs-tools/modules
+    fi
+
+    # build the new initramfs
+    update-initramfs -c -k "$KERN"
+
+    # rename it so we know it has overlay added
+    mv /boot/initrd.img-"$KERN" /boot/"$INITRD"
+  fi
+
+  # there is now a modified initramfs ready for use...
+
+  # modify config.txt
+  sed -i /boot/config.txt -e "/initramfs.*/d" 
+  echo initramfs "$INITRD" >> /boot/config.txt
+
+  # modify command line
+  if ! grep -q "boot=overlay" /boot/cmdline.txt ; then
+      sed -i /boot/cmdline.txt -e "s/^/boot=overlay /"
+  fi
+
+  if [ "$BOOTRO" = "yes" ] ; then
+    if ! mount -o remount,ro /boot 2>/dev/null ; then
+        echo "Unable to remount boot partition as read-only"
+    fi
+  fi
+}
+
+disable_overlayfs() {
+  # mount the boot partition as writable if it isn't already
+  if get_bootro_now ; then
+    if ! mount -o remount,rw /boot 2>/dev/null ; then
+      echo "Unable to mount boot partition as writable - cannot disable"
+      return
+    fi
+    BOOTRO=yes
+  else
+    BOOTRO=no
+  fi
+
+  # modify config.txt
+  sed -i /boot/config.txt -e "/initramfs.*/d"
+
+  # modify command line
+  sed -i /boot/cmdline.txt -e "s/\(.*\)boot=overlay \(.*\)/\1\2/"
+
+  if [ "$BOOTRO" = "yes" ] ; then
+    if ! mount -o remount,ro /boot 2>/dev/null ; then
+        echo "Unable to remount boot partition as read-only"
+    fi
+  fi
+}
+
+enable_bootro() {
+  sed -i /etc/fstab -e "s/\(.*\/boot.*\)defaults\(.*\)/\1defaults,ro\2/"
+}
+
+disable_bootro() {
+  sed -i /etc/fstab -e "s/\(.*\/boot.*\)defaults,ro\(.*\)/\1defaults\2/"
+}
+
+do_overlayfs() {
+  DEFAULT=--defaultno
+  CURRENT=0
+  STATUS="disabled"
+  if get_overlay_conf; then
+    DEFAULT=
+    CURRENT=1
+    STATUS="enabled"
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like the overlay file system to be enabled?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    RET=$1
+  fi
+  if [ $RET -eq $CURRENT ]; then
+    if [ $RET -eq 0 ]; then
+      enable_overlayfs
+      STATUS="enabled"
+    elif [ $RET -eq 1 ]; then
+      disable_overlayfs
+      STATUS="disabled"
+    else
+      return $RET
+    fi
+    ASK_TO_REBOOT=1
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "The overlay file system is $STATUS." 20 60 1
+  fi
+  if get_overlay_now ; then
+    if get_bootro_conf; then
+      BPRO="read-only"
+    else
+      BPRO="writable"
+    fi
+    whiptail --msgbox "The boot partition is currently $BPRO. This cannot be changed while an overlay file system is enabled." 20 60 1
+  else
+    DEFAULT=--defaultno
+    CURRENT=0
+    STATUS="writable"
+    if get_bootro_conf; then
+      DEFAULT=
+      CURRENT=1
+      STATUS="read-only"
+    fi
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --yesno "Would you like the boot partition to be write-protected?" $DEFAULT 20 60 2
+      RET=$?
+    else
+      RET=$1
+    fi
+    if [ $RET -eq $CURRENT ]; then
+      if [ $RET -eq 0 ]; then
+        enable_bootro
+        STATUS="read-only"
+      elif [ $RET -eq 1 ]; then
+        disable_bootro
+        STATUS="writable"
+      else
+        return $RET
+      fi
+      ASK_TO_REBOOT=1
+    fi
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "The boot partition is $STATUS." 20 60 1
+    fi
+  fi
+}
+
 nonint() {
   "$@"
 }
@@ -1909,6 +2133,7 @@ do_advanced_menu() {
     "A7 GL Driver" "Enable/Disable experimental desktop GL driver" \
     "A8 Compositor" "Enable/Disable xcompmgr composition manager" \
     "A9 Pi 4 Video Output" "Video output options for Pi 4" \
+    "AA Overlay FS" "Enable/Disable read-only file system" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -1924,6 +2149,7 @@ do_advanced_menu() {
       A7\ *) do_gldriver ;;
       A8\ *) do_xcompmgr ;;
       A9\ *) do_pi4video ;;
+      AA\ *) do_overlayfs ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
