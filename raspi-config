@@ -1934,10 +1934,18 @@ disable_overlayfs() {
 }
 
 enable_bootro() {
+  if get_overlay_now ; then
+    echo "Overlay in use; cannot update fstab"
+    return 1
+  fi
   sed -i /etc/fstab -e "s/\(.*\/boot.*\)defaults\(.*\)/\1defaults,ro\2/"
 }
 
 disable_bootro() {
+  if get_overlay_now ; then
+    echo "Overlay in use; cannot update fstab"
+    return 1
+  fi
   sed -i /etc/fstab -e "s/\(.*\/boot.*\)defaults,ro\(.*\)/\1defaults\2/"
 }
 
@@ -1960,19 +1968,20 @@ do_overlayfs() {
     if [ $RET -eq 0 ]; then
       if enable_overlayfs; then
         STATUS="enabled"
+        ASK_TO_REBOOT=1
       else
         STATUS="unchanged"
       fi
     elif [ $RET -eq 1 ]; then
       if disable_overlayfs; then
         STATUS="disabled"
+        ASK_TO_REBOOT=1
       else
         STATUS="unchanged"
       fi
     else
       return $RET
     fi
-    ASK_TO_REBOOT=1
   fi
   if [ "$INTERACTIVE" = True ]; then
     whiptail --msgbox "The overlay file system is $STATUS." 20 60 1
@@ -2001,15 +2010,22 @@ do_overlayfs() {
     fi
     if [ $RET -eq $CURRENT ]; then
       if [ $RET -eq 0 ]; then
-        enable_bootro
-        STATUS="read-only"
+        if enable_bootro; then
+          STATUS="read-only"
+          ASK_TO_REBOOT=1
+        else
+          STATUS="unchanged"
+        fi
       elif [ $RET -eq 1 ]; then
-        disable_bootro
-        STATUS="writable"
+        if disable_bootro; then
+          STATUS="writable"
+          ASK_TO_REBOOT=1
+        else
+          STATUS="unchanged"
+        fi
       else
         return $RET
       fi
-      ASK_TO_REBOOT=1
     fi
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "The boot partition is $STATUS." 20 60 1
