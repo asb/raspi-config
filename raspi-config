@@ -1811,7 +1811,7 @@ enable_overlayfs() {
   if get_bootro_now ; then
     if ! mount -o remount,rw /boot 2>/dev/null ; then
       echo "Unable to mount boot partition as writable - cannot enable"
-      return
+      return 1
     fi
     BOOTRO=yes
   else
@@ -1913,7 +1913,7 @@ disable_overlayfs() {
   if get_bootro_now ; then
     if ! mount -o remount,rw /boot 2>/dev/null ; then
       echo "Unable to mount boot partition as writable - cannot disable"
-      return
+      return 1
     fi
     BOOTRO=yes
   else
@@ -1958,11 +1958,17 @@ do_overlayfs() {
   fi
   if [ $RET -eq $CURRENT ]; then
     if [ $RET -eq 0 ]; then
-      enable_overlayfs
-      STATUS="enabled"
+      if enable_overlayfs; then
+        STATUS="enabled"
+      else
+        STATUS="unchanged"
+      fi
     elif [ $RET -eq 1 ]; then
-      disable_overlayfs
-      STATUS="disabled"
+      if disable_overlayfs; then
+        STATUS="disabled"
+      else
+        STATUS="unchanged"
+      fi
     else
       return $RET
     fi
