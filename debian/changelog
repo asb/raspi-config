@@ -1,3 +1,9 @@
+raspi-config (20191005) buster; urgency=medium
+
+  * Add overlay file system functions
+
+ -- Simon Long <simon@raspberrypi.org>  Fri, 05 Oct 2019 10:13:58 +0100
+
 raspi-config (20190917) buster; urgency=medium
 
   * Enable overscan for FKMS
