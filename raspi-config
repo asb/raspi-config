@@ -2248,7 +2248,6 @@ if [ "$INTERACTIVE" = True ]; then
         "3 Boot Options" "Configure options for start-up" \
         "4 Localisation Options" "Set up language and regional settings to match your location" \
         "5 SSH" "Enable/Disable remote command line access to your PC using SSH" \
-        "6 Pixel Doubling" "Enable/Disable 2x2 pixel mapping" \
         "8 Update" "Update this tool to the latest version" \
         "9 About raspi-config" "Information about this configuration tool" \
         3>&1 1>&2 2>&3)
@@ -2277,7 +2276,6 @@ if [ "$INTERACTIVE" = True ]; then
           3\ *) do_boot_menu ;;
           4\ *) do_internationalisation_menu ;;
           5\ *) do_ssh ;;
-          6\ *) do_pixdub ;;
           8\ *) do_update ;;
           9\ *) do_about ;;
           *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;

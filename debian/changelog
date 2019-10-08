@@ -1,3 +1,9 @@
+raspi-config (20191008) buster; urgency=medium
+
+  * Remove pixel doubling option for x86
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 08 Oct 2019 10:19:48 +0100
+
 raspi-config (20191005) buster; urgency=medium
 
   * Add overlay file system functions
