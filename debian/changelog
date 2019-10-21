@@ -1,3 +1,9 @@
+raspi-config (20191021) buster; urgency=medium
+
+  * Add initramfs as dependency for overlayfs
+
+ -- Simon Long <simon@raspberrypi.org>  Mon, 21 Oct 2019 14:44:54 +0100
+
 raspi-config (20191008) buster; urgency=medium
 
   * Remove pixel doubling option for x86
