@@ -1,3 +1,9 @@
+raspi-config (20191210) buster; urgency=medium
+
+  * Fix postrm script
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 10 Dec 2019 14:22:08 +0000
+
 raspi-config (20191209) buster; urgency=medium
 
   * Add option to enable/disable screen blanking
