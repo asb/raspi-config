@@ -1417,8 +1417,13 @@ do_gldriver() {
     whiptail --msgbox "Driver and kernel not present on your system. Please update" 20 60 2
     return 1
   fi
-  if [ $(dpkg -l libgl1-mesa-dri | tail -n 1 | cut -d ' ' -f 1) != "ii" ]; then
-    whiptail --msgbox "libgl1-mesa-dri not found - please install" 20 60 2
+  for package in gldriver-test libgl1-mesa-dri; do
+    if [ "$(dpkg -l "$package" 2> /dev/null | tail -n 1 | cut -d ' ' -f 1)" != "ii" ]; then
+      missing_packages="$package $missing_packages"
+    fi
+  done
+  if [ -n "$missing_packages" ] && ! apt-get install $missing_packages; then
+    whiptail --msgbox "Required packages not found, please install: ${missing_packages}" 20 60 2
     return 1
   fi
   if is_pifour ; then
