@@ -2080,6 +2080,68 @@ do_overlayfs() {
   fi
 }
 
+get_proxy() {
+  SCHEME="$1"
+  VAR_NAME="${SCHEME}_proxy"
+  if [ -f /etc/profile.d/proxy.sh ]; then
+    # shellcheck disable=SC1091
+    . /etc/profile.d/proxy.sh
+  fi
+  eval "echo \$$VAR_NAME"
+}
+
+do_proxy() {
+  SCHEMES="$1"
+  ADDRESS="$2"
+  if [ "$SCHEMES" = "all" ]; then
+    CURRENT="$(get_proxy http)"
+    SCHEMES="http https ftp rsync"
+  else
+    CURRENT="$(get_proxy "$SCHEMES")"
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    if [ "$SCHEMES" = "no" ]; then
+      STRING="Please enter a comma separated list of addresses that should be excluded from using proxy servers.\\nEg: localhost,127.0.0.1,localaddress,.localdomain.com"
+    else
+      STRING="Please enter proxy address.\\nEg: http://user:pass@proxy:8080"
+    fi
+    if ! ADDRESS="$(whiptail --inputbox "$STRING"  20 60 "$CURRENT" 3>&1 1>&2 2>&3)"; then
+      return 0
+    fi
+  fi
+  for SCHEME in $SCHEMES; do
+    unset "${SCHEME}_proxy"
+    CURRENT="$(get_proxy "$SCHEME")"
+    if [ "$CURRENT" != "$ADDRESS" ]; then
+      ASK_TO_REBOOT=1
+    fi
+    if [ -f /etc/profile.d/proxy.sh ]; then
+      sed -i "/^export ${SCHEME}_/Id" /etc/profile.d/proxy.sh
+    fi
+    if [ "${SCHEME#*http}" != "$SCHEME" ]; then
+      if [ -f /etc/apt/apt.conf.d/01proxy ]; then
+        sed -i "/::${SCHEME}::Proxy/d" /etc/apt/apt.conf.d/01proxy
+      fi
+    fi
+    if [ -z "$ADDRESS" ]; then
+      STATUS=cleared
+      continue
+    fi
+    STATUS=updated
+    SCHEME_UPPER="$(echo "$SCHEME" | tr '[:lower:]' '[:upper:]')"
+    echo "export ${SCHEME_UPPER}_PROXY=\"$ADDRESS\"" >> /etc/profile.d/proxy.sh
+    if [ "$SCHEME" != "rsync" ]; then
+      echo "export ${SCHEME}_proxy=\"$ADDRESS\"" >> /etc/profile.d/proxy.sh
+    fi
+    if [ "${SCHEME#*http}" != "$SCHEME" ]; then
+      echo "Acquire::$SCHEME::Proxy \"$ADDRESS\";"  >> /etc/apt/apt.conf.d/01proxy
+    fi
+  done
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "Proxy settings $STATUS" 20 60 1
+  fi
+}
+
 nonint() {
   "$@"
 }
@@ -2257,6 +2319,7 @@ do_network_menu() {
     "N1 Hostname" "Set the visible name for this Pi on a network" \
     "N2 Wi-fi" "Enter SSID and passphrase" \
     "N3 Network interface names" "Enable/Disable predictable network interface names" \
+    "N4 Network proxy settings" "Configure network proxy settings" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -2266,6 +2329,32 @@ do_network_menu() {
       N1\ *) do_hostname ;;
       N2\ *) do_wifi_ssid_passphrase ;;
       N3\ *) do_net_names ;;
+      N4\ *) do_proxy_menu ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  fi
+}
+
+do_proxy_menu() {
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Network Proxy Settings" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    "P1 All" "Set the same proxy for all schemes" \
+    "P2 HTTP" "Set the HTTP proxy" \
+    "P3 HTTPS" "Set the HTTPS/SSL proxy" \
+    "P4 FTP" "Set the FTP proxy" \
+    "P5 RSYNC" "Set the RSYNC proxy" \
+    "P6 Exceptions" "Set addresses for which a proxy server should not be used" \
+    3>&1 1>&2 2>&3)
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    case "$FUN" in
+      P1\ *) do_proxy all ;;
+      P2\ *) do_proxy http ;;
+      P3\ *) do_proxy https ;;
+      P4\ *) do_proxy ftp ;;
+      P5\ *) do_proxy rsync ;;
+      P6\ *) do_proxy no;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
