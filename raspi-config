@@ -758,7 +758,9 @@ do_ssh() {
     DEFAULT=
   fi
   if [ "$INTERACTIVE" = True ]; then
-    whiptail --yesno "Would you like the SSH server to be enabled?" $DEFAULT 20 60 2
+    whiptail --yesno \
+      "Would you like the SSH server to be enabled?\n\nCaution: Default and weak passwords are a security risk when SSH is enabled!" \
+      $DEFAULT 20 60 2
     RET=$?
   else
     RET=$1
