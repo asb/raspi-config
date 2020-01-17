@@ -1860,6 +1860,11 @@ get_bootro_conf() {
   grep /boot /etc/fstab | grep -q "defaults.*,ro "
 }
 
+is_uname_current() {
+  test -d "/lib/modules/$(uname -r)"
+  return $?
+}
+
 enable_overlayfs() {
   KERN=$(uname -r)
   INITRD=initrd.img-"$KERN"-overlay
@@ -1875,11 +1880,7 @@ enable_overlayfs() {
     BOOTRO=no
   fi
 
-  # check that the modified initramfs is available for the current kernel version
-  if [ ! -e /boot/"$INITRD" ]; then
-    # generate the modified initramfs - check that the overlay file is available
-    if [ ! -e /etc/initramfs-tools/scripts/overlay ]; then
-      cat > /etc/initramfs-tools/scripts/overlay << 'EOF'
+  cat > /etc/initramfs-tools/scripts/overlay << 'EOF'
 # Local filesystem mounting			-*- shell-script -*-
 
 #
@@ -1933,19 +1934,17 @@ local_mount_root()
 	    overlay ${rootmnt}
 }
 EOF
-    fi
 
-    # add the overlay to the list of modules
-    if ! grep overlay /etc/initramfs-tools/modules > /dev/null; then
-      echo overlay >> /etc/initramfs-tools/modules
-    fi
-
-    # build the new initramfs
-    update-initramfs -c -k "$KERN"
-
-    # rename it so we know it has overlay added
-    mv /boot/initrd.img-"$KERN" /boot/"$INITRD"
+  # add the overlay to the list of modules
+  if ! grep overlay /etc/initramfs-tools/modules > /dev/null; then
+    echo overlay >> /etc/initramfs-tools/modules
   fi
+
+  # build the new initramfs
+  update-initramfs -c -k "$KERN"
+
+  # rename it so we know it has overlay added
+  mv /boot/initrd.img-"$KERN" /boot/"$INITRD"
 
   # there is now a modified initramfs ready for use...
 
@@ -1966,6 +1965,7 @@ EOF
 }
 
 disable_overlayfs() {
+  KERN=$(uname -r)
   # mount the boot partition as writable if it isn't already
   if get_bootro_now ; then
     if ! mount -o remount,rw /boot 2>/dev/null ; then
@@ -1979,6 +1979,7 @@ disable_overlayfs() {
 
   # modify config.txt
   sed -i /boot/config.txt -e "/initramfs.*/d"
+  update-initramfs -d -k "${KERN}-overlay"
 
   # modify command line
   sed -i /boot/cmdline.txt -e "s/\(.*\)boot=overlay \(.*\)/\1\2/"
@@ -2010,6 +2011,12 @@ do_overlayfs() {
   DEFAULT=--defaultno
   CURRENT=0
   STATUS="disabled"
+
+  if [ "$INTERACTIVE" = True ] && ! is_uname_current; then
+    whiptail --msgbox "Could not find modules for the running kernel ($(uname -r))." 20 60 1
+    return 1
+  fi
+
   if get_overlay_conf; then
     DEFAULT=
     CURRENT=1
