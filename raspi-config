@@ -1573,17 +1573,72 @@ do_update() {
 }
 
 do_audio() {
-  if [ "$INTERACTIVE" = True ]; then
-    AUDIO_OUT=$(whiptail --menu "Choose the audio output" 20 60 10 \
-      "0" "Auto" \
-      "1" "Force 3.5mm ('headphone') jack" \
-      "2" "Force HDMI" \
-      3>&1 1>&2 2>&3)
+  if aplay -l | grep -q "bcm2835 ALSA"; then
+    if [ "$INTERACTIVE" = True ]; then
+      AUDIO_OUT=$(whiptail --menu "Choose the audio output" 20 60 10 \
+        "0" "Auto" \
+        "1" "Force 3.5mm ('headphone') jack" \
+        "2" "Force HDMI" \
+        3>&1 1>&2 2>&3)
+    else
+      AUDIO_OUT=$1
+    fi
+    if [ $? -eq 0 ]; then
+      amixer cset numid=3 "$AUDIO_OUT"
+    fi
   else
-    AUDIO_OUT=$1
-  fi
-  if [ $? -eq 0 ]; then
-    amixer cset numid=3 "$AUDIO_OUT"
+    ASPATH=$(getent passwd $USER | cut -d : -f 6)/.asoundrc
+    if [ "$INTERACTIVE" = True ]; then
+      CARD0=$(aplay -l | grep bcm2835 | grep "card 0" | cut -d [ -f 3 | cut -d ] -f 1 | cut -d ' ' -f 2-)
+      CARD1=$(aplay -l | grep bcm2835 | grep "card 1" | cut -d [ -f 3 | cut -d ] -f 1 | cut -d ' ' -f 2-)
+      CARD2=$(aplay -l | grep bcm2835 | grep "card 2" | cut -d [ -f 3 | cut -d ] -f 1 | cut -d ' ' -f 2-)
+      if ! [ -z "$CARD2" ]; then
+      AUDIO_OUT=$(whiptail --menu "Choose the audio output" 20 60 10 \
+        "0" "$CARD0" \
+        "1" "$CARD1" \
+        "2" "$CARD2" \
+        3>&1 1>&2 2>&3)
+      elif ! [ -z "$CARD1" ]; then
+      AUDIO_OUT=$(whiptail --menu "Choose the audio output" 20 60 10 \
+        "0" "$CARD0" \
+        "1" "$CARD1" \
+        3>&1 1>&2 2>&3)
+      elif ! [ -z "$CARD0" ]; then
+      AUDIO_OUT=$(whiptail --menu "Choose the audio output" 20 60 10 \
+        "0" "$CARD0" \
+        3>&1 1>&2 2>&3)
+      else
+        whiptail --msgbox "No internal audio devices found" 20 60 1
+        false
+      fi
+    else
+      AUDIO_OUT=$1
+    fi
+    if [ $? -eq 0 ]; then
+      cat << EOF > $ASPATH
+pcm.!default {
+  type asym
+  playback.pcm {
+    type plug
+    slave.pcm "output"
+  }
+  capture.pcm {
+    type plug
+    slave.pcm "input"
+  }
+}
+
+pcm.output {
+  type hw
+  card $AUDIO_OUT
+}
+
+ctl.!default {
+  type hw
+  card $AUDIO_OUT
+}
+EOF
+    fi
   fi
 }
 

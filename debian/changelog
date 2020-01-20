@@ -1,3 +1,9 @@
+raspi-config (20200120) buster; urgency=medium
+
+  * Add audio switching for discrete internal ALSA devices
+
+ -- Simon Long <simon@raspberrypi.org>  Mon, 20 Jan 2020 11:38:37 +0000
+
 raspi-config (20200117) buster; urgency=medium
 
   * Add proxy configuration
