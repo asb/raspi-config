@@ -353,7 +353,7 @@ do_blanking() {
 }
 
 get_pixdub() {
-  if is_pi ; then
+  if is_pi && ! is_fkms; then
     FBW=$(get_config_var framebuffer_width $CONFIG)
     if [ $FBW -eq 0 ]; then
       echo 1
@@ -361,7 +361,7 @@ get_pixdub() {
       echo 0
     fi
   else
-    if [ -e /etc/profile.d/pd.sh ] ; then
+    if grep -q 'scale 0.5x0.5' /usr/share/dispsetup.sh ; then
       echo 0
     else
       echo 1
@@ -377,12 +377,6 @@ is_number() {
 }
 
 do_pixdub() {
-  if is_fkms ; then
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "Pixel doubling cannot be used with the GL driver" 20 60 1
-    fi
-    return 1
-  fi
   DEFAULT=--defaultno
   CURRENT=0
   if [ $(get_pixdub) -eq 0 ]; then
@@ -395,7 +389,7 @@ do_pixdub() {
   else
     RET=$1
   fi
-  if is_pi ; then
+  if is_pi && ! is_fkms; then
     if [ $RET -eq 0 ] ; then
 	  XVAL=$(xrandr 2>&1 | grep current | cut -f2 -d, | cut -f3 -d' ')
 	  YVAL=$(xrandr 2>&1 | grep current | cut -f2 -d, | cut -f5 -d' ')
@@ -420,21 +414,28 @@ do_pixdub() {
       return $RET
     fi
   else
-    if [ -e /etc/profile.d/pd.sh ] ; then
-      rm /etc/profile.d/pd.sh
-    fi
     if [ $RET -eq 0 ] ; then
+      if [ -e /usr/share/dispsetup.sh ] ; then
+        rm /usr/share/dispsetup.sh
+      fi
+      echo '#!/bin/sh' > /usr/share/dispsetup.sh
       DEV=$(xrandr | grep -w connected | cut -f1 -d' ')
       for item in $DEV
       do
-        echo xrandr --output $item --scale 0.5x0.5 >> /etc/profile.d/pd.sh
+        echo xrandr --output $item --scale 0.5x0.5 >> /usr/share/dispsetup.sh
       done
       STATUS=enabled
     elif [ $RET -eq 1 ]; then
+      if [ -e /usr/share/dispsetup.sh ] ; then
+        rm /usr/share/dispsetup.sh
+      fi
+      echo '#!/bin/sh' > /usr/share/dispsetup.sh
+      echo 'exit 0' >> /usr/share/dispsetup.sh
       STATUS=disabled
     else
       return $RET
     fi
+    chmod a+x /usr/share/dispsetup.sh
   fi
   if [ $RET -eq $CURRENT ]; then
     ASK_TO_REBOOT=1

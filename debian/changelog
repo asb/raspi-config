@@ -1,3 +1,9 @@
+raspi-config (20200203) buster; urgency=medium
+
+  * Add pixel doubling option for FKMS using xrandr
+
+ -- Simon Long <simon@raspberrypi.org>  Mon, 03 Feb 2020 09:36:38 +0000
+
 raspi-config (20200120) buster; urgency=medium
 
   * Add audio switching for discrete internal ALSA devices
