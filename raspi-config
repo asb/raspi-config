@@ -422,7 +422,7 @@ do_pixdub() {
       DEV=$(xrandr | grep -w connected | cut -f1 -d' ')
       for item in $DEV
       do
-        echo xrandr --output $item --scale 0.5x0.5 >> /usr/share/dispsetup.sh
+        echo xrandr --output $item --scale 0.5x0.5 --filter nearest >> /usr/share/dispsetup.sh
       done
       STATUS=enabled
     elif [ $RET -eq 1 ]; then

@@ -1,3 +1,9 @@
+raspi-config (20200205) buster; urgency=medium
+
+  * Add filter parameter to xrandr when setting pixel doubling
+
+ -- Simon Long <simon@raspberrypi.org>  Wed, 05 Feb 2020 07:46:42 +0000
+
 raspi-config (20200203) buster; urgency=medium
 
   * Add pixel doubling option for FKMS using xrandr
