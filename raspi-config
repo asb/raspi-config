@@ -792,10 +792,10 @@ do_ssh() {
 }
 
 get_vnc() {
-  if systemctl status vncserver-x11-serviced.service  | grep -q inactive; then
-    echo 1
-  else
+  if systemctl status vncserver-x11-serviced.service  | grep -q -w active; then
     echo 0
+  else
+    echo 1
   fi
 }
 
