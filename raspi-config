@@ -811,7 +811,7 @@ do_vnc() {
     RET=$1
   fi
   if [ $RET -eq 0 ]; then
-    if is_installed realvnc-vnc-server || apt install -y realvnc-vnc-server; then
+    if is_installed realvnc-vnc-server || apt-get install realvnc-vnc-server; then
       systemctl enable vncserver-x11-serviced.service &&
       systemctl start vncserver-x11-serviced.service &&
       STATUS=enabled
@@ -819,8 +819,10 @@ do_vnc() {
       return 1
     fi
   elif [ $RET -eq 1 ]; then
-    systemctl disable vncserver-x11-serviced.service
-    systemctl stop vncserver-x11-serviced.service
+    if is_installed realvnc-vnc-server; then
+        systemctl disable vncserver-x11-serviced.service
+        systemctl stop vncserver-x11-serviced.service
+    fi
     STATUS=disabled
   else
     return $RET

@@ -1,3 +1,9 @@
+raspi-config (20200207) buster; urgency=medium
+
+  * Fix bug preventing VNC from being disabled
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 07 Feb 2020 12:59:29 +0000
+
 raspi-config (20200205) buster; urgency=medium
 
   * Add filter parameter to xrandr when setting pixel doubling
