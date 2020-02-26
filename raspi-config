@@ -12,7 +12,7 @@ USER=${SUDO_USER:-$(who -m | awk '{ print $1 }')}
 
 is_pi () {
   ARCH=$(dpkg --print-architecture)
-  if [ "$ARCH" = "armhf" ] ; then
+  if [ "$ARCH" = "armhf" ] || [ "$ARCH" = "arm64" ] ; then
     return 0
   else
     return 1
@@ -74,7 +74,9 @@ is_ssh() {
 }
 
 is_fkms() {
-  if grep -q okay /proc/device-tree/soc/v3d@7ec00000/status 2> /dev/null || grep -q okay /proc/device-tree/soc/firmwarekms@7e600000/status 2> /dev/null ; then
+  if grep -s -q okay /proc/device-tree/soc/v3d@7ec00000/status \
+                     /proc/device-tree/soc/firmwarekms@7e600000/status \
+                     /proc/device-tree/v3dbus/v3d@7ec04000/status; then
     return 0
   else
     return 1
