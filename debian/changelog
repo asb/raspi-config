@@ -1,3 +1,9 @@
+raspi-config (20200504) buster; urgency=medium
+
+  * Replace references to wifi
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 04 May 2020 11:47:53 +0100
+
 raspi-config (20200226) buster; urgency=medium
 
   * Sync FKMS check with gldriver-test
