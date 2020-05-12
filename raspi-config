@@ -1184,6 +1184,58 @@ EOF
   fi
 }
 
+do_boot_order() {
+  if [ "$INTERACTIVE" = True ]; then
+    BOOTOPT=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Device Order" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
+      "B1 USB Boot" "Boot from USB device if SD card boot fails" \
+      "B2 Network Boot" "Boot from network if SD card boot fails" \
+      3>&1 1>&2 2>&3)
+  else
+    BOOTOPT=$1
+    true
+  fi
+  if [ $? -eq 0 ]; then
+    CURDATE=$(date -d "`vcgencmd bootloader_version |  head -n 1`" +%Y%m%d)
+    LATEST=0
+    for filename in /lib/firmware/raspberrypi/bootloader/critical/pieeprom*.bin ; do
+      FILDATE=$(date -d "`echo $filename | cut -d - -f 2- | cut -d . -f 1`" +%Y%m%d)
+      if [ $FILDATE -gt $LATEST ]; then
+        LATEST=$FILDATE
+        FILNAME=$filename
+      fi
+    done
+    if [ $CURDATE -lt $LATEST ]; then
+      if [ "$INTERACTIVE" = True ]; then
+        whiptail --msgbox "No up-to-date EEPROM bin file - aborting" 20 60 2
+      fi
+      return 1
+    fi
+    EECFG=$(mktemp)
+    vcgencmd bootloader_config > $EECFG
+    case "$BOOTOPT" in
+      B1*)
+        sed $EECFG -i -e "s/^BOOT_ORDER=.*/BOOT_ORDER=0x041/"
+        STATUS="USB device"
+        ;;
+      B2*)
+        sed $EECFG -i -e "s/^BOOT_ORDER=.*/BOOT_ORDER=0xf21/"
+        STATUS="Network"
+        ;;
+      *)
+        whiptail --msgbox "Programmer error, unrecognised boot option" 20 60 2
+        return 1
+        ;;
+    esac
+    EEBIN=$(mktemp)
+    rpi-eeprom-config --config $EECFG --out $EEBIN $FILNAME
+    rpi-eeprom-update -d -f $EEBIN
+    ASK_TO_REBOOT=1
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "$STATUS is default boot device" 20 60 1
+    fi
+  fi
+}
+
 get_boot_wait() {
   if test -e /etc/systemd/system/dhcpcd.service.d/wait.conf; then
     echo 0
@@ -2377,6 +2429,13 @@ do_boot_menu() {
       "B1 Desktop / CLI" "Choose whether to boot into a desktop environment or the command line" \
       "B2 Wait for Network at Boot" "Choose whether to wait for network connection during boot" \
       3>&1 1>&2 2>&3)
+  elif is_pifour ; then
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "B1 Desktop / CLI" "Choose whether to boot into a desktop environment or the command line" \
+      "B2 Wait for Network at Boot" "Choose whether to wait for network connection during boot" \
+      "B3 Splash Screen" "Choose graphical splash screen or text boot" \
+      "B4 Boot Order" "Choose network or USB device boot" \
+      3>&1 1>&2 2>&3)
   else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "B1 Desktop / CLI" "Choose whether to boot into a desktop environment or the command line" \
@@ -2392,6 +2451,7 @@ do_boot_menu() {
       B1\ *) do_boot_behaviour ;;
       B2\ *) do_boot_wait ;;
       B3\ *) do_boot_splash ;;
+      B4\ *) do_boot_order ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
