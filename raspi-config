@@ -1196,17 +1196,16 @@ do_boot_order() {
   fi
   if [ $? -eq 0 ]; then
     CURDATE=$(date -d "`vcgencmd bootloader_version |  head -n 1`" +%Y%m%d)
-    LATEST=0
+    FILNAME="none"
     for filename in /lib/firmware/raspberrypi/bootloader/critical/pieeprom*.bin ; do
       FILDATE=$(date -d "`echo $filename | cut -d - -f 2- | cut -d . -f 1`" +%Y%m%d)
-      if [ $FILDATE -gt $LATEST ]; then
-        LATEST=$FILDATE
+      if [ $FILDATE -eq $CURDATE ]; then
         FILNAME=$filename
       fi
     done
-    if [ $CURDATE -lt $LATEST ]; then
+    if [ "$FILNAME" = "none" ]; then
       if [ "$INTERACTIVE" = True ]; then
-        whiptail --msgbox "No up-to-date EEPROM bin file - aborting" 20 60 2
+        whiptail --msgbox "No matching EEPROM bin file - aborting" 20 60 2
       fi
       return 1
     fi
