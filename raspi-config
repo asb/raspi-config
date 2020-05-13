@@ -1205,7 +1205,7 @@ do_boot_order() {
     done
     if [ "$FILNAME" = "none" ]; then
       if [ "$INTERACTIVE" = True ]; then
-        whiptail --msgbox "No EEPROM bin file found for version $CURDATE - aborting" 20 60 2
+        whiptail --msgbox "No EEPROM bin file found for version `date -d $CURDATE +%Y-%m-%d` - aborting" 20 60 2
       fi
       return 1
     fi
@@ -1214,7 +1214,7 @@ do_boot_order() {
     case "$BOOTOPT" in
       B1*)
         if ! grep -q "BOOT_ORDER" $EECFG ; then
-          sed $EECFG -i -e "\$aBOOT_ORDER=0xf41"
+          sed $EECFG -i -e "\$a[all]\nBOOT_ORDER=0xf41"
         else
           sed $EECFG -i -e "s/^BOOT_ORDER=.*/BOOT_ORDER=0xf41/"
         fi
@@ -1222,7 +1222,7 @@ do_boot_order() {
         ;;
       B2*)
         if ! grep -q "BOOT_ORDER" $EECFG ; then
-          sed $EECFG -i -e "\$aBOOT_ORDER=0xf21"
+          sed $EECFG -i -e "\$a[all]\nBOOT_ORDER=0xf21"
         else
           sed $EECFG -i -e "s/^BOOT_ORDER=.*/BOOT_ORDER=0xf21/"
         fi
