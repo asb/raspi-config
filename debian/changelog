@@ -1,3 +1,11 @@
+raspi-config (20200514) buster; urgency=medium
+
+  * Update initial resize script
+    - Change disk ID to avoid clashes
+  * Add boot order selector
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 14 May 2020 06:33:23 +0100
+
 raspi-config (20200504) buster; urgency=medium
 
   * Replace references to wifi
