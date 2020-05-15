@@ -22,7 +22,7 @@ check_commands () {
       sleep 5
       return 1
   fi
-  for COMMAND in grep cut sed parted fdisk findmnt partprobe; do
+  for COMMAND in grep cut sed parted fdisk findmnt; do
     if ! command -v $COMMAND > /dev/null; then
       FAIL_REASON="$COMMAND not found"
       return 1
@@ -78,18 +78,21 @@ fix_partuuid() {
   mount -o remount,rw "$ROOT_PART_DEV"
   mount -o remount,rw "$BOOT_PART_DEV"
   DISKID="$(tr -dc 'a-f0-9' < /dev/hwrng | dd bs=1 count=8 2>/dev/null)"
-  fdisk "$ROOT_DEV" <<EOF
+  fdisk "$ROOT_DEV" > /dev/null <<EOF
 x
 i
 0x$DISKID
 r
 w
 EOF
-  sed -i "s/${OLD_DISKID}/${DISKID}/g" /etc/fstab
-  sed -i "s/${OLD_DISKID}/${DISKID}/" /boot/cmdline.txt
+  if [ "$?" -eq 0 ]; then
+    sed -i "s/${OLD_DISKID}/${DISKID}/g" /etc/fstab
+    sed -i "s/${OLD_DISKID}/${DISKID}/" /boot/cmdline.txt
+    sync
+  fi
+
   mount -o remount,ro "$ROOT_PART_DEV"
   mount -o remount,ro "$BOOT_PART_DEV"
-  sync
 }
 
 check_variables () {
