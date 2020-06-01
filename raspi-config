@@ -1594,9 +1594,9 @@ do_audio() {
   else
     ASPATH=$(getent passwd $USER | cut -d : -f 6)/.asoundrc
     if [ "$INTERACTIVE" = True ]; then
-      CARD0=$(aplay -l | grep bcm2835 | grep "card 0" | cut -d [ -f 3 | cut -d ] -f 1 | cut -d ' ' -f 2-)
-      CARD1=$(aplay -l | grep bcm2835 | grep "card 1" | cut -d [ -f 3 | cut -d ] -f 1 | cut -d ' ' -f 2-)
-      CARD2=$(aplay -l | grep bcm2835 | grep "card 2" | cut -d [ -f 3 | cut -d ] -f 1 | cut -d ' ' -f 2-)
+      CARD0=$(LC_ALL=C aplay -l | grep bcm2835 | grep "card 0" | cut -d [ -f 3 | cut -d ] -f 1 | cut -d ' ' -f 2-)
+      CARD1=$(LC_ALL=C aplay -l | grep bcm2835 | grep "card 1" | cut -d [ -f 3 | cut -d ] -f 1 | cut -d ' ' -f 2-)
+      CARD2=$(LC_ALL=C aplay -l | grep bcm2835 | grep "card 2" | cut -d [ -f 3 | cut -d ] -f 1 | cut -d ' ' -f 2-)
       if ! [ -z "$CARD2" ]; then
       AUDIO_OUT=$(whiptail --menu "Choose the audio output" 20 60 10 \
         "0" "$CARD0" \
