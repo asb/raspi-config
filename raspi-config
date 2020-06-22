@@ -1205,6 +1205,8 @@ do_boot_order() {
     fi
     EECFG=$(mktemp)
     vcgencmd bootloader_config > $EECFG
+    sed $EECFG -i -e "/SD_BOOT_MAX_RETRIES/d"
+    sed $EECFG -i -e "/NET_BOOT_MAX_RETRIES/d"
     case "$BOOTOPT" in
       B1*)
         if ! grep -q "BOOT_ORDER" $EECFG ; then
