@@ -1191,7 +1191,12 @@ do_boot_order() {
   if [ $? -eq 0 ]; then
     CURDATE=$(date -d "`vcgencmd bootloader_version |  head -n 1`" +%Y%m%d)
     FILNAME="none"
-    for filename in /lib/firmware/raspberrypi/bootloader/critical/pieeprom*.bin ; do
+    if grep -q "stable" /etc/default/rpi-eeprom-update ; then
+      EEPATH = "/lib/firmware/raspberrypi/bootloader/stable/pieeprom*.bin"
+    else
+      EEPATH = "/lib/firmware/raspberrypi/bootloader/critical/pieeprom*.bin"
+    fi
+    for filename in $EEPATH ; do
       FILDATE=$(date -d "`echo $filename | cut -d - -f 2- | cut -d . -f 1`" +%Y%m%d)
       if [ $FILDATE -eq $CURDATE ]; then
         FILNAME=$filename
@@ -1236,6 +1241,66 @@ do_boot_order() {
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "$STATUS is default boot device" 20 60 1
     fi
+  fi
+}
+
+
+do_eeprom() {
+  if [ "$INTERACTIVE" = True ]; then
+    BOOTOPT=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "EEPROM Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
+      "E1 Stable" "Use the stable EEPROM software image" \
+      "E2 Critical" "Use the critical EEPROM software image" \
+      3>&1 1>&2 2>&3)
+  else
+    BOOTOPT=$1
+    true
+  fi
+  if [ $? -eq 0 ]; then
+    case "$BOOTOPT" in
+      E1*)
+        sed /etc/default/rpi-eeprom-update -i -e "s/FIRMWARE_RELEASE_STATUS.*/FIRMWARE_RELEASE_STATUS=\"stable\"/"
+        EETYPE="Stable"
+        ;;
+      E2*)
+        sed /etc/default/rpi-eeprom-update -i -e "s/FIRMWARE_RELEASE_STATUS.*/FIRMWARE_RELEASE_STATUS=\"critical\"/"
+        EETYPE="Critical"
+        ;;
+      *)
+        whiptail --msgbox "Programmer error, unrecognised EEPROM option" 20 60 2
+        return 1
+        ;;
+    esac
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --yesno "$EETYPE EEPROM set.\nWould you like to reset EEPROM to defaults?" 20 60 2
+      if [ $? -eq 0 ]; then # yes
+        CURDATE=$(date -d "`vcgencmd bootloader_version |  head -n 1`" +%Y%m%d)
+        FILNAME="none"
+        if grep -q "stable" /etc/default/rpi-eeprom-update ; then
+          EEPATH="/lib/firmware/raspberrypi/bootloader/stable/pieeprom*.bin"
+        else
+          EEPATH="/lib/firmware/raspberrypi/bootloader/critical/pieeprom*.bin"
+        fi
+        for filename in $EEPATH ; do
+          FILDATE=$(date -d "`echo $filename | cut -d - -f 2- | cut -d . -f 1`" +%Y%m%d)
+          if [ $FILDATE -eq $CURDATE ]; then
+            FILNAME=$filename
+          fi
+        done
+        if [ "$FILNAME" = "none" ]; then
+          if [ "$INTERACTIVE" = True ]; then
+            whiptail --msgbox "No EEPROM bin file found for version `date -d $CURDATE +%Y-%m-%d` - cannot reset to defaults" 20 60 2
+          fi
+        else
+          rpi-eeprom-update -d -f $FILNAME
+        fi
+      else
+        rpi-eeprom-update
+      fi
+    else
+      # don't set defaults if not interactive
+      rpi-eeprom-update
+    fi
+    ASK_TO_REBOOT=1
   fi
 }
 
@@ -2438,6 +2503,7 @@ do_boot_menu() {
       "B2 Wait for Network at Boot" "Choose whether to wait for network connection during boot" \
       "B3 Splash Screen" "Choose graphical splash screen or text boot" \
       "B4 Boot Order" "Choose network or USB device boot" \
+      "B5 EEPROM Version" "Select stable or critical EEPROM version" \
       3>&1 1>&2 2>&3)
   else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -2455,6 +2521,7 @@ do_boot_menu() {
       B2\ *) do_boot_wait ;;
       B3\ *) do_boot_splash ;;
       B4\ *) do_boot_order ;;
+      B5\ *) do_eeprom ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
