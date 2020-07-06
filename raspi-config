@@ -1580,16 +1580,28 @@ do_gldriver() {
   if [ $? -eq 0 ]; then
     case "$GLOPT" in
       G1*)
-        if grep -q -E "^dtoverlay=vc4-f?kms-v3d" $CONFIG; then
-          ASK_TO_REBOOT=1
+        if is_pifour ; then
+          if grep -q -E "^dtoverlay=vc4-f?kms-v3d" $CONFIG; then
+            ASK_TO_REBOOT=1
+          fi
+        else
+          if sed -n "/\[pi4\]/,/\[/ !p" $CONFIG | grep -q -E "^dtoverlay=vc4-f?kms-v3d" ; then
+            ASK_TO_REBOOT=1
+          fi
         fi
         sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/g"
         sed $CONFIG -i -e "s/^dtoverlay=vc4-fkms-v3d/#dtoverlay=vc4-fkms-v3d/g"
         STATUS="The GL driver is disabled."
         ;;
       G2*)
-        if ! sed -n "/\[pi4\]/,/\[/ !p" $CONFIG | grep -q "^dtoverlay=vc4-fkms-v3d" ; then
-          ASK_TO_REBOOT=1
+        if is_pifour ; then
+          if ! grep -q -E "^dtoverlay=vc4-fkms-v3d" $CONFIG; then
+            ASK_TO_REBOOT=1
+          fi
+        else
+          if ! sed -n "/\[pi4\]/,/\[/ !p" $CONFIG | grep -q "^dtoverlay=vc4-fkms-v3d" ; then
+            ASK_TO_REBOOT=1
+          fi
         fi
         sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/g"
         sed $CONFIG -i -e "s/^#dtoverlay=vc4-fkms-v3d/dtoverlay=vc4-fkms-v3d/g"
