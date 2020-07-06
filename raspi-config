@@ -1248,8 +1248,8 @@ do_boot_order() {
 do_boot_rom() {
   if [ "$INTERACTIVE" = True ]; then
     BOOTOPT=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot ROM Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
-      "E1 Stable" "Use the stable boot ROM software image" \
-      "E2 Critical" "Use the critical boot ROM software image" \
+      "E1 Latest" "Use the latest version boot ROM software" \
+      "E2 Default" "Use the factory default boot ROM software" \
       3>&1 1>&2 2>&3)
   else
     BOOTOPT=$1
@@ -1259,11 +1259,11 @@ do_boot_rom() {
     case "$BOOTOPT" in
       E1*)
         sed /etc/default/rpi-eeprom-update -i -e "s/FIRMWARE_RELEASE_STATUS.*/FIRMWARE_RELEASE_STATUS=\"stable\"/"
-        EETYPE="Stable"
+        EETYPE="Latest version"
         ;;
       E2*)
         sed /etc/default/rpi-eeprom-update -i -e "s/FIRMWARE_RELEASE_STATUS.*/FIRMWARE_RELEASE_STATUS=\"critical\"/"
-        EETYPE="Critical"
+        EETYPE="Factory default"
         ;;
       *)
         whiptail --msgbox "Programmer error, unrecognised boot ROM option" 20 60 2
@@ -1271,28 +1271,22 @@ do_boot_rom() {
         ;;
     esac
     if [ "$INTERACTIVE" = True ]; then
-      whiptail --yesno "$EETYPE EEPROM set - will be loaded at next reboot.\nWould you like to reset boot ROM to defaults?" 20 60 2
+      whiptail --yesno "$EETYPE boot ROM selected - will be loaded at next reboot.\n\nReset boot ROM to defaults?" 20 60 2
       DEFAULTS=$?
      else
       DEFAULTS=$2
     fi
     if [ "$DEFAULTS" -eq 0 ]; then # yes
-      CURDATE=$(date -d "`vcgencmd bootloader_version |  head -n 1`" +%Y%m%d)
-      FILNAME="none"
       if grep -q "stable" /etc/default/rpi-eeprom-update ; then
-        EEPATH="/lib/firmware/raspberrypi/bootloader/stable/pieeprom*.bin"
+        EEPATH="/lib/firmware/raspberrypi/bootloader/stable/"
       else
-        EEPATH="/lib/firmware/raspberrypi/bootloader/critical/pieeprom*.bin"
+        EEPATH="/lib/firmware/raspberrypi/bootloader/critical/"
       fi
-      for filename in $EEPATH ; do
-        FILDATE=$(date -d "`echo $filename | cut -d - -f 2- | cut -d . -f 1`" +%Y%m%d)
-        if [ $FILDATE -eq $CURDATE ]; then
-          FILNAME=$filename
-        fi
-      done
-      if [ "$FILNAME" = "none" ]; then
+      MATCH=".*/pieeprom-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].bin"
+      FILNAME="$(find "${EEPATH}" -maxdepth 1 -type f -size 524288c -regex "${MATCH}" | sort -r | head -n1)"
+      if [ -z "$FILNAME" ]; then
         if [ "$INTERACTIVE" = True ]; then
-          whiptail --msgbox "No EEPROM bin file found for version `date -d $CURDATE +%Y-%m-%d` - cannot reset to defaults" 20 60 2
+          whiptail --msgbox "No EEPROM bin file found - cannot reset to defaults" 20 60 2
         fi
       else
         rpi-eeprom-update -d -f $FILNAME
@@ -2521,7 +2515,7 @@ do_boot_menu() {
       "B2 Wait for Network at Boot" "Choose whether to wait for network connection during boot" \
       "B3 Splash Screen" "Choose graphical splash screen or text boot" \
       "B4 Boot Order" "Choose network or USB device boot" \
-      "B5 Boot ROM Version" "Select stable or critical boot ROM release" \
+      "B5 Boot ROM Version" "Select latest or default boot ROM software" \
       3>&1 1>&2 2>&3)
   else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
