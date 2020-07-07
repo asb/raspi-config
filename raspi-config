@@ -1258,11 +1258,11 @@ do_boot_rom() {
   if [ $? -eq 0 ]; then
     case "$BOOTOPT" in
       E1*)
-        sed /etc/default/rpi-eeprom-update -i -e "s/FIRMWARE_RELEASE_STATUS.*/FIRMWARE_RELEASE_STATUS=\"stable\"/"
+        sed /etc/default/rpi-eeprom-update -i -e "s/^FIRMWARE_RELEASE_STATUS.*/FIRMWARE_RELEASE_STATUS=\"stable\"/"
         EETYPE="Latest version"
         ;;
       E2*)
-        sed /etc/default/rpi-eeprom-update -i -e "s/FIRMWARE_RELEASE_STATUS.*/FIRMWARE_RELEASE_STATUS=\"critical\"/"
+        sed /etc/default/rpi-eeprom-update -i -e "s/^FIRMWARE_RELEASE_STATUS.*/FIRMWARE_RELEASE_STATUS=\"critical\"/"
         EETYPE="Factory default"
         ;;
       *)

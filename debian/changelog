@@ -1,3 +1,9 @@
+raspi-config (20200707) buster; urgency=medium
+
+  * Add boot ROM and boot order selection
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 07 Jul 2020 09:24:56 +0100
+
 raspi-config (20200601) buster; urgency=medium
 
   * Fix audio device check bug when used in non-English locale
