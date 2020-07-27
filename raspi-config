@@ -558,7 +558,10 @@ do_wifi_country() {
         ASK_TO_REBOOT=1
     fi
     if hash rfkill 2> /dev/null; then
-        rfkill unblock wifi
+      rfkill unblock wifi
+      for filename in /var/lib/systemd/rfkill/*:wlan ; do
+        echo 0 > $filename
+      done
     fi
     if [ "$INTERACTIVE" = True ]; then
         whiptail --msgbox "Wireless LAN country set to $COUNTRY" 20 60 1
