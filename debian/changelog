@@ -1,3 +1,9 @@
+raspi-config (20200817) buster; urgency=medium
+
+  * Use processor ID to detect Pi 4 rather than board ID
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 17 Aug 2020 09:24:09 +0100
+
 raspi-config (20200727) buster; urgency=medium
 
   * Disable initial rfkill for all platforms when setting wireless country
