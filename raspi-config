@@ -1119,18 +1119,16 @@ do_pi4video() {
 
 get_leds () {
   if grep -q "\\[actpwr\\]" /sys/class/leds/led0/trigger ; then
-    echo 1
-  else
     echo 0
+  else
+    echo 1
   fi
 }
 
 do_leds() {
   DEFAULT=--defaultno
-  CURRENT=0
-  if [ $(get_leds) -eq 1 ]; then
+  if [ $(get_leds) -eq 0 ]; then
     DEFAULT=
-    CURRENT=1
   fi
   if [ "$INTERACTIVE" = True ]; then
     whiptail --yesno "Would you like the power LED to flash during disk activity?" $DEFAULT 20 60 2
