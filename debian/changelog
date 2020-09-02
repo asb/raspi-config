@@ -1,3 +1,9 @@
+raspi-config (20200902) buster; urgency=medium
+
+  * Add option to control power LED on Pi Zero
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 02 Sep 2020 11:46:19 +0100
+
 raspi-config (20200817) buster; urgency=medium
 
   * Use processor ID to detect Pi 4 rather than board ID

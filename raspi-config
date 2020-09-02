@@ -1117,6 +1117,45 @@ do_pi4video() {
   fi
 }
 
+get_leds () {
+  if grep -q "\\[actpwr\\]" /sys/class/leds/led0/trigger ; then
+    echo 1
+  else
+    echo 0
+  fi
+}
+
+do_leds() {
+  DEFAULT=--defaultno
+  CURRENT=0
+  if [ $(get_leds) -eq 1 ]; then
+    DEFAULT=
+    CURRENT=1
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like the power LED to flash during disk activity?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    RET=$1
+  fi
+  if [ $RET -eq 0 ]; then
+    LEDSET="actpwr"
+    STATUS="flash for disk activity"
+  elif [ $RET -eq 1 ]; then
+    LEDSET="default-on"
+    STATUS="be on constantly"
+  else
+    return $RET
+  fi
+  sed $CONFIG -i -e "s/dtparam=act_led_trigger=.*/dtparam=act_led_trigger=$LEDSET/"
+  if ! grep -q "dtparam=act_led_trigger" $CONFIG ; then
+    sed $CONFIG -i -e "\$adtparam=act_led_trigger=$LEDSET"
+  fi
+  echo $LEDSET | tee /sys/class/leds/led0/trigger > /dev/null
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "The power LED will $STATUS" 20 60 1
+  fi
+}
 
 do_boot_behaviour() {
   if [ "$INTERACTIVE" = True ]; then
@@ -2486,6 +2525,7 @@ do_advanced_menu() {
     "A9 Compositor" "Enable/Disable xcompmgr composition manager" \
     "AA Pi 4 Video Output" "Video output options for Pi 4" \
     "AB Overlay FS" "Enable/Disable read-only file system" \
+    "AC Power LED" "Set behaviour of power LED on Pi Zero" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -2503,6 +2543,7 @@ do_advanced_menu() {
       A9\ *) do_xcompmgr ;;
       AA\ *) do_pi4video ;;
       AB\ *) do_overlayfs ;;
+      AC\ *) do_leds ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
