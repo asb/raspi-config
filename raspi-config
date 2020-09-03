@@ -1120,14 +1120,23 @@ do_pi4video() {
 get_leds () {
   if grep -q "\\[actpwr\\]" /sys/class/leds/led0/trigger ; then
     echo 0
-  else
+  elif grep -q "\\[default-on\\]" /sys/class/leds/led0/trigger ; then
     echo 1
+  else
+    echo -1
   fi
 }
 
 do_leds() {
+  CURRENT=$(get_leds)
+  if [ $CURRENT -eq -1 ] ; then
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "The LED behaviour cannot be changed on this model of Raspberry Pi" 20 60 1
+    fi
+    return 1
+  fi
   DEFAULT=--defaultno
-  if [ $(get_leds) -eq 0 ]; then
+  if [ $CURRENT -eq 0 ]; then
     DEFAULT=
   fi
   if [ "$INTERACTIVE" = True ]; then
