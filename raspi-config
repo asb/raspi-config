@@ -1164,6 +1164,80 @@ do_leds() {
   fi
 }
 
+get_fan() {
+  if grep -q ^dtoverlay=gpio-fan $CONFIG ; then
+    echo 0
+  else
+    echo 1
+  fi
+}
+
+get_fan_gpio() {
+  GPIO=$(grep ^dtoverlay=gpio-fan $CONFIG | cut -d, -f2 | cut -d= -f2)
+  if [ -z $GPIO ]; then
+    GPIO=14
+  fi
+  echo $GPIO
+}
+
+get_fan_temp() {
+  TEMP=$(grep ^dtoverlay=gpio-fan $CONFIG | cut -d, -f3 | cut -d= -f2)
+  if [ -z $TEMP ]; then
+    TEMP=80000
+  fi
+  echo $(( $TEMP / 1000 ))
+}
+
+do_fan() {
+  GNOW=$(get_fan_gpio)
+  TNOW=$(get_fan_temp)
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like to enable fan temperature control?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    RET=$1
+  fi
+  if [ $RET -eq 0 ] ; then
+    if [ "$INTERACTIVE" = True ]; then
+      GPIO=$(whiptail --inputbox "To which GPIO is the fan connected?" 20 60 "$GNOW" 3>&1 1>&2 2>&3)
+    else
+      if [ -z $2 ]; then
+        GPIO=14
+      else
+        GPIO=$2
+      fi
+    fi
+    if [ "$INTERACTIVE" = True ]; then
+      TIN=$(whiptail --inputbox "At what temperature in degrees should the fan turn on?" 20 60 "$TNOW" 3>&1 1>&2 2>&3)
+    else
+      if [ -z $3 ]; then
+        TIN=80
+      else
+        TIN=$3
+      fi
+    fi
+    TEMP=$(( $TIN * 1000 ))
+  fi
+  if [ $RET -eq 0 ]; then
+    if ! grep -q "dtoverlay=gpio-fan" $CONFIG ; then
+      if ! tail -1 $CONFIG | grep -q "\\[all\\]" ; then 
+        sed $CONFIG -i -e "\$a[all]"
+      fi
+      sed $CONFIG -i -e "\$adtoverlay=gpio-fan,gpio_pin=$GPIO,temp=$TEMP"
+    else
+      sed $CONFIG -i -e "s/^.*dtoverlay=gpio-fan.*/dtoverlay=gpio-fan,gpio_pin=$GPIO,temp=$TEMP/"
+    fi
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "The fan on GPIO $GPIO is enabled and will turn on at $TIN degrees" 20 60 1
+    fi
+  else
+    sed $CONFIG -i -e "/^.*dtoverlay=gpio-fan.*/d"
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "The fan is disabled" 20 60 1
+    fi
+  fi
+}
+
 do_boot_behaviour() {
   if [ "$INTERACTIVE" = True ]; then
     BOOTOPT=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
@@ -2533,6 +2607,7 @@ do_advanced_menu() {
     "AA Pi 4 Video Output" "Video output options for Pi 4" \
     "AB Overlay FS" "Enable/Disable read-only file system" \
     "AC Power LED" "Set behaviour of power LED on Pi Zero" \
+    "AD Fan Control" "Set behaviour of GPIO fan" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -2551,6 +2626,7 @@ do_advanced_menu() {
       AA\ *) do_pi4video ;;
       AB\ *) do_overlayfs ;;
       AC\ *) do_leds ;;
+      AD\ *) do_fan ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
