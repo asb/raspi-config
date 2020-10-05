@@ -1220,7 +1220,7 @@ do_fan() {
   fi
   if [ $RET -eq 0 ]; then
     if ! grep -q "dtoverlay=gpio-fan" $CONFIG ; then
-      if ! tail -1 $CONFIG | grep -q "\\[all\\]" ; then 
+      if ! tail -1 $CONFIG | grep -q "\\[all\\]" ; then
         sed $CONFIG -i -e "\$a[all]"
       fi
       sed $CONFIG -i -e "\$adtoverlay=gpio-fan,gpio_pin=$GPIO,temp=$TEMP"
