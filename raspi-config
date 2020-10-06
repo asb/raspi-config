@@ -1207,6 +1207,18 @@ do_fan() {
         GPIO=$2
       fi
     fi
+    if ! echo "$GPIO" | grep -q ^[[:digit:]]*$ ; then
+      if [ "$INTERACTIVE" = True ]; then
+        whiptail --msgbox "GPIO must be a number between 2 and 27" 20 60 1
+      fi
+      return 1
+    fi
+    if [ "$GPIO" -lt 2 ] || [ "$GPIO" -gt 27 ]  ; then
+      if [ "$INTERACTIVE" = True ]; then
+        whiptail --msgbox "GPIO must be a number between 2 and 27" 20 60 1
+      fi
+      return 1
+    fi
     if [ "$INTERACTIVE" = True ]; then
       TIN=$(whiptail --inputbox "At what temperature in degrees should the fan turn on?" 20 60 "$TNOW" 3>&1 1>&2 2>&3)
     else
@@ -1215,6 +1227,18 @@ do_fan() {
       else
         TIN=$3
       fi
+    fi
+    if ! echo "$TIN" | grep -q ^[[:digit:]]*$ ; then
+      if [ "$INTERACTIVE" = True ]; then
+        whiptail --msgbox "Temperature must be a number between 60 and 120" 20 60 1
+      fi
+      return 1
+    fi
+    if [ "$TIN" -lt 60 ] || [ "$TIN" -gt 120 ]  ; then
+      if [ "$INTERACTIVE" = True ]; then
+        whiptail --msgbox "Temperature must be a number between 60 and 120" 20 60 1
+      fi
+      return 1
     fi
     TEMP=$(( $TIN * 1000 ))
   fi
