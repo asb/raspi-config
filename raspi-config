@@ -114,7 +114,7 @@ calc_wt_size() {
 
 do_about() {
   whiptail --msgbox "\
-This tool provides a straight-forward way of doing initial
+This tool provides a straightforward way of doing initial
 configuration of the Raspberry Pi. Although it can be run
 at any time, some of the options may have difficulties if
 you have heavily customised your installation.\
@@ -2567,38 +2567,108 @@ if [ -n "${OPT_MEMORY_SPLIT:-}" ]; then
   exit 0
 fi
 
-do_internationalisation_menu() {
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Localisation Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-    "I1 Change Locale" "Set up language and regional settings to match your location" \
-    "I2 Change Time Zone" "Set up time zone to match your location" \
-    "I3 Change Keyboard Layout" "Set the keyboard layout to match your keyboard" \
-    "I4 Change WLAN Country" "Set the legal channels used in your country" \
-    3>&1 1>&2 2>&3)
+do_system_menu() {
+  if is_pi ; then
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "System Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "S1 Wireless LAN" "Enter SSID and passphrase" \
+      "S2 Audio" "Select audio out through HDMI or 3.5mm jack" \
+      "S3 Change User Password" "Change password for the '$USER' user" \
+      "S4 Hostname" "Set name for this computer on a network" \
+      "S5 Desktop / CLI" "Select boot into desktop or command line" \
+      "S6 Wait for Network at Boot" "Select wait for network connection on boot" \
+      "S7 Splash Screen" "Choose graphical splash screen or text boot" \
+      "S8 Power LED" "Set behaviour of power LED" \
+      3>&1 1>&2 2>&3)
+  elif is_live ; then 
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "System Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "S1 Wireless LAN" "Enter SSID and passphrase" \
+      "S3 Change User Password" "Change password for the '$USER' user" \
+      "S4 Hostname" "Set name for this computer on a network" \
+      "S5 Desktop / CLI" "Select boot into desktop or command line" \
+      "S6 Wait for Network at Boot" "Select wait for network connection on boot" \
+      3>&1 1>&2 2>&3)
+  else
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "System Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "S1 Wireless LAN" "Enter SSID and passphrase" \
+      "S3 Change User Password" "Change password for the '$USER' user" \
+      "S4 Hostname" "Set name for this computer on a network" \
+      "S5 Desktop / CLI" "Select boot into desktop or command line" \
+      "S6 Wait for Network at Boot" "Select wait for network connection on boot" \
+      "S7 Splash Screen" "Choose graphical splash screen or text boot" \
+      3>&1 1>&2 2>&3)
+  fi
   RET=$?
   if [ $RET -eq 1 ]; then
     return 0
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
-      I1\ *) do_change_locale ;;
-      I2\ *) do_change_timezone ;;
-      I3\ *) do_configure_keyboard ;;
-      I4\ *) do_wifi_country ;;
+      S1\ *) do_wifi_ssid_passphrase ;;
+      S2\ *) do_audio ;;
+      S3\ *) do_change_pass ;;
+      S4\ *) do_hostname ;;
+      S5\ *) do_boot_behaviour ;;
+      S6\ *) do_boot_wait ;;
+      S7\ *) do_boot_splash ;;
+      S8\ *) do_leds ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  fi
+}
+
+do_display_menu() {
+  if is_pifour ; then
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "D1 Resolution" "Set a specific screen resolution" \
+      "D2 Overscan" "Remove black border around screen" \
+      "D3 Pixel Doubling" "Enable/disable 2x2 pixel mapping" \
+      "D4 Video Output" "Video output options for Raspberry Pi 4" \
+      "D5 Screen Blanking" "Enable/disable screen blanking" \
+      3>&1 1>&2 2>&3)
+  elif is_pi ; then
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "D1 Resolution" "Set a specific screen resolution" \
+      "D2 Overscan" "Remove black border around screen" \
+      "D3 Pixel Doubling" "Enable/disable 2x2 pixel mapping" \
+      "D5 Screen Blanking" "Enable/disable screen blanking" \
+      3>&1 1>&2 2>&3)
+  else
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "D3 Pixel Doubling" "Enable/disable 2x2 pixel mapping" \
+      "D5 Screen Blanking" "Enable/disable screen blanking" \
+      3>&1 1>&2 2>&3)
+  fi
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    case "$FUN" in
+      D1\ *) do_resolution ;;
+      D2\ *) do_overscan ;;
+      D3\ *) do_pixdub ;;
+      D4\ *) do_pi4video ;;
+      D5\ *) do_blanking ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
 }
 
 do_interface_menu() {
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-    "P1 Camera" "Enable/Disable connection to the Raspberry Pi Camera" \
-    "P2 SSH" "Enable/Disable remote command line access to your Pi using SSH" \
-    "P3 VNC" "Enable/Disable graphical remote access to your Pi using RealVNC" \
-    "P4 SPI" "Enable/Disable automatic loading of SPI kernel module" \
-    "P5 I2C" "Enable/Disable automatic loading of I2C kernel module" \
-    "P6 Serial" "Enable/Disable shell and kernel messages on the serial connection" \
-    "P7 1-Wire" "Enable/Disable one-wire interface" \
-    "P8 Remote GPIO" "Enable/Disable remote access to GPIO pins" \
-    3>&1 1>&2 2>&3)
+  if is_pi ; then
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "P1 Camera" "Enable/disable connection to the Raspberry Pi Camera" \
+      "P2 SSH" "Enable/disable remote command line access using SSH" \
+      "P3 VNC" "Enable/disable graphical remote access using RealVNC" \
+      "P4 SPI" "Enable/disable automatic loading of SPI kernel module" \
+      "P5 I2C" "Enable/disable automatic loading of I2C kernel module" \
+      "P6 Serial" "Enable/disable shell messages on the serial connection" \
+      "P7 1-Wire" "Enable/disable one-wire interface" \
+      "P8 Remote GPIO" "Enable/disable remote access to GPIO pins" \
+      3>&1 1>&2 2>&3)
+  else
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "P2 SSH" "Enable/disable remote command line access using SSH" \
+      3>&1 1>&2 2>&3)
+  fi
   RET=$?
   if [ $RET -eq 1 ]; then
     return 0
@@ -2617,97 +2687,85 @@ do_interface_menu() {
   fi
 }
 
-do_advanced_menu() {
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-    "A1 Expand Filesystem" "Ensures that all of the SD card storage is available to the OS" \
-    "A2 Overscan" "You may need to configure overscan if black bars are present on display" \
-    "A3 Memory Split" "Change the amount of memory made available to the GPU" \
-    "A4 Audio" "Force audio out through HDMI or 3.5mm jack" \
-    "A5 Resolution" "Set a specific screen resolution" \
-    "A6 Screen Blanking" "Enable/Disable screen blanking" \
-    "A7 Pixel Doubling" "Enable/Disable 2x2 pixel mapping" \
-    "A8 GL Driver" "Enable/Disable experimental desktop GL driver" \
-    "A9 Compositor" "Enable/Disable xcompmgr composition manager" \
-    "AA Pi 4 Video Output" "Video output options for Pi 4" \
-    "AB Overlay FS" "Enable/Disable read-only file system" \
-    "AC Power LED" "Set behaviour of power LED on Pi Zero" \
-    "AD Fan Control" "Set behaviour of GPIO fan" \
+do_performance_menu() {
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Performance Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    "P1 Overclock" "Configure CPU overclocking" \
+    "P2 Memory Split" "Change the amount of memory made available to the GPU" \
+    "P3 Overlay FS" "Enable/disable read-only file system" \
+    "P4 Fan Control" "Set behaviour of GPIO fan" \
     3>&1 1>&2 2>&3)
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    case "$FUN" in
+      P1\ *) do_overclock ;;
+      P2\ *) do_memory_split ;;
+      P3\ *) do_overlayfs ;;
+      P4\ *) do_fan ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  fi
+}
+
+do_internationalisation_menu() {
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Localisation Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    "L1 Change Locale" "Configure language and regional settings" \
+    "L2 Change Time Zone" "Configure time zone" \
+    "L3 Change Keyboard Layout" "Set keyboard layout to match your keyboard" \
+    "L4 Change WLAN Country" "Set legal wireless channels for your country" \
+    3>&1 1>&2 2>&3)
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    case "$FUN" in
+      L1\ *) do_change_locale ;;
+      L2\ *) do_change_timezone ;;
+      L3\ *) do_configure_keyboard ;;
+      L4\ *) do_wifi_country ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  fi
+}
+
+do_advanced_menu() {
+  if is_pifour ; then
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "A1 Expand Filesystem" "Ensures that all of the SD card is available" \
+      "A2 GL Driver" "Enable/disable experimental desktop GL driver" \
+      "A3 Compositor" "Enable/disable xcompmgr composition manager" \
+      "A4 Network Interface Names" "Enable/disable predictable network i/f names" \
+      "A5 Network Proxy Settings" "Configure network proxy settings" \
+      "A6 Boot Order" "Choose network or USB device boot" \
+      "A7 Boot ROM Version" "Select latest or default boot ROM software" \
+      3>&1 1>&2 2>&3)
+  elif is_pi ; then
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "A1 Expand Filesystem" "Ensures that all of the SD card is available" \
+      "A2 GL Driver" "Enable/disable experimental desktop GL driver" \
+      "A3 Compositor" "Enable/disable xcompmgr composition manager" \
+      "A4 Network Interface Names" "Enable/disable predictable network i/f names" \
+      "A5 Network Proxy Settings" "Configure network proxy settings" \
+      3>&1 1>&2 2>&3)
+  else
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "A4 Network Interface Names" "Enable/disable predictable network i/f names" \
+      "A5 Network Proxy Settings" "Configure network proxy settings" \
+      3>&1 1>&2 2>&3)
+  fi
   RET=$?
   if [ $RET -eq 1 ]; then
     return 0
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
       A1\ *) do_expand_rootfs ;;
-      A2\ *) do_overscan ;;
-      A3\ *) do_memory_split ;;
-      A4\ *) do_audio ;;
-      A5\ *) do_resolution ;;
-      A6\ *) do_blanking ;;
-      A7\ *) do_pixdub ;;
-      A8\ *) do_gldriver ;;
-      A9\ *) do_xcompmgr ;;
-      AA\ *) do_pi4video ;;
-      AB\ *) do_overlayfs ;;
-      AC\ *) do_leds ;;
-      AD\ *) do_fan ;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
-  fi
-}
-
-do_boot_menu() {
-  if is_live ; then
-    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "B1 Desktop / CLI" "Choose whether to boot into a desktop environment or the command line" \
-      "B2 Wait for Network at Boot" "Choose whether to wait for network connection during boot" \
-      3>&1 1>&2 2>&3)
-  elif is_pifour ; then
-    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "B1 Desktop / CLI" "Choose whether to boot into a desktop environment or the command line" \
-      "B2 Wait for Network at Boot" "Choose whether to wait for network connection during boot" \
-      "B3 Splash Screen" "Choose graphical splash screen or text boot" \
-      "B4 Boot Order" "Choose network or USB device boot" \
-      "B5 Boot ROM Version" "Select latest or default boot ROM software" \
-      3>&1 1>&2 2>&3)
-  else
-    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "B1 Desktop / CLI" "Choose whether to boot into a desktop environment or the command line" \
-      "B2 Wait for Network at Boot" "Choose whether to wait for network connection during boot" \
-      "B3 Splash Screen" "Choose graphical splash screen or text boot" \
-      3>&1 1>&2 2>&3)
-  fi
-  RET=$?
-  if [ $RET -eq 1 ]; then
-    return 0
-  elif [ $RET -eq 0 ]; then
-    case "$FUN" in
-      B1\ *) do_boot_behaviour ;;
-      B2\ *) do_boot_wait ;;
-      B3\ *) do_boot_splash ;;
-      B4\ *) do_boot_order ;;
-      B5\ *) do_boot_rom ;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
-  fi
-}
-
-do_network_menu() {
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Network Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-    "N1 Hostname" "Set the visible name for this Pi on a network" \
-    "N2 Wireless LAN" "Enter SSID and passphrase" \
-    "N3 Network interface names" "Enable/Disable predictable network interface names" \
-    "N4 Network proxy settings" "Configure network proxy settings" \
-    3>&1 1>&2 2>&3)
-  RET=$?
-  if [ $RET -eq 1 ]; then
-    return 0
-  elif [ $RET -eq 0 ]; then
-    case "$FUN" in
-      N1\ *) do_hostname ;;
-      N2\ *) do_wifi_ssid_passphrase ;;
-      N3\ *) do_net_names ;;
-      N4\ *) do_proxy_menu ;;
+      A2\ *) do_gldriver ;;
+      A3\ *) do_xcompmgr ;;
+      A4\ *) do_net_names ;;
+      A5\ *) do_proxy_menu ;;
+      A6\ *) do_boot_order ;;
+      A7\ *) do_boot_rom ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
@@ -2752,23 +2810,22 @@ if [ "$INTERACTIVE" = True ]; then
   while true; do
     if is_pi ; then
       FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --backtitle "$(cat /proc/device-tree/model)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-        "1 Change User Password" "Change password for the '$USER' user" \
-        "2 Network Options" "Configure network settings" \
-        "3 Boot Options" "Configure options for start-up" \
-        "4 Localisation Options" "Set up language and regional settings to match your location" \
-        "5 Interfacing Options" "Configure connections to peripherals" \
-        "6 Overclock" "Configure overclocking for your Pi" \
-        "7 Advanced Options" "Configure advanced settings" \
+        "1 System Options" "Configure system settings" \
+        "2 Display Options" "Configure display settings" \
+        "3 Interfacing Options" "Configure connections to peripherals" \
+        "4 Performance Options" "Configure performance settings" \
+        "5 Localisation Options" "Configure language and regional settings" \
+        "6 Advanced Options" "Configure advanced settings" \
         "8 Update" "Update this tool to the latest version" \
         "9 About raspi-config" "Information about this configuration tool" \
         3>&1 1>&2 2>&3)
     else
       FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-        "1 Change User Password" "Change password for the '$USER' user" \
-        "2 Network Options" "Configure network settings" \
-        "3 Boot Options" "Configure options for start-up" \
-        "4 Localisation Options" "Set up language and regional settings to match your location" \
-        "5 SSH" "Enable/Disable remote command line access to your PC using SSH" \
+        "1 System Options" "Configure system settings" \
+        "2 Display Options" "Configure display settings" \
+        "3 Interfacing Options" "Configure connections to peripherals" \
+        "5 Localisation Options" "Configure language and regional settings" \
+        "6 Advanced Options" "Configure advanced settings" \
         "8 Update" "Update this tool to the latest version" \
         "9 About raspi-config" "Information about this configuration tool" \
         3>&1 1>&2 2>&3)
@@ -2777,31 +2834,17 @@ if [ "$INTERACTIVE" = True ]; then
     if [ $RET -eq 1 ]; then
       do_finish
     elif [ $RET -eq 0 ]; then
-      if is_pi ; then
-        case "$FUN" in
-          1\ *) do_change_pass ;;
-          2\ *) do_network_menu ;;
-          3\ *) do_boot_menu ;;
-          4\ *) do_internationalisation_menu ;;
-          5\ *) do_interface_menu ;;
-          6\ *) do_overclock ;;
-          7\ *) do_advanced_menu ;;
-          8\ *) do_update ;;
-          9\ *) do_about ;;
-          *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-        esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
-      else
-        case "$FUN" in
-          1\ *) do_change_pass ;;
-          2\ *) do_network_menu ;;
-          3\ *) do_boot_menu ;;
-          4\ *) do_internationalisation_menu ;;
-          5\ *) do_ssh ;;
-          8\ *) do_update ;;
-          9\ *) do_about ;;
-          *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-        esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
-      fi
+      case "$FUN" in
+        1\ *) do_system_menu ;;
+        2\ *) do_display_menu ;;
+        3\ *) do_interface_menu ;;
+        4\ *) do_performance_menu ;;
+        5\ *) do_internationalisation_menu ;;
+        6\ *) do_advanced_menu ;;
+        8\ *) do_update ;;
+        9\ *) do_about ;;
+        *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+      esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else
       exit 1
     fi
