@@ -549,10 +549,9 @@ do_wifi_country() {
 
   oIFS="$IFS"
   if [ "$INTERACTIVE" = True ]; then
-    IFS="/"
     value=$(cat /usr/share/zoneinfo/iso3166.tab | tail -n +26 | tr '\t' '/' | tr '\n' '/')
+    IFS="/"
     COUNTRY=$(whiptail --menu "Select the country in which the Pi is to be used" 20 60 10 ${value} 3>&1 1>&2 2>&3)
-    IFS=$oIFS
   else
     COUNTRY=$1
     true
@@ -560,7 +559,7 @@ do_wifi_country() {
   if [ $? -eq 0 ];then
     wpa_cli -i "$IFACE" set country "$COUNTRY"
     wpa_cli -i "$IFACE" save_config > /dev/null 2>&1
-    if ! iw reg set "$COUNTRY" 2> /dev/null; then
+    if iw reg set "$COUNTRY" 2> /dev/null; then
         ASK_TO_REBOOT=1
     fi
     if hash rfkill 2> /dev/null; then
@@ -575,6 +574,7 @@ do_wifi_country() {
         whiptail --msgbox "Wireless LAN country set to $COUNTRY" 20 60 1
     fi
   fi
+  IFS=$oIFS
 }
 
 get_hostname() {
@@ -1872,21 +1872,24 @@ do_update() {
 
 do_audio() {
   if is_pulseaudio ; then
+    oIFS="$IFS"
     if [ "$INTERACTIVE" = True ]; then
-      oIFS="$IFS"
-      IFS="/"
       list=$(sudo -u $SUDO_USER XDG_RUNTIME_DIR=/run/user/$SUDO_UID pacmd list-sinks | grep -e index -e alsa.name | sed s/*//g | sed s/^[' '\\t]*//g | sed s/'index: '//g | sed s/'alsa.name = '//g | sed s/'bcm2835 '//g | sed s/\"//g | tr '\n' '/')
       if ! [ -z "$list" ] ; then
+        IFS="/"
         AUDIO_OUT=$(whiptail --menu "Choose the audio output" 20 60 10 ${list} 3>&1 1>&2 2>&3)
       else
         whiptail --msgbox "No internal audio devices found" 20 60 1
         return 1
       fi
-      IFS=$oIFS
     else
       AUDIO_OUT=$1
+      true
     fi
-    sudo -u $SUDO_USER XDG_RUNTIME_DIR=/run/user/$SUDO_UID pactl set-default-sink $AUDIO_OUT
+    if [ $? -eq 0 ]; then
+      sudo -u $SUDO_USER XDG_RUNTIME_DIR=/run/user/$SUDO_UID pactl set-default-sink $AUDIO_OUT
+    fi
+    IFS=$oIFS
   else
     if aplay -l | grep -q "bcm2835 ALSA"; then
       if [ "$INTERACTIVE" = True ]; then
