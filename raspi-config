@@ -83,6 +83,12 @@ is_fkms() {
   fi
 }
 
+is_pulseaudio() {
+  PS=$(ps ax)
+  echo "$PS" | grep -q pulseaudio
+  return $?
+}
+
 is_installed() {
     if [ "$(dpkg -l "$1" 2> /dev/null | tail -n 1 | cut -d ' ' -f 1)" != "ii" ]; then
       return 1
