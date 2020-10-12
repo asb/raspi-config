@@ -1257,11 +1257,13 @@ do_fan() {
     else
       sed $CONFIG -i -e "s/^.*dtoverlay=gpio-fan.*/dtoverlay=gpio-fan,gpio_pin=$GPIO,temp=$TEMP/"
     fi
+    dtoverlay gpio-fan gpiopin=$GPIO temp=$TEMP
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "The fan on GPIO $GPIO is enabled and will turn on at $TIN degrees" 20 60 1
     fi
   else
     sed $CONFIG -i -e "/^.*dtoverlay=gpio-fan.*/d"
+    dtoverlay -r gpio-fan
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "The fan is disabled" 20 60 1
     fi
