@@ -1213,6 +1213,9 @@ do_fan() {
         GPIO=$2
       fi
     fi
+    if ! [ $? -eq 0 ] ; then
+      return 0
+    fi
     if ! echo "$GPIO" | grep -q ^[[:digit:]]*$ ; then
       if [ "$INTERACTIVE" = True ]; then
         whiptail --msgbox "GPIO must be a number between 2 and 27" 20 60 1
@@ -1233,6 +1236,9 @@ do_fan() {
       else
         TIN=$3
       fi
+    fi
+    if ! [ $? -eq 0 ] ; then
+      return 0
     fi
     if ! echo "$TIN" | grep -q ^[[:digit:]]*$ ; then
       if [ "$INTERACTIVE" = True ]; then
@@ -1257,13 +1263,15 @@ do_fan() {
     else
       sed $CONFIG -i -e "s/^.*dtoverlay=gpio-fan.*/dtoverlay=gpio-fan,gpio_pin=$GPIO,temp=$TEMP/"
     fi
-    dtoverlay gpio-fan gpiopin=$GPIO temp=$TEMP
+    ASK_TO_REBOOT=1
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "The fan on GPIO $GPIO is enabled and will turn on at $TIN degrees" 20 60 1
     fi
   else
+    if grep -q "^dtoverlay=gpio-fan" $CONFIG ; then
+      ASK_TO_REBOOT=1
+    fi
     sed $CONFIG -i -e "/^.*dtoverlay=gpio-fan.*/d"
-    dtoverlay -r gpio-fan
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "The fan is disabled" 20 60 1
     fi
