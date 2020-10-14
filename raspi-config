@@ -2609,28 +2609,28 @@ do_system_menu() {
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "System Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "S1 Wireless LAN" "Enter SSID and passphrase" \
       "S2 Audio" "Select audio out through HDMI or 3.5mm jack" \
-      "S3 Change User Password" "Change password for the '$USER' user" \
+      "S3 Password" "Change password for the '$USER' user" \
       "S4 Hostname" "Set name for this computer on a network" \
-      "S5 Desktop / CLI" "Select boot into desktop or command line" \
-      "S6 Wait for Network at Boot" "Select wait for network connection on boot" \
+      "S5 Boot / Auto Login" "Select boot into desktop or to command line" \
+      "S6 Network at Boot" "Select wait for network connection on boot" \
       "S7 Splash Screen" "Choose graphical splash screen or text boot" \
       "S8 Power LED" "Set behaviour of power LED" \
       3>&1 1>&2 2>&3)
   elif is_live ; then 
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "System Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "S1 Wireless LAN" "Enter SSID and passphrase" \
-      "S3 Change User Password" "Change password for the '$USER' user" \
+      "S3 Password" "Change password for the '$USER' user" \
       "S4 Hostname" "Set name for this computer on a network" \
-      "S5 Desktop / CLI" "Select boot into desktop or command line" \
-      "S6 Wait for Network at Boot" "Select wait for network connection on boot" \
+      "S5 Boot / Auto Login" "Select boot into desktop or to command line" \
+      "S6 Network at Boot" "Select wait for network connection on boot" \
       3>&1 1>&2 2>&3)
   else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "System Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "S1 Wireless LAN" "Enter SSID and passphrase" \
-      "S3 Change User Password" "Change password for the '$USER' user" \
+      "S3 Password" "Change password for the '$USER' user" \
       "S4 Hostname" "Set name for this computer on a network" \
-      "S5 Desktop / CLI" "Select boot into desktop or command line" \
-      "S6 Wait for Network at Boot" "Select wait for network connection on boot" \
+      "S5 Boot / Auto Login" "Select boot into desktop or to command line" \
+      "S6 Network at Boot" "Select wait for network connection on boot" \
       "S7 Splash Screen" "Choose graphical splash screen or text boot" \
       3>&1 1>&2 2>&3)
   fi
@@ -2656,15 +2656,15 @@ do_display_menu() {
   if is_pifour ; then
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "D1 Resolution" "Set a specific screen resolution" \
-      "D2 Overscan" "Remove black border around screen" \
+      "D2 Underscan" "Remove black border around screen" \
       "D3 Pixel Doubling" "Enable/disable 2x2 pixel mapping" \
-      "D4 Video Output" "Video output options for Raspberry Pi 4" \
+      "D4 Composite Video" "Video output options for Raspberry Pi 4" \
       "D5 Screen Blanking" "Enable/disable screen blanking" \
       3>&1 1>&2 2>&3)
   elif is_pi ; then
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "D1 Resolution" "Set a specific screen resolution" \
-      "D2 Overscan" "Remove black border around screen" \
+      "D2 Underscan" "Remove black border around screen" \
       "D3 Pixel Doubling" "Enable/disable 2x2 pixel mapping" \
       "D5 Screen Blanking" "Enable/disable screen blanking" \
       3>&1 1>&2 2>&3)
@@ -2697,7 +2697,7 @@ do_interface_menu() {
       "P3 VNC" "Enable/disable graphical remote access using RealVNC" \
       "P4 SPI" "Enable/disable automatic loading of SPI kernel module" \
       "P5 I2C" "Enable/disable automatic loading of I2C kernel module" \
-      "P6 Serial" "Enable/disable shell messages on the serial connection" \
+      "P6 Serial Port" "Enable/disable shell messages on the serial connection" \
       "P7 1-Wire" "Enable/disable one-wire interface" \
       "P8 Remote GPIO" "Enable/disable remote access to GPIO pins" \
       3>&1 1>&2 2>&3)
@@ -2727,9 +2727,9 @@ do_interface_menu() {
 do_performance_menu() {
   FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Performance Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
     "P1 Overclock" "Configure CPU overclocking" \
-    "P2 Memory Split" "Change the amount of memory made available to the GPU" \
-    "P3 Overlay FS" "Enable/disable read-only file system" \
-    "P4 Fan Control" "Set behaviour of GPIO fan" \
+    "P2 GPU Memory" "Change the amount of memory made available to the GPU" \
+    "P3 Overlay File System" "Enable/disable read-only file system" \
+    "P4 Fan" "Set behaviour of GPIO fan" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -2747,10 +2747,10 @@ do_performance_menu() {
 
 do_internationalisation_menu() {
   FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Localisation Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-    "L1 Change Locale" "Configure language and regional settings" \
-    "L2 Change Time Zone" "Configure time zone" \
-    "L3 Change Keyboard Layout" "Set keyboard layout to match your keyboard" \
-    "L4 Change WLAN Country" "Set legal wireless channels for your country" \
+    "L1 Locale" "Configure language and regional settings" \
+    "L2 Timezone" "Configure time zone" \
+    "L3 Keyboard" "Set keyboard layout to match your keyboard" \
+    "L4 WLAN Country" "Set legal wireless channels for your country" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -2849,7 +2849,7 @@ if [ "$INTERACTIVE" = True ]; then
       FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --backtitle "$(cat /proc/device-tree/model)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "1 System Options" "Configure system settings" \
         "2 Display Options" "Configure display settings" \
-        "3 Interfacing Options" "Configure connections to peripherals" \
+        "3 Interface Options" "Configure connections to peripherals" \
         "4 Performance Options" "Configure performance settings" \
         "5 Localisation Options" "Configure language and regional settings" \
         "6 Advanced Options" "Configure advanced settings" \
@@ -2860,7 +2860,7 @@ if [ "$INTERACTIVE" = True ]; then
       FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "1 System Options" "Configure system settings" \
         "2 Display Options" "Configure display settings" \
-        "3 Interfacing Options" "Configure connections to peripherals" \
+        "3 Interface Options" "Configure connections to peripherals" \
         "5 Localisation Options" "Configure language and regional settings" \
         "6 Advanced Options" "Configure advanced settings" \
         "8 Update" "Update this tool to the latest version" \
