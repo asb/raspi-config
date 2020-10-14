@@ -1,3 +1,10 @@
+raspi-config (20201014) buster; urgency=medium
+
+  * Add PulseAudio output control
+  * Restructure menus to match GUI application
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 14 Oct 2020 14:59:35 +0100
+
 raspi-config (20201006) buster; urgency=medium
 
   * Add fan control
