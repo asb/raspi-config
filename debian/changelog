@@ -1,3 +1,9 @@
+raspi-config (20201027) buster; urgency=medium
+
+  * Add function to check whether board has an analog output jack
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 27 Oct 2020 17:29:53 +0000
+
 raspi-config (20201014) buster; urgency=medium
 
   * Add PulseAudio output control
