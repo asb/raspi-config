@@ -2783,7 +2783,7 @@ do_advanced_menu() {
       "A4 Network Interface Names" "Enable/disable predictable network i/f names" \
       "A5 Network Proxy Settings" "Configure network proxy settings" \
       "A6 Boot Order" "Choose network or USB device boot" \
-      "A7 Boot ROM Version" "Select latest or default boot ROM software" \
+      "A7 Bootloader Version" "Select latest or default boot ROM software" \
       3>&1 1>&2 2>&3)
   elif is_pi ; then
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
