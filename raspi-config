@@ -1267,9 +1267,9 @@ do_fan() {
       if ! tail -1 $CONFIG | grep -q "\\[all\\]" ; then
         sed $CONFIG -i -e "\$a[all]"
       fi
-      sed $CONFIG -i -e "\$adtoverlay=gpio-fan,gpio_pin=$GPIO,temp=$TEMP"
+      sed $CONFIG -i -e "\$adtoverlay=gpio-fan,gpiopin=$GPIO,temp=$TEMP"
     else
-      sed $CONFIG -i -e "s/^.*dtoverlay=gpio-fan.*/dtoverlay=gpio-fan,gpio_pin=$GPIO,temp=$TEMP/"
+      sed $CONFIG -i -e "s/^.*dtoverlay=gpio-fan.*/dtoverlay=gpio-fan,gpiopin=$GPIO,temp=$TEMP/"
     fi
     ASK_TO_REBOOT=1
     if [ "$INTERACTIVE" = True ]; then

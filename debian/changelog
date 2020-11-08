@@ -1,3 +1,9 @@
+raspi-config (20201108) buster; urgency=medium
+
+  * Fix typo in fan controller
+
+ -- Simon Long <simon@raspberrypi.com>  Sun, 08 Nov 2020 11:37:08 +0000
+
 raspi-config (20201027) buster; urgency=medium
 
   * Add function to check whether board has an analog output jack
