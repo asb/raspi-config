@@ -1083,9 +1083,9 @@ do_pi4video() {
   CURRENT=$(get_pi4video)
   if [ "$INTERACTIVE" = True ]; then
     VIDOPT=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Pi 4 Video Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
-      "V1 Enable 4Kp60 HDMI" "Enable 4Kp60 resolution on HDMI0 (disables analog)" \
-      "V2 Enable analog TV output" "Enable composite video output (disables 4Kp60)" \
-      "V3 Disable both 4Kp60 and analog" "Disable 4Kp60 HDMI and composite video" \
+      "V1 Enable 4Kp60 HDMI" "Enable 4Kp60 resolution on HDMI0" \
+      "V2 Enable composite " "Enable composite video output (disables HDMI)" \
+      "V3 Default" "Disable 4Kp60 HDMI and composite video" \
       3>&1 1>&2 2>&3)
   else
     VIDOPT=$1
@@ -1099,22 +1099,27 @@ do_pi4video() {
         if ! grep -q "hdmi_enable_4kp60" $CONFIG ; then
             sed $CONFIG -i -e "\$ahdmi_enable_4kp60=1"
         fi
-        STATUS="4Kp60 HDMI enabled"
+        STATUS="4Kp60 is enabled on HDMI0"
         OPT=1
         ;;
       V2*)
-        sed $CONFIG -i -e "s/^#\?enable_tvout=.*/enable_tvout=1/"
-        sed $CONFIG -i -e "s/^hdmi_enable_4kp60=/#hdmi_enable_4kp60=/"
-        if ! grep -q "enable_tvout" $CONFIG ; then
-            sed $CONFIG -i -e "\$aenable_tvout=1"
+        if whiptail --yesno "If composite video is enabled, both HDMI outputs will be disabled, and unless a composite monitor is connected, no video output will be available.\n\nAre you sure you want to enable composite and disable HDMI?" 20 60 2 --defaultno ; then
+          sed $CONFIG -i -e "s/^#\?enable_tvout=.*/enable_tvout=1/"
+          sed $CONFIG -i -e "s/^hdmi_enable_4kp60=/#hdmi_enable_4kp60=/"
+          if ! grep -q "enable_tvout" $CONFIG ; then
+              sed $CONFIG -i -e "\$aenable_tvout=1"
+          fi
+          STATUS="Composite video is enabled. HDMI is disabled."
+          OPT=2
+        else
+          STATUS="Video output settings unchanged"
+          OPT=$CURRENT
         fi
-        STATUS="analog TV enabled"
-        OPT=2
         ;;
       V3*)
         sed $CONFIG -i -e "s/^hdmi_enable_4kp60=/#hdmi_enable_4kp60=/"
         sed $CONFIG -i -e "s/^enable_tvout=/#enable_tvout=/"
-        STATUS="4K and analog disabled"
+        STATUS="Both HDMI ports set to defaults - 4Kp60 and composite disabled"
         OPT=0
         ;;
       *)
@@ -1126,7 +1131,7 @@ do_pi4video() {
       ASK_TO_REBOOT=1
     fi
     if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "Pi 4 video output option is $STATUS" 20 60 1
+      whiptail --msgbox "$STATUS" 20 60 1
     fi
   fi
 }
@@ -2661,25 +2666,17 @@ do_system_menu() {
 }
 
 do_display_menu() {
-  if is_pifour ; then
+  if is_pi ; then
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "D1 Resolution" "Set a specific screen resolution" \
       "D2 Underscan" "Remove black border around screen" \
       "D3 Pixel Doubling" "Enable/disable 2x2 pixel mapping" \
-      "D4 Composite Video" "Video output options for Raspberry Pi 4" \
-      "D5 Screen Blanking" "Enable/disable screen blanking" \
-      3>&1 1>&2 2>&3)
-  elif is_pi ; then
-    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "D1 Resolution" "Set a specific screen resolution" \
-      "D2 Underscan" "Remove black border around screen" \
-      "D3 Pixel Doubling" "Enable/disable 2x2 pixel mapping" \
-      "D5 Screen Blanking" "Enable/disable screen blanking" \
+      "D4 Screen Blanking" "Enable/disable screen blanking" \
       3>&1 1>&2 2>&3)
   else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "D3 Pixel Doubling" "Enable/disable 2x2 pixel mapping" \
-      "D5 Screen Blanking" "Enable/disable screen blanking" \
+      "D4 Screen Blanking" "Enable/disable screen blanking" \
       3>&1 1>&2 2>&3)
   fi
   RET=$?
@@ -2690,8 +2687,7 @@ do_display_menu() {
       D1\ *) do_resolution ;;
       D2\ *) do_overscan ;;
       D3\ *) do_pixdub ;;
-      D4\ *) do_pi4video ;;
-      D5\ *) do_blanking ;;
+      D4\ *) do_blanking ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
@@ -2784,6 +2780,7 @@ do_advanced_menu() {
       "A5 Network Proxy Settings" "Configure network proxy settings" \
       "A6 Boot Order" "Choose network or USB device boot" \
       "A7 Bootloader Version" "Select latest or default boot ROM software" \
+      "A8 HDMI / Composite" "Raspberry Pi 4 video output options" \
       3>&1 1>&2 2>&3)
   elif is_pi ; then
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -2811,6 +2808,7 @@ do_advanced_menu() {
       A5\ *) do_proxy_menu ;;
       A6\ *) do_boot_order ;;
       A7\ *) do_boot_rom ;;
+      A8\ *) do_pi4video ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi

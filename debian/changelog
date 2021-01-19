@@ -1,3 +1,9 @@
+raspi-config (20210119) buster; urgency=medium
+
+  * Move Pi 4 video output setting to advanced menu
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 19 Jan 2021 14:51:58 +0000
+
 raspi-config (20201108) buster; urgency=medium
 
   * Fix typo in fan controller
