@@ -1359,8 +1359,9 @@ EOF
 do_boot_order() {
   if [ "$INTERACTIVE" = True ]; then
     BOOTOPT=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Boot Device Order" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
-      "B1 USB Boot" "Boot from USB device if SD card boot fails" \
-      "B2 Network Boot" "Boot from network if SD card boot fails" \
+      "B1 SD Card Boot" "Boot from SD Card if available, otherwise boot from USB" \
+      "B2 USB Boot" "Boot from USB if available, otherwise boot from SD Card" \
+      "B3 Network Boot" "Boot from network if SD card boot fails" \
       3>&1 1>&2 2>&3)
   else
     BOOTOPT=$1
@@ -1397,9 +1398,17 @@ do_boot_order() {
         else
           sed $EECFG -i -e "s/^BOOT_ORDER=.*/BOOT_ORDER=0xf41/"
         fi
-        STATUS="USB device"
+        STATUS="SD Card"
         ;;
       B2*)
+        if ! grep -q "BOOT_ORDER" $EECFG ; then
+          sed $EECFG -i -e "\$a[all]\nBOOT_ORDER=0xf14"
+        else
+          sed $EECFG -i -e "s/^BOOT_ORDER=.*/BOOT_ORDER=0xf14/"
+        fi
+        STATUS="USB"
+        ;;
+      B3*)
         if ! grep -q "BOOT_ORDER" $EECFG ; then
           sed $EECFG -i -e "\$a[all]\nBOOT_ORDER=0xf21"
         else
