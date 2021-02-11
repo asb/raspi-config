@@ -203,8 +203,8 @@ if main; then
   whiptail --infobox "Resized root filesystem. Rebooting in 5 seconds..." 20 60
   sleep 5
 else
-  sleep 5
   whiptail --msgbox "Could not expand filesystem, please try raspi-config or rc_gui.\n${FAIL_REASON}" 20 60
+  sleep 5
 fi
 
 reboot_pi
