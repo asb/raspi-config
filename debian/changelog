@@ -1,3 +1,9 @@
+raspi-config (20210212) buster; urgency=medium
+
+  * Update boot order menu
+
+ -- Simon Long <simon@raspberrypi.com>  Fri, 12 Feb 2021 12:07:27 +0000
+
 raspi-config (20210119) buster; urgency=medium
 
   * Move Pi 4 video output setting to advanced menu
