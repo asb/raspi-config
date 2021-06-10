@@ -1,3 +1,9 @@
+raspi-config (20210610) bullseye; urgency=medium
+
+  * Remove redundant xcompmgr parameter
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 10 Jun 2021 17:02:43 +0100
+
 raspi-config (20210604) bullseye; urgency=medium
 
   * Disable xcompmgr when openbox not running
