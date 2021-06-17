@@ -1,14 +1,15 @@
 Source: raspi-config
-Section: unknown
-Priority: extra
-Maintainer: Alex Bradbury <asb@asbradbury.org>
+Section: utils
+Priority: optional
+Maintainer: Serge Schneider <serge@raspberrypi.org>
 Build-Depends: debhelper (>= 8.0.0)
-Standards-Version: 3.9.2
-Homepage: https://github.com/asb/raspi-config
-#Vcs-Git: git://git.debian.org/collab-maint/raspi-config.git
-#Vcs-Browser: http://git.debian.org/?p=collab-maint/raspi-config.git;a=summary
+Standards-Version: 4.3.0
+Vcs-Git: git://git@github.com:RPi-Distro/raspi-config.git
+Vcs-Browser: https://github.com/RPi-Distro/raspi-config
 
 Package: raspi-config
 Architecture: all
-Depends: ${misc:Depends}, whiptail, parted, lua5.1, triggerhappy
-Description: Simple configuration for Raspberry Pi
+Depends: ${misc:Depends}, whiptail, parted, lua5.1, alsa-utils, psmisc, initramfs-tools
+Recommends: triggerhappy, iw
+Description: Raspberry Pi configuration tool
+ A simple configuration tool for common Raspberry Pi administrative tasks

@@ -1,3 +1,617 @@
+raspi-config (20210212) buster; urgency=medium
+
+  * Update boot order menu
+
+ -- Simon Long <simon@raspberrypi.com>  Fri, 12 Feb 2021 12:07:27 +0000
+
+raspi-config (20210119) buster; urgency=medium
+
+  * Move Pi 4 video output setting to advanced menu
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 19 Jan 2021 14:51:58 +0000
+
+raspi-config (20201108) buster; urgency=medium
+
+  * Fix typo in fan controller
+
+ -- Simon Long <simon@raspberrypi.com>  Sun, 08 Nov 2020 11:37:08 +0000
+
+raspi-config (20201027) buster; urgency=medium
+
+  * Add function to check whether board has an analog output jack
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 27 Oct 2020 17:29:53 +0000
+
+raspi-config (20201014) buster; urgency=medium
+
+  * Add PulseAudio output control
+  * Restructure menus to match GUI application
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 14 Oct 2020 14:59:35 +0100
+
+raspi-config (20201006) buster; urgency=medium
+
+  * Add fan control
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 06 Oct 2020 15:17:39 +0100
+
+raspi-config (20200902) buster; urgency=medium
+
+  * Add option to control power LED on Pi Zero
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 02 Sep 2020 11:46:19 +0100
+
+raspi-config (20200817) buster; urgency=medium
+
+  * Use processor ID to detect Pi 4 rather than board ID
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 17 Aug 2020 09:24:09 +0100
+
+raspi-config (20200727) buster; urgency=medium
+
+  * Disable initial rfkill for all platforms when setting wireless country
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 27 Jul 2020 15:47:29 +0100
+
+raspi-config (20200707) buster; urgency=medium
+
+  * Add boot ROM and boot order selection
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 07 Jul 2020 09:24:56 +0100
+
+raspi-config (20200601) buster; urgency=medium
+
+  * Fix audio device check bug when used in non-English locale
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 01 Jun 2020 10:28:35 +0100
+
+raspi-config (20200515) buster; urgency=medium
+
+  * Update initial resize script
+    - Change disk ID to avoid clashes
+  * Add support for USB resize
+
+ -- Serge Schneider <serge@raspberrypi.com>  Fri, 15 May 2020 08:47:17 +0100
+
+raspi-config (20200504) buster; urgency=medium
+
+  * Replace references to wifi
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 04 May 2020 11:47:53 +0100
+
+raspi-config (20200226) buster; urgency=medium
+
+  * Sync FKMS check with gldriver-test
+  * Fix is_pi check
+
+ -- Serge Schneider <serge@raspberrypi.org>  Wed, 26 Feb 2020 17:51:20 +0000
+
+raspi-config (20200207) buster; urgency=medium
+
+  * Fix bug preventing VNC from being disabled
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 07 Feb 2020 12:59:29 +0000
+
+raspi-config (20200205) buster; urgency=medium
+
+  * Add filter parameter to xrandr when setting pixel doubling
+
+ -- Simon Long <simon@raspberrypi.org>  Wed, 05 Feb 2020 07:46:42 +0000
+
+raspi-config (20200203) buster; urgency=medium
+
+  * Add pixel doubling option for FKMS using xrandr
+
+ -- Simon Long <simon@raspberrypi.org>  Mon, 03 Feb 2020 09:36:38 +0000
+
+raspi-config (20200120) buster; urgency=medium
+
+  * Add audio switching for discrete internal ALSA devices
+
+ -- Simon Long <simon@raspberrypi.org>  Mon, 20 Jan 2020 11:38:37 +0000
+
+raspi-config (20200117) buster; urgency=medium
+
+  * Add proxy configuration
+  * Handle cases where SUDO_USER is unset
+  * Fix VNC options
+  * Install required packages when changing GL settings
+  * Add warning when enabling SSH
+  * OverlayFS - try loading module from rootfs
+  * OverlayFS - remove initramfs when disabled
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 17 Jan 2020 11:50:54 +0000
+
+raspi-config (20191210) buster; urgency=medium
+
+  * Fix postrm script
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 10 Dec 2019 14:22:08 +0000
+
+raspi-config (20191209) buster; urgency=medium
+
+  * Add option to enable/disable screen blanking
+  * Simplify source package
+
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 09 Dec 2019 16:20:44 +0000
+
+raspi-config (20191021) buster; urgency=medium
+
+  * Add initramfs as dependency for overlayfs
+
+ -- Simon Long <simon@raspberrypi.org>  Mon, 21 Oct 2019 14:44:54 +0100
+
+raspi-config (20191008) buster; urgency=medium
+
+  * Remove pixel doubling option for x86
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 08 Oct 2019 10:19:48 +0100
+
+raspi-config (20191005) buster; urgency=medium
+
+  * Add overlay file system functions
+
+ -- Simon Long <simon@raspberrypi.org>  Fri, 05 Oct 2019 10:13:58 +0100
+
+raspi-config (20190917) buster; urgency=medium
+
+  * Enable overscan for FKMS
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 17 Sep 2019 15:34:56 +0100
+
+raspi-config (20190709) buster; urgency=medium
+
+  * Rename hdmi_enable_4k to hdmi_enable_4kp60
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 09 Jul 2019 13:48:03 +0100
+
+raspi-config (20190620) buster; urgency=medium
+
+  * get_wifi_country: call save_config instead of reconfigure
+    - Prevents WiFi from disconnecting
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 20 Jun 2019 20:01:06 +0100
+
+raspi-config (20190619) buster; urgency=medium
+
+  [ Simon Long ]
+  * Fix composite output options for Pi 4
+  * Keep splash screen settings when changing GPU options
+
+ -- Serge Schneider <serge@raspberrypi.org>  Wed, 19 Jun 2019 15:49:38 +0100
+
+raspi-config (20190607) buster; urgency=medium
+
+  [ Simon Long ]
+  * Only run xcompmgr if FKMS is enabled
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 07 Jun 2019 16:11:11 +0100
+
+raspi-config (20190520) buster; urgency=medium
+
+  [ Simon Long ]
+  * Add Pi 4 video options
+
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 20 May 2019 11:01:12 +0100
+
+raspi-config (20190514) buster; urgency=medium
+
+  [ Simon Long ]
+  * Add FKMS check
+  * Disable pixel doubling when FKMS is enabled
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 14 May 2019 15:38:17 +0100
+
+raspi-config (20190509) buster; urgency=medium
+
+  * init_resize.sh: Remove sdhci.debug_quirks2=4 from /boot/cmdline.txt
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 09 May 2019 13:38:34 +0100
+
+raspi-config (20190507) buster; urgency=medium
+
+  [ Simon Long ]
+  * Switch from compton to xcompmgr
+  * Tweak get_wifi_country to work with the desktop applet
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 07 May 2019 16:03:15 +0100
+
+raspi-config (20190502) buster; urgency=medium
+
+  * Use wpa_cli to check WiFi country setting
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 02 May 2019 13:22:49 +0100
+
+raspi-config (20190429) buster; urgency=medium
+
+  * Update do_wifi_country
+    - Enable wifi regardless of whether /run/wifi-country-unset exists
+  * Make sure SSH host keys are generated when SSH is enabled
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 29 Apr 2019 14:52:56 +0100
+
+raspi-config (20190424) stretch; urgency=medium
+
+  * Add Compton option to advanced options
+
+ -- Simon Long <simon@raspberrypi.org>  Wed, 24 Apr 2019 13:45:54 +0100
+
+raspi-config (20190423) stretch; urgency=medium
+
+  * Change autologin $TERM; tweaks to overclock wording
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 23 Apr 2019 08:19:08 +0100
+
+raspi-config (20190219) stretch; urgency=medium
+
+  * Update autologin behaviour for compatibility with buster
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 19 Feb 2019 10:07:01 +0000
+
+raspi-config (20181118) stretch; urgency=medium
+
+  * Set TTY autologin correctly when using desktop autologin
+
+ -- Simon Long <simon@raspberrypi.org>  Sun, 18 Nov 2018 10:59:01 +0000
+
+raspi-config (20180518) stretch; urgency=medium
+
+  * Add separate settings for serial hardware and console
+
+ -- Simon Long <simon@raspberrypi.org>  Fri, 18 May 2018 07:29:57 +0100
+
+raspi-config (20180406+1) stretch; urgency=medium
+
+  * Fix Wi-Fi country setting
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 06 Apr 2018 14:28:02 +0100
+
+raspi-config (20180406) stretch; urgency=medium
+
+  * Set Wi-Fi country while connecting to SSID
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 06 Apr 2018 13:40:21 +0100
+
+raspi-config (20180228) stretch; urgency=medium
+
+  * Setting Wi-Fi country no longer requires a reboot
+
+ -- Serge Schneider <serge@raspberrypi.org>  Wed, 28 Feb 2018 17:28:50 +0000
+
+raspi-config (20171201) stretch; urgency=medium
+
+  * Add pixel doubling option
+
+ -- Simon Long <simon@raspberrypi.org>  Fri, 01 Dec 2017 08:05:53 +0000
+
+raspi-config (20171127) stretch; urgency=medium
+
+  * Allow entering SSID and passphrase (#68)
+  * Console keyboard layout changes effective immediately (#67)
+  * Formatting fixes (#70)
+  * Add non-interactive timezone, locale and keyboard configuration
+  * Modify architecture test for piserver
+
+ -- Simon Long <simon@raspberrypi.org>  Mon, 27 Nov 2017 10:14:37 +0000
+
+raspi-config (20170926) stretch; urgency=medium
+
+  * Add option to enable predictable network interface names
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 26 Sep 2017 12:32:25 +0100
+
+raspi-config (20170811) stretch; urgency=medium
+
+  * Only restart pigpio daemon if it is running
+
+ -- Simon Long <simon@raspberrypi.org>  Fri, 11 Aug 2017 14:40:50 +0100
+
+raspi-config (20170803) stretch; urgency=medium
+
+  * Allow splash screen with fake KMS.
+
+ -- Simon Long <simon@raspberrypi.org>  Thu, 03 Aug 2017 10:11:08 +0100
+
+raspi-config (20170714) stretch; urgency=medium
+
+  [Simon Long]
+  * Autologin operations now all use current user rather than defaulting to pi
+  * initd support removed
+  [Serge Schneider]
+  * Add pi model as backtitle
+  * Define memory split units
+  * Fix NOOBS config keyboard setup
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 14 Jul 2017 12:34:21 +0100
+
+raspi-config (20170711) stretch; urgency=medium
+
+  * Fix wait for network option
+  * Bump compat level to 9
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 11 Jul 2017 11:47:34 +0100
+
+raspi-config (20170704) stretch; urgency=medium
+
+  * Remove unnecessary sudo from apt-get
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 04 Jul 2017 10:28:55 +0100
+
+raspi-config (20170627) stretch; urgency=medium
+
+  * Change configuration for GL driver - no compton, keep fbturbo, allow on Pi 1 and Pi 0
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 27 Jun 2017 11:56:21 +0100
+
+raspi-config (20170619) stretch; urgency=medium
+
+  * Start service on all runlevels
+
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 19 Jun 2017 09:14:40 +0000
+
+raspi-config (20170518) jessie; urgency=medium
+
+  * Improve x86 splash screen command line handling to remove spurious arguments and spaces
+
+ -- Simon Long <simon@raspberrypi.org>  Thu, 18 May 2017 13:19:27 +0100
+
+raspi-config (20170503) jessie; urgency=medium
+
+  * Correctly handle GRUB command line options for splash screen on x86
+
+ -- Simon Long <simon@raspberrypi.org>  Wed, 03 May 2017 11:30:57 +0100
+
+raspi-config (20170307) jessie; urgency=medium
+
+  * Run init_resize.sh through shellcheck
+  * Improve init_resize.sh reliability
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 07 Mar 2017 13:49:57 +0000
+
+raspi-config (20170228) jessie; urgency=medium
+
+  * Added detection of 0 W boards
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 28 Feb 2017 10:06:36 +0000
+
+raspi-config (20170214) jessie; urgency=medium
+
+  * Allow compton with fake KMS driver; modified check for ARM architecture
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 14 Feb 2017 14:47:58 +0000
+
+raspi-config (20170127) jessie; urgency=medium
+
+  * Prevent keyboard language from being configured over SSH
+
+ -- Simon Long <simon@raspberrypi.org>  Fri, 27 Jan 2017 16:15:56 +0000
+
+raspi-config (20170120) jessie; urgency=medium
+
+  * Mods to support use on x86; fake KMS option added for GL driver
+
+ -- Simon Long <simon@raspberrypi.org>  Fri, 20 Jan 2017 14:19:18 +0000
+
+raspi-config (20161207) jessie; urgency=medium
+
+  * Use compton for compositing with GL driver instead of xcompmgr
+
+ -- Simon Long <simon@raspberrypi.org>  Wed, 07 Dec 2016 12:43:26 +0000
+
+raspi-config (20161206) jessie; urgency=medium
+
+  * Menus reorganised; resolution setting added
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 06 Dec 2016 13:43:32 +0000
+
+raspi-config (20161114) jessie; urgency=medium
+
+  * Restore -a option for xcompmgr; disable splash screen with GL driver
+
+ -- Simon Long <simon@raspberrypi.org>  Mon, 14 Nov 2016 14:25:19 +0000
+
+raspi-config (20161108) jessie; urgency=medium
+
+  * init_resize.sh: Remove clash with pix-plym-splash
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 08 Nov 2016 17:34:00 +0000
+
+raspi-config (20161102) jessie; urgency=medium
+
+  * Sed processing of autologin options modified to improve robustness
+
+ -- Simon Long <simon@raspberrypi.org>  Wed, 02 Nov 2016 15:02:45 +0000
+
+raspi-config (20161013) jessie; urgency=medium
+
+  * Rastrack option removed
+  * Splash screen control added
+
+ -- Simon Long <simon@raspberrypi.org>  Thu, 13 Oct 2016 13:53:54 +0100
+
+raspi-config (20160527) jessie; urgency=medium
+
+  [ Simon Long ]
+  * Function to read hostname added
+  * Function added to get wifi country
+  * Functions to detect boot behaviour added
+  * Test functions added for remote GPIO and slow boot
+  * Added some functions to read current state for use by rc_gui
+  * Requirement for reboot removed from SPI and I2C settings
+  * A lot of NOTs taken out of serial test
+  * Status indications moved to end of some functions
+  * Overscan description amended
+  * Check for fs expandability added; overscan function matches others
+  * Added more success / fail feedback to settings
+  * Global check for mountpoint and existence of /boot/config.txt
+  * Checking of initial state added for camera and 1-wire
+  * Unnecessary reboots removed
+  * Some function names changed for consistency
+  * GL driver setting aligned with other functions
+  * Functions to control remote GPIO and boot wait for network aligned
+  * Tidied function to control remote GPIO access
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 27 May 2016 11:10:11 +0100
+
+raspi-config (20160506) jessie; urgency=medium
+
+  [ Axel Beckert ]
+  * Downgrade hard dependency on triggerhappy to recommendation.
+    + init script: Check if thd is present before using it.
+
+  [ Simon Long ]
+  * New method for testing whether serial is enabled.
+  * Current state of serial i/f reflected in raspi-config.
+  * Menu option to toggle device tree removed.
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 06 May 2016 18:41:58 +0100
+
+raspi-config (20160428) jessie; urgency=medium
+
+  * [Simon Long]
+    - dtparam used instead of modprobe for SPI and I2C
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 28 Apr 2016 15:42:42 +0100
+
+raspi-config (20160425) jessie; urgency=medium
+
+  * [Simon Long]
+    - Merge - Prevent errors when enabling "Fast" network boot multiple times
+    - UART switch added to serial; GPIO server public access finished
+    - Skeleton added for setting security state of GPIO server
+    - Reads in gpu_mem_<size> settings and clears them when writing
+  * [Serge Schneider]
+    - Remove io_is_busy
+
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 25 Apr 2016 11:58:48 +0100
+
+raspi-config (20160322) jessie; urgency=medium
+
+  * [Simon Long]
+    - 1-wire interface control added
+    - Wifi country code setting now creates wpa_supplicant.conf
+      if it doesn't exist
+  * [Serge Schneider]
+    - Add first boot resize script
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 22 Mar 2016 16:45:29 +0000
+
+raspi-config (20160225) jessie; urgency=medium
+
+  * Added wi-fi country setting to raspi-config
+  * Wifi setting in raspi-config can now be called in non-interactive mode.
+  * Mods to support new serial device alias in cmdline.txt.
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 25 Feb 2016 07:48:56 +0000
+
+raspi-config (20160210) jessie; urgency=medium
+
+  * Pi board checks now take account of warranty bits.
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 09 Feb 2016 16:16:58 +0000
+
+raspi-config (20160209) jessie; urgency=medium
+
+  * Check for mesa driver before allowing GL driver to be enabled
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 09 Feb 2016 13:56:44 +0000
+
+raspi-config (20160201) jessie; urgency=medium
+
+  * Compute Module added to is_pione
+
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 01 Feb 2016 12:28:22 +0000
+
+raspi-config (20160125) jessie; urgency=medium
+
+  * Do not allow GL driver to be enabled on 2835-based Pis - it needs at least 1GB of RAM.
+  * Overclocking behaviour made board-specific.
+
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 25 Jan 2016 12:29:54 +0000
+
+raspi-config (20160121) jessie; urgency=medium
+
+  * GPU memory reset to default when GL driver enabled
+  * Launch of simple compositor added when GL driver is enabled
+  * Filename of V3d overlay corrected
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 21 Jan 2016 11:12:49 +0000
+
+raspi-config (20160119) jessie; urgency=medium
+
+  * Option added to select experimental GL driver
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 19 Jan 2016 13:56:53 +0000
+
+raspi-config (20160108) jessie; urgency=medium
+
+  * Update URL
+  * Remove first boot auto-login files
+  * Fix auto-login
+  * Fix typos
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 08 Jan 2016 10:44:05 +0000
+
+raspi-config (20151117) jessie; urgency=medium
+
+  * raspi-config modified to remove config variables rather than set default
+    values when overclocking
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 17 Nov 2015 11:35:14 +0000
+
+raspi-config (20151019) jessie; urgency=medium
+
+  * Add alsa-utils dependency
+  * Remove unnecessary sudo in init script
+  * Add wait for network option
+
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 19 Oct 2015 13:01:26 +0100
+
+raspi-config (20150923) jessie; urgency=medium
+
+  * Auto-login to desktop and console option for rc_gui
+
+ -- Serge Schneider <serge@raspberrypi.org>  Wed, 23 Sep 2015 21:25:52 +0100
+
+raspi-config (20150915) jessie; urgency=medium
+
+  * Add support for rc_gui from spl
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 15 Sep 2015 10:23:52 +0100
+
+raspi-config (20150706) jessie; urgency=low
+
+  * Include io_is_busy in cpufreq settings
+  * Bump standards version to 3.9.6
+
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 06 Jul 2015 08:59:56 +0100
+
+raspi-config (20150603) jessie; urgency=low
+
+  * systemd compatibility
+  * Add udevadm command to notify Xorg after change of keyboard layout - jojopi
+  * Remove boot to scratch
+
+ -- Serge Schneider <serge@raspberrypi.org>  Fri, 29 May 2015 11:31:46 +0100
+
+raspi-config (20150131-4) stable; urgency=low
+
+  * Use dh_installinit --no-start instead of --noscripts to ensure raspi-config runs
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 14 May 2015 18:09:47 +0100
+
+raspi-config (20150131-3) unstable; urgency=low
+
+  * Add prerm failed-upgrade to allow upgrades
+
+ -- Serge Schneider <serge@raspberrypi.org>  Wed, 06 May 2015 15:33:35 +0100
+
+raspi-config (20150131-2) unstable; urgency=low
+
+  * Prevent postinstall from trying to stop /etc/init.d/raspi-config
+  dh_installinit --noscripts
+
+ -- Serge Schneider <serge@raspberrypi.org>  Wed, 06 May 2015 14:23:57 +0100
+
 raspi-config (20150131-1) unstable; urgency=low
 
   * Add Pi2 overclock preset
