@@ -131,7 +131,9 @@ do_about() {
 This tool provides a straightforward way of doing initial
 configuration of the Raspberry Pi. Although it can be run
 at any time, some of the options may have difficulties if
-you have heavily customised your installation.\
+you have heavily customised your installation.
+
+$(dpkg -s raspi-config 2> /dev/null | grep Version)\
 " 20 70 1
   return 0
 }
