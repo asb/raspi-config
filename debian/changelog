@@ -1,3 +1,9 @@
+raspi-config (20210816) bullseye; urgency=medium
+
+  * Enable xcompmgr with full KMS as well as fKMS on all platforms
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 16 Aug 2021 14:02:06 +0100
+
 raspi-config (20210610) bullseye; urgency=medium
 
   * Remove redundant xcompmgr parameter
