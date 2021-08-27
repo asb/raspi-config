@@ -1,3 +1,9 @@
+raspi-config (20210827) bullseye; urgency=medium
+
+  * Add switching for new camera detection in firmware
+
+ -- Simon Long <simon@raspberrypi.com>  Fri, 27 Aug 2021 16:13:49 +0100
+
 raspi-config (20210816) bullseye; urgency=medium
 
   * Enable xcompmgr with full KMS as well as fKMS on all platforms

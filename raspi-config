@@ -1644,16 +1644,29 @@ EOF
 }
 
 get_camera() {
-  CAM=$(get_config_var start_x $CONFIG)
-  if [ $CAM -eq 1 ]; then
-    echo 0
+  if [ $(deb_ver) -le 10 ]; then
+    CAM=$(get_config_var start_x $CONFIG)
+    if [ $CAM -eq 1 ]; then
+      echo 0
+    else
+      echo 1
+    fi
   else
-    echo 1
+    if grep -q camera_auto_detect $CONFIG ; then
+      CAM=$(get_config_var camera_auto_detect $CONFIG)
+      if [ $CAM -eq 1 ]; then
+        echo 0
+      else
+        echo 1
+      fi
+    else
+      echo 0
+    fi
   fi
 }
 
 do_camera() {
-  if [ ! -e /boot/start_x.elf ]; then
+  if [ $(deb_ver) -le 10 ] && [ ! -e /boot/start_x.elf ]; then
     whiptail --msgbox "Your firmware appears to be out of date (no start_x.elf). Please update" 20 60 2
     return 1
   fi
@@ -1676,15 +1689,23 @@ do_camera() {
     ASK_TO_REBOOT=1
   fi
   if [ $RET -eq 0 ]; then
-    set_config_var start_x 1 $CONFIG
-    CUR_GPU_MEM=$(get_config_var gpu_mem $CONFIG)
-    if [ -z "$CUR_GPU_MEM" ] || [ "$CUR_GPU_MEM" -lt 128 ]; then
-      set_config_var gpu_mem 128 $CONFIG
+    if [ $(deb_ver) -le 10 ] ; then
+      set_config_var start_x 1 $CONFIG
+      CUR_GPU_MEM=$(get_config_var gpu_mem $CONFIG)
+      if [ -z "$CUR_GPU_MEM" ] || [ "$CUR_GPU_MEM" -lt 128 ]; then
+        set_config_var gpu_mem 128 $CONFIG
+      fi
+    else
+      set_config_var camera_auto_detect 1 $CONFIG
     fi
     STATUS=enabled
   elif [ $RET -eq 1 ]; then
-    set_config_var start_x 0 $CONFIG
-    sed $CONFIG -i -e "s/^start_file/#start_file/"
+    if [ $(deb_ver) -le 10 ] ; then
+      set_config_var start_x 0 $CONFIG
+      sed $CONFIG -i -e "s/^start_file/#start_file/"
+    else
+      set_config_var camera_auto_detect 0 $CONFIG
+    fi
     STATUS=disabled
   else
     return $RET
