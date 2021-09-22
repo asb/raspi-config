@@ -1880,7 +1880,9 @@ EOF
 }
 
 get_net_names() {
-  if grep -q "net.ifnames=0" $CMDLINE || [ "$(readlink -f /etc/systemd/network/99-default.link)" = "/dev/null" ] ; then
+  if grep -q "net.ifnames=0" $CMDLINE || \
+    ( [ "$(readlink -f /etc/systemd/network/99-default.link)" = "/dev/null" ] && \
+      [ "$(readlink -f /etc/systemd/network/73-usb-net-by-mac.link)" = "/dev/null" ] ); then
     echo 1
   else
     echo 0
@@ -1906,9 +1908,11 @@ do_net_names () {
   if [ $RET -eq 0 ]; then
     sed -i $CMDLINE -e "s/net.ifnames=0 *//"
     rm -f /etc/systemd/network/99-default.link
+    rm -f /etc/systemd/network/73-usb-net-by-mac.link
     STATUS=enabled
   elif [ $RET -eq 1 ]; then
     ln -sf /dev/null /etc/systemd/network/99-default.link
+    ln -sf /dev/null /etc/systemd/network/73-usb-net-by-mac.link
     STATUS=disabled
   else
     return $RET
