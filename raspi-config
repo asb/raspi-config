@@ -1518,7 +1518,7 @@ do_boot_wait() {
     cat > /etc/systemd/system/dhcpcd.service.d/wait.conf << EOF
 [Service]
 ExecStart=
-ExecStart=/usr/lib/dhcpcd5/dhcpcd -q -w
+ExecStart=/usr/sbin/dhcpcd -w
 EOF
     STATUS=enabled
   elif [ $RET -eq 1 ]; then

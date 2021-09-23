@@ -4,6 +4,12 @@ raspi-config (20210924) bullseye; urgency=medium
 
  -- Simon Long <simon@raspberrypi.com>  Fri, 24 Sep 2021 14:32:52 +0100
 
+raspi-config (20210923) bullseye; urgency=medium
+
+  * Updated the the wait.conf drop-in for the new dhcpcd5 package
+
+ -- Serge Schneider <serge@raspberrypi.com>  Thu, 23 Sep 2021 18:24:05 +0100
+
 raspi-config (20210922) bullseye; urgency=medium
 
   * Handle 73-usb-net-by-mac.link when toggling network names
