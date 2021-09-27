@@ -1,3 +1,9 @@
+raspi-config (20210927) bullseye; urgency=medium
+
+  * Remove resolution setting option under KMS
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 27 Sep 2021 18:19:23 +0100
+
 raspi-config (20210924) bullseye; urgency=medium
 
   * Remove fake KMS option
