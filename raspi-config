@@ -1848,6 +1848,41 @@ EOF
   fi
 }
 
+do_glamor() {
+  DEFAULT=
+  CURRENT=1
+  if [ -e /usr/share/X11/xorg.conf.d/20-noglamor.conf ] ; then
+    DEFAULT=--defaultno
+    CURRENT=0
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like glamor acceleration to be enabled?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    RET=$1
+  fi
+  if [ $RET -eq $CURRENT ]; then
+    ASK_TO_REBOOT=1
+  fi
+  if [ $RET -eq 0 ]; then
+    systemctl disable glamor-test.service
+    systemctl stop glamor-test.service
+    if [ -e /usr/share/X11/xorg.conf.d/20-noglamor.conf ] ; then
+      rm /usr/share/X11/xorg.conf.d/20-noglamor.conf
+    fi
+    STATUS=enabled
+  elif [ $RET -eq 1 ]; then
+    systemctl enable glamor-test.service &&
+    systemctl start glamor-test.service &&
+    STATUS=disabled
+  else
+    return $RET
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "Glamor acceleration is $STATUS" 20 60 1
+  fi
+}
+
 get_net_names() {
   if grep -q "net.ifnames=0" $CMDLINE || \
     ( [ "$(readlink -f /etc/systemd/network/99-default.link)" = "/dev/null" ] && \
@@ -2802,6 +2837,7 @@ do_advanced_menu() {
       "A3 Compositor" "Enable/disable xcompmgr composition manager" \
       "A4 Network Interface Names" "Enable/disable predictable network i/f names" \
       "A5 Network Proxy Settings" "Configure network proxy settings" \
+      "A9 Glamor" "Enable/disable glamor graphics acceleration" \
       3>&1 1>&2 2>&3)
   else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -2822,6 +2858,7 @@ do_advanced_menu() {
       A6\ *) do_boot_order ;;
       A7\ *) do_boot_rom ;;
       A8\ *) do_pi4video ;;
+      A9\ *) do_glamor ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
