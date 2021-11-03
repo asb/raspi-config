@@ -7,11 +7,12 @@ reboot_pi () {
   if [ "$NOOBS" = "1" ]; then
     if [ "$NEW_KERNEL" = "1" ]; then
       reboot -f "$BOOT_PART_NUM"
+      sleep 5
     else
       echo "$BOOT_PART_NUM" > "/sys/module/${BCM_MODULE}/parameters/reboot_part"
     fi
   fi
-  echo b > /proc/sysrq-trigger
+  reboot -f
   sleep 5
   exit 0
 }
@@ -192,8 +193,6 @@ if ! grep -q splash /boot/cmdline.txt; then
 fi
 mount /boot -o remount,ro
 sync
-
-echo 1 > /proc/sys/kernel/sysrq
 
 if ! check_commands; then
   reboot_pi
