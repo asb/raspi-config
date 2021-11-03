@@ -1,7 +1,7 @@
 Source: raspi-config
 Section: utils
 Priority: optional
-Maintainer: Serge Schneider <serge@raspberrypi.org>
+Maintainer: Serge Schneider <serge@raspberrypi.com>
 Build-Depends: debhelper (>= 8.0.0)
 Standards-Version: 4.3.0
 Vcs-Git: git://git@github.com:RPi-Distro/raspi-config.git
