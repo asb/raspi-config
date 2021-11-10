@@ -2094,6 +2094,38 @@ do_resolution() {
   fi
 }
 
+do_vnc_resolution() {
+  if [ "$INTERACTIVE" = True ]; then
+    if [ -e /etc/xdg/autostart/vnc_xrandr.desktop ] ; then
+      CUR=$(grep fb /etc/xdg/autostart/vnc_xrandr.desktop | cut -f 15 -d ' ')
+    else
+      CUR=640x480
+    fi
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --default-item $CUR --menu "Set VNC Resolution" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "640x480" "" "720x480" "" "800x600" "" "1024x768" "" "1280x720" "" "1280x1024" "" "1600x1200" "" "1920x1080" "" 3>&1 1>&2 2>&3)
+    RET=$?
+  else
+    FUN=$1
+    RET=0
+  fi
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    cat > /etc/xdg/autostart/vnc_xrandr.desktop << EOF
+[Desktop Entry]
+Type=Application
+Name=vnc_xrandr
+Comment=Set resolution for VNC
+NoDisplay=true
+Exec=sh -c "if ! (xrandr | grep -q -w connected) ; then /usr/bin/xrandr --fb $FUN ; fi"
+EOF
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "The resolution is set to $FUN" 20 60 1
+    ASK_TO_REBOOT=1
+  fi
+}
+
 list_wlan_interfaces() {
   for dir in /sys/class/net/*/wireless; do
     if [ -d "$dir" ]; then
@@ -2713,6 +2745,7 @@ do_display_menu() {
       "D2 Underscan" "Remove black border around screen" \
       "D3 Pixel Doubling" "Enable/disable 2x2 pixel mapping" \
       "D4 Screen Blanking" "Enable/disable screen blanking" \
+      "D5 VNC Resolution" "Set resolution for headless use" \
       3>&1 1>&2 2>&3)
     else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -2720,6 +2753,7 @@ do_display_menu() {
       "D2 Underscan" "Remove black border around screen" \
       "D3 Pixel Doubling" "Enable/disable 2x2 pixel mapping" \
       "D4 Screen Blanking" "Enable/disable screen blanking" \
+      "D5 VNC Resolution" "Set resolution for headless use" \
       3>&1 1>&2 2>&3)
     fi
   else
@@ -2737,6 +2771,7 @@ do_display_menu() {
       D2\ *) do_overscan ;;
       D3\ *) do_pixdub ;;
       D4\ *) do_blanking ;;
+      D5\ *) do_vnc_resolution ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
