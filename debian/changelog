@@ -1,3 +1,9 @@
+raspi-config (20211110) bullseye; urgency=medium
+
+  * Add VNC resolution option
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 10 Nov 2021 11:28:55 +0000
+
 raspi-config (20211103) bullseye; urgency=medium
 
   * Use 'reboot' on initial resize instead of sysrq emergency reboot
