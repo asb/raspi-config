@@ -2094,11 +2094,18 @@ do_resolution() {
   fi
 }
 
+get_vnc_resolution() {
+  if [ -e /etc/xdg/autostart/vnc_xrandr.desktop ] ; then
+      echo $(grep fb /etc/xdg/autostart/vnc_xrandr.desktop | cut -f 15 -d ' ')
+  else
+      echo "not set"
+  fi
+}
+
 do_vnc_resolution() {
   if [ "$INTERACTIVE" = True ]; then
-    if [ -e /etc/xdg/autostart/vnc_xrandr.desktop ] ; then
-      CUR=$(grep fb /etc/xdg/autostart/vnc_xrandr.desktop | cut -f 15 -d ' ')
-    else
+    CUR=$(get_vnc_resolution)
+    if [ "$CUR" = "not set" ] ; then
       CUR=640x480
     fi
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --default-item $CUR --menu "Set VNC Resolution" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -2119,10 +2126,10 @@ Comment=Set resolution for VNC
 NoDisplay=true
 Exec=sh -c "if ! (xrandr | grep -q -w connected) ; then /usr/bin/xrandr --fb $FUN ; fi"
 EOF
-  fi
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --msgbox "The resolution is set to $FUN" 20 60 1
-    ASK_TO_REBOOT=1
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "The resolution is set to $FUN" 20 60 1
+      ASK_TO_REBOOT=1
+    fi
   fi
 }
 
