@@ -1102,6 +1102,7 @@ do_pi4video() {
         if ! grep -q "hdmi_enable_4kp60" $CONFIG ; then
             sed $CONFIG -i -e "\$ahdmi_enable_4kp60=1"
         fi
+        sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d.*/dtoverlay=vc4-kms-v3d/"
         STATUS="4Kp60 is enabled on HDMI0"
         OPT=1
         ;;
@@ -1112,6 +1113,7 @@ do_pi4video() {
           if ! grep -q "enable_tvout" $CONFIG ; then
               sed $CONFIG -i -e "\$aenable_tvout=1"
           fi
+          sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d.*/dtoverlay=vc4-kms-v3d,composite/"
           STATUS="Composite video is enabled. HDMI is disabled."
           OPT=2
         else
@@ -1122,6 +1124,7 @@ do_pi4video() {
       V3*)
         sed $CONFIG -i -e "s/^hdmi_enable_4kp60=/#hdmi_enable_4kp60=/"
         sed $CONFIG -i -e "s/^enable_tvout=/#enable_tvout=/"
+        sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d.*/dtoverlay=vc4-kms-v3d/"
         STATUS="Both HDMI ports set to defaults - 4Kp60 and composite disabled"
         OPT=0
         ;;
@@ -1136,6 +1139,43 @@ do_pi4video() {
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "$STATUS" 20 60 1
     fi
+  fi
+}
+
+get_composite() {
+  if grep -q "^dtoverlay=vc4-kms-v3d,composite" $CONFIG ; then
+    echo 0
+  else
+    echo 1
+  fi
+}
+
+do_composite() {
+  CURRENT=$(get_composite)
+  DEFAULT=--defaultno
+  if [ $CURRENT -eq 0 ]; then
+    DEFAULT=
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like composite video output to be enabled?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    RET=$1
+  fi
+  if [ $RET -eq 0 ]; then
+    sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d.*/dtoverlay=vc4-kms-v3d,composite/"
+    STATUS=enabled
+  elif [ $RET -eq 1 ]; then
+    sed $CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d.*/dtoverlay=vc4-kms-v3d/"
+    STATUS=disabled
+  else
+    return $RET
+  fi
+  if [ $RET -ne $CURRENT ]; then
+    ASK_TO_REBOOT=1
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "Composite video output is $STATUS" 20 60 1
   fi
 }
 
@@ -2880,6 +2920,7 @@ do_advanced_menu() {
       "A4 Network Interface Names" "Enable/disable predictable network i/f names" \
       "A5 Network Proxy Settings" "Configure network proxy settings" \
       "A9 Glamor" "Enable/disable glamor graphics acceleration" \
+      "AA Composite" "Enable/disable composite video output" \
       3>&1 1>&2 2>&3)
   else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -2901,6 +2942,7 @@ do_advanced_menu() {
       A7\ *) do_boot_rom ;;
       A8\ *) do_pi4video ;;
       A9\ *) do_glamor ;;
+      AA\ *) do_composite ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
