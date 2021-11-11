@@ -1,3 +1,9 @@
+raspi-config (20211111) bullseye; urgency=medium
+
+  * Changes to configuring of composite output under KMS
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 11 Nov 2021 16:41:28 +0000
+
 raspi-config (20211110) bullseye; urgency=medium
 
   * Add VNC resolution option
