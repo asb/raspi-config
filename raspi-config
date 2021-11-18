@@ -1796,6 +1796,59 @@ do_onewire() {
   fi
 }
 
+get_legacy() {
+  if sed -n '/\[pi4\]/,/\[/ !p' $CONFIG | grep -q '^dtoverlay=vc4-kms-v3d' ; then
+    echo 1
+  else
+    echo 0
+  fi
+}
+
+do_legacy() {
+  DEFAULT=--defaultno
+  CURRENT=0
+  if [ $(get_legacy) -eq 0 ]; then
+    DEFAULT=
+    CURRENT=1
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --yesno "Would you like to enable legacy camera support?" $DEFAULT 20 60 2
+    RET=$?
+  else
+    RET=$1
+  fi
+  if [ $RET -eq $CURRENT ]; then
+    ASK_TO_REBOOT=1
+  fi
+  if [ $RET -eq 0 ]; then
+    sed $CONFIG -i -e '/\[pi4\]/,/\[/ s/^#\?dtoverlay=vc4-f\?kms-v3d/dtoverlay=vc4-fkms-v3d/g'
+    sed $CONFIG -i -e '/\[pi4\]/,/\[/ !s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/g'
+    sed $CONFIG -i -e '/\[pi4\]/,/\[/ !s/^dtoverlay=vc4-fkms-v3d/#dtoverlay=vc4-fkms-v3d/g'
+    if ! sed -n '/\[pi4\]/,/\[/ p' $CONFIG | grep -q '^dtoverlay=vc4-fkms-v3d' ; then
+      if grep -q '[pi4]' $CONFIG ; then
+        sed $CONFIG -i -e 's/\[pi4\]/\[pi4\]\ndtoverlay=vc4-fkms-v3d/'
+      else
+        printf "[pi4]\ndtoverlay=vc4-fkms-v3d\n" >> $CONFIG
+      fi
+    fi
+    STATUS="Legacy camera support is enabled.\n\nThis will disable various features in the video driver."
+  else
+    sed $CONFIG -i -e 's/^#\?dtoverlay=vc4-f\?kms-v3d/dtoverlay=vc4-kms-v3d/g'
+    sed $CONFIG -i -e '/\[pi4\]/,/\[/ {/dtoverlay=vc4-kms-v3d/d}'
+    if ! sed -n '/\[pi4\]/,/\[/ !p' $CONFIG | grep -q '^dtoverlay=vc4-kms-v3d' ; then
+      if grep -q '[all]' $CONFIG ; then
+        sed $CONFIG -i -e 's/\[all\]/\[all\]\ndtoverlay=vc4-kms-v3d/'
+      else
+        printf "[all]\ndtoverlay=vc4-kms-v3d\n" >> $CONFIG
+      fi
+    fi
+    STATUS="Legacy camera support is disabled."
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "$STATUS" 20 60 1
+  fi
+}
+
 do_gldriver() {
   if [ ! -e /boot/overlays/vc4-kms-v3d.dtbo ]; then
     whiptail --msgbox "Driver and kernel not present on your system. Please update" 20 60 2
@@ -2911,6 +2964,7 @@ do_advanced_menu() {
       "A6 Boot Order" "Choose network or USB device boot" \
       "A7 Bootloader Version" "Select latest or default boot ROM software" \
       "A8 HDMI / Composite" "Raspberry Pi 4 video output options" \
+      "AB Legacy Camera" "Enable/disable legacy camera support" \
       3>&1 1>&2 2>&3)
   elif is_pi ; then
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -2921,6 +2975,7 @@ do_advanced_menu() {
       "A5 Network Proxy Settings" "Configure network proxy settings" \
       "A9 Glamor" "Enable/disable glamor graphics acceleration" \
       "AA Composite" "Enable/disable composite video output" \
+      "AB Legacy Camera" "Enable/disable legacy camera support" \
       3>&1 1>&2 2>&3)
   else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -2943,6 +2998,7 @@ do_advanced_menu() {
       A8\ *) do_pi4video ;;
       A9\ *) do_glamor ;;
       AA\ *) do_composite ;;
+      AB\ *) do_legacy ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
