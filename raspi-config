@@ -1831,6 +1831,12 @@ do_legacy() {
         printf "[pi4]\ndtoverlay=vc4-fkms-v3d\n" >> $CONFIG
       fi
     fi
+    CUR_GPU_MEM=$(get_config_var gpu_mem $CONFIG)
+    if [ -z "$CUR_GPU_MEM" ] || [ "$CUR_GPU_MEM" -lt 128 ]; then
+      set_config_var gpu_mem 128 $CONFIG
+    fi
+    sed $CONFIG -i -e 's/^camera_auto_detect.*/start_x=1/g'
+    sed $CONFIG -i -e 's/^dtoverlay=camera/#dtoverlay=camera/g'
     STATUS="Legacy camera support is enabled.\n\nThis will disable various features in the video driver."
   else
     sed $CONFIG -i -e 's/^#\?dtoverlay=vc4-f\?kms-v3d/dtoverlay=vc4-kms-v3d/g'
@@ -1842,6 +1848,8 @@ do_legacy() {
         printf "[all]\ndtoverlay=vc4-kms-v3d\n" >> $CONFIG
       fi
     fi
+    sed $CONFIG -i -e 's/^start_x.*/camera_auto_detect=1/g'
+    sed $CONFIG -i -e 's/^#dtoverlay=camera/dtoverlay=camera/g'
     STATUS="Legacy camera support is disabled."
   fi
   if [ "$INTERACTIVE" = True ]; then
