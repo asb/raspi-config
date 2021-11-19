@@ -1837,7 +1837,7 @@ do_legacy() {
     fi
     sed $CONFIG -i -e 's/^camera_auto_detect.*/start_x=1/g'
     sed $CONFIG -i -e 's/^dtoverlay=camera/#dtoverlay=camera/g'
-    STATUS="Legacy camera support is enabled.\n\nThis will disable various features in the video driver."
+    STATUS="Legacy camera support is enabled.\n\nPlease note that this functionality is deprecated and will not be supported for future development."
   else
     sed $CONFIG -i -e 's/^#\?dtoverlay=vc4-f\?kms-v3d/dtoverlay=vc4-kms-v3d/g'
     sed $CONFIG -i -e '/\[pi4\]/,/\[/ {/dtoverlay=vc4-kms-v3d/d}'
