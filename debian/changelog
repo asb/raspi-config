@@ -1,3 +1,9 @@
+raspi-config (20211124) bullseye; urgency=medium
+
+  * Legacy camera mode switch added
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 24 Nov 2021 16:45:14 +0000
+
 raspi-config (20211111) bullseye; urgency=medium
 
   * Changes to configuring of composite output under KMS
