@@ -2854,6 +2854,7 @@ do_display_menu() {
       "D3 Pixel Doubling" "Enable/disable 2x2 pixel mapping" \
       "D4 Screen Blanking" "Enable/disable screen blanking" \
       "D5 VNC Resolution" "Set resolution for headless use" \
+      "D6 Composite" "Set options for composite output" \
       3>&1 1>&2 2>&3)
     else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -2862,6 +2863,7 @@ do_display_menu() {
       "D3 Pixel Doubling" "Enable/disable 2x2 pixel mapping" \
       "D4 Screen Blanking" "Enable/disable screen blanking" \
       "D5 VNC Resolution" "Set resolution for headless use" \
+      "D6 Composite" "Set options for composite output" \
       3>&1 1>&2 2>&3)
     fi
   else
@@ -2880,6 +2882,12 @@ do_display_menu() {
       D3\ *) do_pixdub ;;
       D4\ *) do_blanking ;;
       D5\ *) do_vnc_resolution ;;
+      D6\ *) if is_pifour ; then
+               do_pi4video
+             else
+               do_composite
+             fi
+             ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
@@ -2888,7 +2896,7 @@ do_display_menu() {
 do_interface_menu() {
   if is_pi ; then
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "P1 Camera" "Enable/disable connection to the Raspberry Pi Camera" \
+      "P1 Legacy Camera" "Enable/disable legacy camera support" \
       "P2 SSH" "Enable/disable remote command line access using SSH" \
       "P3 VNC" "Enable/disable graphical remote access using RealVNC" \
       "P4 SPI" "Enable/disable automatic loading of SPI kernel module" \
@@ -2907,7 +2915,7 @@ do_interface_menu() {
     return 0
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
-      P1\ *) do_camera ;;
+      P1\ *) do_legacy ;;
       P2\ *) do_ssh ;;
       P3\ *) do_vnc ;;
       P4\ *) do_spi ;;
@@ -2971,8 +2979,6 @@ do_advanced_menu() {
       "A5 Network Proxy Settings" "Configure network proxy settings" \
       "A6 Boot Order" "Choose network or USB device boot" \
       "A7 Bootloader Version" "Select latest or default boot ROM software" \
-      "A8 HDMI / Composite" "Raspberry Pi 4 video output options" \
-      "AB Legacy Camera" "Enable/disable legacy camera support" \
       3>&1 1>&2 2>&3)
   elif is_pi ; then
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -2981,9 +2987,7 @@ do_advanced_menu() {
       "A3 Compositor" "Enable/disable xcompmgr composition manager" \
       "A4 Network Interface Names" "Enable/disable predictable network i/f names" \
       "A5 Network Proxy Settings" "Configure network proxy settings" \
-      "A9 Glamor" "Enable/disable glamor graphics acceleration" \
-      "AA Composite" "Enable/disable composite video output" \
-      "AB Legacy Camera" "Enable/disable legacy camera support" \
+      "A8 Glamor" "Enable/disable glamor graphics acceleration" \
       3>&1 1>&2 2>&3)
   else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -3003,10 +3007,7 @@ do_advanced_menu() {
       A5\ *) do_proxy_menu ;;
       A6\ *) do_boot_order ;;
       A7\ *) do_boot_rom ;;
-      A8\ *) do_pi4video ;;
-      A9\ *) do_glamor ;;
-      AA\ *) do_composite ;;
-      AB\ *) do_legacy ;;
+      A8\ *) do_glamor ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
