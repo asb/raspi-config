@@ -2896,14 +2896,14 @@ do_display_menu() {
 do_interface_menu() {
   if is_pi ; then
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "P1 Legacy Camera" "Enable/disable legacy camera support" \
-      "P2 SSH" "Enable/disable remote command line access using SSH" \
-      "P3 VNC" "Enable/disable graphical remote access using RealVNC" \
-      "P4 SPI" "Enable/disable automatic loading of SPI kernel module" \
-      "P5 I2C" "Enable/disable automatic loading of I2C kernel module" \
-      "P6 Serial Port" "Enable/disable shell messages on the serial connection" \
-      "P7 1-Wire" "Enable/disable one-wire interface" \
-      "P8 Remote GPIO" "Enable/disable remote access to GPIO pins" \
+      "I1 Legacy Camera" "Enable/disable legacy camera support" \
+      "I2 SSH" "Enable/disable remote command line access using SSH" \
+      "I3 VNC" "Enable/disable graphical remote access using RealVNC" \
+      "I4 SPI" "Enable/disable automatic loading of SPI kernel module" \
+      "I5 I2C" "Enable/disable automatic loading of I2C kernel module" \
+      "I6 Serial Port" "Enable/disable shell messages on the serial connection" \
+      "I7 1-Wire" "Enable/disable one-wire interface" \
+      "I8 Remote GPIO" "Enable/disable remote access to GPIO pins" \
       3>&1 1>&2 2>&3)
   else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -2915,14 +2915,14 @@ do_interface_menu() {
     return 0
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
-      P1\ *) do_legacy ;;
-      P2\ *) do_ssh ;;
-      P3\ *) do_vnc ;;
-      P4\ *) do_spi ;;
-      P5\ *) do_i2c ;;
-      P6\ *) do_serial ;;
-      P7\ *) do_onewire ;;
-      P8\ *) do_rgpio ;;
+      I1\ *) do_legacy ;;
+      I2\ *) do_ssh ;;
+      I3\ *) do_vnc ;;
+      I4\ *) do_spi ;;
+      I5\ *) do_i2c ;;
+      I6\ *) do_serial ;;
+      I7\ *) do_onewire ;;
+      I8\ *) do_rgpio ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi

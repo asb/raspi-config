@@ -1,3 +1,9 @@
+raspi-config (20211202) bullseye; urgency=medium
+
+  * Correct labelling of entries in the interface menu
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 02 Dec 2021 11:51:10 +0000
+
 raspi-config (20211124) bullseye; urgency=medium
 
   * Legacy camera mode switch added
