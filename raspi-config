@@ -2907,7 +2907,7 @@ do_interface_menu() {
       3>&1 1>&2 2>&3)
   else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "P2 SSH" "Enable/disable remote command line access using SSH" \
+      "I2 SSH" "Enable/disable remote command line access using SSH" \
       3>&1 1>&2 2>&3)
   fi
   RET=$?

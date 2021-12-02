@@ -1,3 +1,9 @@
+raspi-config (20211203) bullseye; urgency=medium
+
+  * Correct labelling for x86 version as well
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 02 Dec 2021 18:39:04 +0000
+
 raspi-config (20211202) bullseye; urgency=medium
 
   * Correct labelling of entries in the interface menu
