@@ -491,13 +491,17 @@ do_change_locale() {
   if [ "$INTERACTIVE" = True ]; then
     dpkg-reconfigure locales
   else
-    local LOCALE="$1"
-    if ! LOCALE_LINE="$(grep -E "^$LOCALE( |$)" /usr/share/i18n/SUPPORTED)"; then
+    if ! LOCALE_LINE="$(grep -E "^$1( |$)" /usr/share/i18n/SUPPORTED)"; then
       return 1
     fi
-    local ENCODING="$(echo $LOCALE_LINE | cut -f2 -d " ")"
-    echo "$LOCALE $ENCODING" > /etc/locale.gen
-    sed -i "s/^\s*LANG=\S*/LANG=$LOCALE/" /etc/default/locale
+    export LC_ALL=C
+    export LANG=C
+    local LG="/etc/locale.gen"
+    local NEW_LANG="$(echo $LOCALE_LINE | cut -f1 -d " ")"
+    [ -L "$LG" ] && [ "$(readlink $LG)" = "/usr/share/i18n/SUPPORTED" ] && rm -f "$LG"
+    echo "$LOCALE_LINE" > /etc/locale.gen
+    update-locale --no-checks LANG
+    update-locale --no-checks "LANG=$NEW_LANG"
     dpkg-reconfigure -f noninteractive locales
   fi
 }
