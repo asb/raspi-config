@@ -1,3 +1,13 @@
+raspi-config (20220106) bullseye; urgency=medium
+
+  [ garyk10 ]
+  * Make nonint do_change_locale work with encoding field as well (#167)
+
+  [ Aristo Chen ]
+  * Fix inconsistent indent (#165)
+
+ -- Serge Schneider <serge@raspberrypi.com>  Thu, 06 Jan 2022 08:24:02 +0000
+
 raspi-config (20211203) bullseye; urgency=medium
 
   * Correct labelling for x86 version as well
