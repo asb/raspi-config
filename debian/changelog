@@ -1,3 +1,10 @@
+raspi-config (20220112) bullseye; urgency=medium
+
+  * Run apt-get with '-y' flag when in nonint mode
+    - https://github.com/RPi-Distro/raspi-config/issues/177
+
+ -- Serge Schneider <serge@raspberrypi.com>  Wed, 12 Jan 2022 09:04:54 +0000
+
 raspi-config (20220110) bullseye; urgency=medium
 
   * Add -q flag to wait.conf

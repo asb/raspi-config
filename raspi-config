@@ -826,14 +826,16 @@ do_vnc() {
   if [ $(get_vnc) -eq 0 ]; then
     DEFAULT=
   fi
+  APT_GET_FLAGS=""
   if [ "$INTERACTIVE" = True ]; then
     whiptail --yesno "Would you like the VNC Server to be enabled?" $DEFAULT 20 60 2
     RET=$?
   else
     RET=$1
+    APT_GET_FLAGS="-y"
   fi
   if [ $RET -eq 0 ]; then
-    if is_installed realvnc-vnc-server || apt-get install realvnc-vnc-server; then
+    if is_installed realvnc-vnc-server || apt-get install "$APT_GET_FLAGS" realvnc-vnc-server; then
       systemctl enable vncserver-x11-serviced.service &&
       systemctl start vncserver-x11-serviced.service &&
       STATUS=enabled
