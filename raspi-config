@@ -2430,23 +2430,26 @@ do_apply_os_config() {
 
 get_overlay_now() {
   grep -q "boot=overlay" /proc/cmdline
+  echo $?
 }
 
 get_overlay_conf() {
   grep -q "boot=overlay" /boot/cmdline.txt
+  echo $?
 }
 
 get_bootro_now() {
   findmnt /boot | grep -q " ro,"
+  echo $?
 }
 
 get_bootro_conf() {
   grep /boot /etc/fstab | grep -q "defaults.*,ro "
+  echo $?
 }
 
 is_uname_current() {
   test -d "/lib/modules/$(uname -r)"
-  return $?
 }
 
 enable_overlayfs() {
@@ -2454,7 +2457,7 @@ enable_overlayfs() {
   INITRD=initrd.img-"$KERN"-overlay
 
   # mount the boot partition as writable if it isn't already
-  if get_bootro_now ; then
+  if [ $(get_bootro_now) -eq 0 ] ; then
     if ! mount -o remount,rw /boot 2>/dev/null ; then
       echo "Unable to mount boot partition as writable - cannot enable"
       return 1
@@ -2551,7 +2554,7 @@ EOF
 disable_overlayfs() {
   KERN=$(uname -r)
   # mount the boot partition as writable if it isn't already
-  if get_bootro_now ; then
+  if [ $(get_bootro_now) -eq 0 ] ; then
     if ! mount -o remount,rw /boot 2>/dev/null ; then
       echo "Unable to mount boot partition as writable - cannot disable"
       return 1
@@ -2576,7 +2579,7 @@ disable_overlayfs() {
 }
 
 enable_bootro() {
-  if get_overlay_now ; then
+  if [ $(get_overlay_now) -eq 0 ] ; then
     echo "Overlay in use; cannot update fstab"
     return 1
   fi
@@ -2584,7 +2587,7 @@ enable_bootro() {
 }
 
 disable_bootro() {
-  if get_overlay_now ; then
+  if [ $(get_overlay_now) -eq 0 ] ; then
     echo "Overlay in use; cannot update fstab"
     return 1
   fi
@@ -2601,7 +2604,7 @@ do_overlayfs() {
     return 1
   fi
 
-  if get_overlay_conf; then
+  if [ $(get_overlay_conf) -eq 0 ] ; then
     DEFAULT=
     CURRENT=1
     STATUS="enabled"
@@ -2634,8 +2637,8 @@ do_overlayfs() {
   if [ "$INTERACTIVE" = True ]; then
     whiptail --msgbox "The overlay file system is $STATUS." 20 60 1
   fi
-  if get_overlay_now ; then
-    if get_bootro_conf; then
+  if [ $(get_overlay_now) -eq 0 ] ; then
+    if [ $(get_bootro_conf) -eq 0 ] ; then
       BPRO="read-only"
     else
       BPRO="writable"
@@ -2645,7 +2648,7 @@ do_overlayfs() {
     DEFAULT=--defaultno
     CURRENT=0
     STATUS="writable"
-    if get_bootro_conf; then
+    if [ $(get_bootro_conf) -eq 0 ]; then
       DEFAULT=
       CURRENT=1
       STATUS="read-only"
