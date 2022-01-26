@@ -1,3 +1,9 @@
+raspi-config (20220126) bullseye; urgency=medium
+
+  * Modify overlay functions to match format of other nonint calls
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 26 Jan 2022 14:55:17 +0000
+
 raspi-config (20220112) bullseye; urgency=medium
 
   * Run apt-get with '-y' flag when in nonint mode
