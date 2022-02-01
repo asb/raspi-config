@@ -1,6 +1,7 @@
 raspi-config (20220201) UNRELEASED; urgency=medium
 
   * pass -f flag to rm
+  * Fix init_resize.sh on Bullseye NOOBS images
 
  -- Serge Schneider <serge@raspberrypi.com>  Tue, 01 Feb 2022 16:02:27 +0000
 
