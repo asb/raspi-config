@@ -1,3 +1,9 @@
+raspi-config (20220201) UNRELEASED; urgency=medium
+
+  * pass -f flag to rm
+
+ -- Serge Schneider <serge@raspberrypi.com>  Tue, 01 Feb 2022 16:02:27 +0000
+
 raspi-config (20220126) bullseye; urgency=medium
 
   * Modify overlay functions to match format of other nonint calls
