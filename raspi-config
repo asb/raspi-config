@@ -328,6 +328,23 @@ do_overscan() {
   fi
 }
 
+get_overscan_kms() {
+  RES=$(grep "HDMI-$1" /usr/share/dispsetup.sh | grep margin | rev | cut -d ' ' -f 1 | rev)
+  if [ -z $RES ] ; then
+    echo 0
+  else
+    echo $RES
+  fi
+}
+
+do_overscan_kms() {
+  if grep "HDMI-$1" /usr/share/dispsetup.sh | grep -q margin ; then
+    sed /usr/share/dispsetup.sh -i -e "s/xrandr --output HDMI-$1.*margin.*/xrandr --output HDMI-$1 --set \"left margin\" $2 --set \"right margin\" $2 --set \"top margin\" $2 --set \"bottom margin\" $2/"
+  else
+    sed /usr/share/dispsetup.sh -i -e "s/exit/xrandr --output HDMI-$1 --set \"left margin\" $2 --set \"right margin\" $2 --set \"top margin\" $2 --set \"bottom margin\" $2\nexit/"
+  fi
+}
+
 get_blanking() {
   if ! [ -f "/etc/X11/xorg.conf.d/10-blanking.conf" ]; then
     echo 0
