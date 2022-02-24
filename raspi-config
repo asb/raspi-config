@@ -338,10 +338,31 @@ get_overscan_kms() {
 }
 
 do_overscan_kms() {
-  if grep "HDMI-$1" /usr/share/dispsetup.sh | grep -q margin ; then
-    sed /usr/share/dispsetup.sh -i -e "s/xrandr --output HDMI-$1.*margin.*/xrandr --output HDMI-$1 --set \"left margin\" $2 --set \"right margin\" $2 --set \"top margin\" $2 --set \"bottom margin\" $2/"
+  if [ "$INTERACTIVE" = True ]; then
+    DEV=$(whiptail --menu "Select the output for which overscan is to be set" 20 60 10 "1" "HDMI-1" "2" "HDMI-2" 3>&1 1>&2 2>&3)
+    if [ $(get_overscan_kms $DEV) -eq 0 ]; then
+      DEFAULT=--defaultno
+    else
+      DEFAULT=
+    fi
+    if whiptail --yesno "Would you like to enable overscan compensation for HDMI-$DEV?" $DEFAULT 20 60 2 ; then
+      PIX=16
+      STATUS="enabled"
+    else
+      PIX=0
+      STATUS="disabled"
+    fi
   else
-    sed /usr/share/dispsetup.sh -i -e "s/exit/xrandr --output HDMI-$1 --set \"left margin\" $2 --set \"right margin\" $2 --set \"top margin\" $2 --set \"bottom margin\" $2\nexit/"
+    DEV=$1
+    PIX=$2
+  fi
+  if grep "HDMI-$DEV" /usr/share/dispsetup.sh | grep -q margin ; then
+    sed /usr/share/dispsetup.sh -i -e "s/xrandr --output HDMI-$DEV.*margin.*/xrandr --output HDMI-$DEV --set \"left margin\" $PIX --set \"right margin\" $PIX --set \"top margin\" $PIX --set \"bottom margin\" $PIX/"
+  else
+    sed /usr/share/dispsetup.sh -i -e "s/exit/xrandr --output HDMI-$DEV --set \"left margin\" $PIX --set \"right margin\" $PIX --set \"top margin\" $PIX --set \"bottom margin\" $PIX\nexit/"
+  fi
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "Display overscan compensation for HDMI-$DEV is $STATUS" 20 60 1
   fi
 }
 
@@ -2900,7 +2921,12 @@ do_display_menu() {
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
       D1\ *) do_resolution ;;
-      D2\ *) do_overscan ;;
+      D2\ *) if is_fkms ; then
+               do_overscan_kms
+             else
+               do_overscan
+             fi
+             ;;
       D3\ *) do_pixdub ;;
       D4\ *) do_blanking ;;
       D5\ *) do_vnc_resolution ;;
