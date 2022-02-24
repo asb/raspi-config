@@ -362,6 +362,7 @@ do_overscan_kms() {
     sed /usr/share/dispsetup.sh -i -e "s/exit/xrandr --output HDMI-$DEV --set \"left margin\" $PIX --set \"right margin\" $PIX --set \"top margin\" $PIX --set \"bottom margin\" $PIX\nexit/"
   fi
   if [ "$INTERACTIVE" = True ]; then
+    xrandr --output HDMI-$DEV --set "left margin" $PIX --set "right margin" $PIX --set "top margin" $PIX --set "bottom margin" $PIX
     whiptail --msgbox "Display overscan compensation for HDMI-$DEV is $STATUS" 20 60 1
   fi
 }
