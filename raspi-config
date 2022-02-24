@@ -341,7 +341,15 @@ get_overscan_kms() {
 
 do_overscan_kms() {
   if [ "$INTERACTIVE" = True ]; then
-    DEV=$(whiptail --menu "Select the output for which overscan is to be set" 20 60 10 "1" "HDMI-1" "2" "HDMI-2" 3>&1 1>&2 2>&3)
+    NDEVS=$(xrandr -q | grep -c connected)
+    if [ $NDEVS -gt 1 ] ; then
+      DEV=$(whiptail --menu "Select the output for which overscan is to be set" 20 60 10 "1" "HDMI-1" "2" "HDMI-2" 3>&1 1>&2 2>&3)
+      if [ $? -eq 1 ] ; then
+        return
+      fi
+    else
+      DEV=1
+    fi
     if [ $(get_overscan_kms $DEV) -eq 1 ]; then
       DEFAULT=--defaultno
     else
