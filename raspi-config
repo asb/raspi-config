@@ -356,6 +356,8 @@ do_overscan_kms() {
     DEV=$1
     PIX=$2
   fi
+  sed $CONFIG -i -e "s/^overscan_/#overscan_/"
+  set_config_var disable_overscan 1 $CONFIG
   if grep "HDMI-$DEV" /usr/share/dispsetup.sh | grep -q margin ; then
     sed /usr/share/dispsetup.sh -i -e "s/xrandr --output HDMI-$DEV.*margin.*/xrandr --output HDMI-$DEV --set \"left margin\" $PIX --set \"right margin\" $PIX --set \"top margin\" $PIX --set \"bottom margin\" $PIX/"
   else
