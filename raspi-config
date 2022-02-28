@@ -437,11 +437,7 @@ get_pixdub() {
       echo 0
     fi
   else
-    if grep -q 'scale 0.5x0.5' /usr/share/dispsetup.sh ; then
-      echo 0
-    else
-      echo 1
-    fi
+    echo 1
   fi
 }
 
@@ -489,29 +485,6 @@ do_pixdub() {
     else
       return $RET
     fi
-  else
-    if [ $RET -eq 0 ] ; then
-      if [ -e /usr/share/dispsetup.sh ] ; then
-        rm /usr/share/dispsetup.sh
-      fi
-      echo '#!/bin/sh' > /usr/share/dispsetup.sh
-      DEV=$(xrandr | grep -w connected | cut -f1 -d' ')
-      for item in $DEV
-      do
-        echo xrandr --output $item --scale 0.5x0.5 --filter nearest >> /usr/share/dispsetup.sh
-      done
-      STATUS=enabled
-    elif [ $RET -eq 1 ]; then
-      if [ -e /usr/share/dispsetup.sh ] ; then
-        rm /usr/share/dispsetup.sh
-      fi
-      echo '#!/bin/sh' > /usr/share/dispsetup.sh
-      echo 'exit 0' >> /usr/share/dispsetup.sh
-      STATUS=disabled
-    else
-      return $RET
-    fi
-    chmod a+x /usr/share/dispsetup.sh
   fi
   if [ $RET -eq $CURRENT ]; then
     ASK_TO_REBOOT=1
@@ -2911,7 +2884,6 @@ do_display_menu() {
     if is_fkms; then
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "D2 Underscan" "Remove black border around screen" \
-      "D3 Pixel Doubling" "Enable/disable 2x2 pixel mapping" \
       "D4 Screen Blanking" "Enable/disable screen blanking" \
       "D5 VNC Resolution" "Set resolution for headless use" \
       "D6 Composite" "Set options for composite output" \
@@ -2928,7 +2900,7 @@ do_display_menu() {
     fi
   else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "D3 Pixel Doubling" "Enable/disable 2x2 pixel mapping" \
+      "D2 Underscan" "Remove black border around screen" \
       "D4 Screen Blanking" "Enable/disable screen blanking" \
       3>&1 1>&2 2>&3)
   fi
@@ -2938,7 +2910,7 @@ do_display_menu() {
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
       D1\ *) do_resolution ;;
-      D2\ *) if is_fkms ; then
+      D2\ *) if is_fkms || ! is_pi ; then
                do_overscan_kms
              else
                do_overscan
