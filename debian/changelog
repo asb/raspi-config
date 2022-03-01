@@ -1,7 +1,14 @@
-raspi-config (20220201) UNRELEASED; urgency=medium
+raspi-config (20220301) bullseye; urgency=medium
 
+  [ Serge Schneider ]
   * pass -f flag to rm
   * Fix init_resize.sh on Bullseye NOOBS images
+
+  [ Simon Long ]
+  * Rename is_fkms function to is_kms
+  * Remove pixel doubling for KMS systems
+  * Add on-the-fly overscan setting for KMS systems
+  * Use in-built is_kms function for cmstart script
 
  -- Serge Schneider <serge@raspberrypi.com>  Tue, 01 Feb 2022 16:02:27 +0000
 
