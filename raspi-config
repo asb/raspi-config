@@ -3025,6 +3025,7 @@ do_advanced_menu() {
       "A7 Bootloader Version" "Select latest or default boot ROM software" \
       3>&1 1>&2 2>&3)
   elif is_pi ; then
+    if is_kms; then
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "A1 Expand Filesystem" "Ensures that all of the SD card is available" \
       "A2 GL Driver" "Enable/disable experimental desktop GL driver" \
@@ -3033,6 +3034,15 @@ do_advanced_menu() {
       "A5 Network Proxy Settings" "Configure network proxy settings" \
       "A8 Glamor" "Enable/disable glamor graphics acceleration" \
       3>&1 1>&2 2>&3)
+    else
+    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "A1 Expand Filesystem" "Ensures that all of the SD card is available" \
+      "A2 GL Driver" "Enable/disable experimental desktop GL driver" \
+      "A4 Network Interface Names" "Enable/disable predictable network i/f names" \
+      "A5 Network Proxy Settings" "Configure network proxy settings" \
+      "A8 Glamor" "Enable/disable glamor graphics acceleration" \
+      3>&1 1>&2 2>&3)
+    fi
   else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "A4 Network Interface Names" "Enable/disable predictable network i/f names" \
