@@ -10,7 +10,7 @@ raspi-config (20220301) bullseye; urgency=medium
   * Add on-the-fly overscan setting for KMS systems
   * Use in-built is_kms function for cmstart script
 
- -- Serge Schneider <serge@raspberrypi.com>  Tue, 01 Feb 2022 16:02:27 +0000
+ -- Simon Long <simon@raspberrypi.com>  Tue, 01 Mar 2022 11:56:27 +0000
 
 raspi-config (20220126) bullseye; urgency=medium
 
