@@ -73,7 +73,7 @@ is_ssh() {
   fi
 }
 
-is_fkms() {
+is_kms() {
   if grep -s -q okay /proc/device-tree/soc/v3d@7ec00000/status \
                      /proc/device-tree/soc/firmwarekms@7e600000/status \
                      /proc/device-tree/v3dbus/v3d@7ec04000/status; then
@@ -436,7 +436,7 @@ do_blanking() {
 }
 
 get_pixdub() {
-  if is_pi && ! is_fkms; then
+  if is_pi && ! is_kms; then
     FBW=$(get_config_var framebuffer_width $CONFIG)
     if [ $FBW -eq 0 ]; then
       echo 1
@@ -468,7 +468,7 @@ do_pixdub() {
   else
     RET=$1
   fi
-  if is_pi && ! is_fkms; then
+  if is_pi && ! is_kms; then
     if [ $RET -eq 0 ] ; then
       XVAL=$(xrandr 2>&1 | grep current | cut -f2 -d, | cut -f3 -d' ')
       YVAL=$(xrandr 2>&1 | grep current | cut -f2 -d, | cut -f5 -d' ')
@@ -2888,7 +2888,7 @@ do_system_menu() {
 
 do_display_menu() {
   if is_pi ; then
-    if is_fkms; then
+    if is_kms; then
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "D2 Underscan" "Remove black border around screen" \
       "D4 Screen Blanking" "Enable/disable screen blanking" \
@@ -2917,10 +2917,10 @@ do_display_menu() {
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
       D1\ *) do_resolution ;;
-      D2\ *) if is_fkms || ! is_pi ; then
-               do_overscan_kms
-             else
+      D2\ *) if is_pi && ! is_kms;  then
                do_overscan
+             else
+               do_overscan_kms
              fi
              ;;
       D3\ *) do_pixdub ;;
