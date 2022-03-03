@@ -1,3 +1,9 @@
+raspi-config (20220303) bullseye; urgency=medium
+
+  * Use wildcards for KMS test
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 03 Mar 2022 13:44:04 +0000
+
 raspi-config (20220301) bullseye; urgency=medium
 
   [ Serge Schneider ]

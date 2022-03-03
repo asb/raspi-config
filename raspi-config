@@ -74,9 +74,9 @@ is_ssh() {
 }
 
 is_kms() {
-  if grep -s -q okay /proc/device-tree/soc/v3d@7ec00000/status \
-                     /proc/device-tree/soc/firmwarekms@7e600000/status \
-                     /proc/device-tree/v3dbus/v3d@7ec04000/status; then
+  if grep -s -q okay /proc/device-tree/soc/v3d@*/status \
+                     /proc/device-tree/soc/firmwarekms@*/status \
+                     /proc/device-tree/v3dbus/v3d@*/status; then
     return 0
   else
     return 1
