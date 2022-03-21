@@ -2466,7 +2466,7 @@ get_bootro_now() {
 }
 
 get_bootro_conf() {
-  grep /boot /etc/fstab | grep -q "defaults.*,ro "
+  grep /boot /etc/fstab | grep -q "defaults.*,ro[ ,]"
   echo $?
 }
 
