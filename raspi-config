@@ -372,7 +372,7 @@ do_overscan_kms() {
   fi
   xrandr --output HDMI-$DEV --set "left margin" $PIX --set "right margin" $PIX --set "top margin" $PIX --set "bottom margin" $PIX
   # hack to force reload when not using mutter
-  if ! ps ax | grep -v grep | grep -q mutter ; then
+  if ! ps ax | grep -v grep | grep -q " mutter" ; then
     xrandr --output HDMI-$DEV --reflect x
     xrandr --output HDMI-$DEV --reflect normal
   fi
