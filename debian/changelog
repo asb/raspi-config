@@ -1,3 +1,9 @@
+raspi-config (20220419) bullseye; urgency=medium
+
+  * Reinstate -R parameter for xcompmgr
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 19 Apr 2022 10:36:34 +0100
+
 raspi-config (20220331) bullseye; urgency=medium
 
   [ Serge Schneider ]
