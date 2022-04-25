@@ -25,6 +25,8 @@ else
   CMDLINE=/proc/cmdline
 fi
 
+# tests for Pi 1, 2 and 0 all test for specific boards...
+
 is_pione() {
   if grep -q "^Revision\s*:\s*00[0-9a-fA-F][0-9a-fA-F]$" /proc/cpuinfo; then
     return 0
@@ -45,6 +47,13 @@ is_pizero() {
   return $?
 }
 
+# ...while tests for Pi 3 and 4 just test processor type, so will also find CM3, CM4, Zero 2 etc.
+
+is_pithree() {
+  grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F]2[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]$" /proc/cpuinfo
+  return $?
+}
+
 is_pifour() {
   grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F]3[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]$" /proc/cpuinfo
   return $?
@@ -55,8 +64,14 @@ get_pi_type() {
     echo 1
   elif is_pitwo; then
     echo 2
-  else
+  elif is_pithree; then
+    echo 3
+  elif is_pifour; then
+    echo 4
+  elif is_pizero; then
     echo 0
+  else
+    echo -1
   fi
 }
 

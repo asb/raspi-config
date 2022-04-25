@@ -1,3 +1,9 @@
+raspi-config (20220425) bullseye; urgency=medium
+
+  * Tidy hardware detection functions
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 25 Apr 2022 17:38:35 +0100
+
 raspi-config (20220419) bullseye; urgency=medium
 
   * Reinstate -R parameter for xcompmgr
