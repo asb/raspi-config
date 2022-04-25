@@ -2809,12 +2809,6 @@ nonint() {
   "$@"
 }
 
-# Everything needs to be run as root
-if [ $(id -u) -ne 0 ]; then
-  printf "Script must be run as root. Try 'sudo raspi-config'\n"
-  exit 1
-fi
-
 #
 # Command line options for non-interactive use
 #
@@ -2859,6 +2853,12 @@ done
 #  echo $CURRENT_MEMSPLIT
 #  exit 0
 #fi
+
+# Everything else needs to be run as root
+if [ $(id -u) -ne 0 ]; then
+  printf "Script must be run as root. Try 'sudo raspi-config'\n"
+  exit 1
+fi
 
 if [ -n "${OPT_MEMORY_SPLIT:-}" ]; then
   set -e # Fail when a command errors
