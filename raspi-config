@@ -2035,7 +2035,7 @@ do_glamor() {
 do_wayland() {
   DEFAULT=--defaultno
   CURRENT=0
-  if grep -q "^user-session=LXDE-pi" /etc/lightdm/lightdm.conf ; then
+  if grep -q "^user-session=LXDE-pi-wayland" /etc/lightdm/lightdm.conf ; then
     DEFAULT=
     CURRENT=1
   fi
@@ -2049,10 +2049,18 @@ do_wayland() {
     ASK_TO_REBOOT=1
   fi
   if [ $RET -eq 0 ]; then
-    sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?user-session.*/user-session=LXDE-pi/"
+    sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?user-session.*/user-session=LXDE-pi-wayland/"
+    sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?autologin-session.*/autologin-session=LXDE-pi-wayland/"
+    if [ -e "/var/lib/AccountsService/users/$USER" ] ; then
+      sed "/var/lib/AccountsService/users/$USER" -i -e "s/XSession=.*/XSession=LXDE-pi-wayland/"
+    fi
     STATUS=enabled
   elif [ $RET -eq 1 ]; then
-    sed /etc/lightdm/lightdm.conf -i -e "s/user-session.*/#user-session=LXDE-pi/"
+    sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?user-session.*/user-session=LXDE-pi-x/"
+    sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?autologin-session.*/autologin-session=LXDE-pi-x/"
+    if [ -e "/var/lib/AccountsService/users/$USER" ] ; then
+      sed "/var/lib/AccountsService/users/$USER" -i -e "s/XSession=.*/XSession=LXDE-pi-x/"
+    fi
     STATUS=disabled
   else
     return $RET

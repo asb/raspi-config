@@ -1,3 +1,9 @@
+raspi-config (20220506) bullseye; urgency=medium
+
+  * Modify Wayland switching to work with AccountSettings
+
+ -- Simon Long <simon@raspberrypi.com>  Fri, 06 May 2022 14:07:57 +0100
+
 raspi-config (20220425) bullseye; urgency=medium
 
   * Tidy hardware detection functions
