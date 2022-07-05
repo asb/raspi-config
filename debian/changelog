@@ -1,3 +1,9 @@
+raspi-config (20220705) bullseye; urgency=medium
+
+  * Add network config switching
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 05 Jul 2022 14:12:28 +0100
+
 raspi-config (20220506) bullseye; urgency=medium
 
   * Modify Wayland switching to work with AccountSettings
