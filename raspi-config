@@ -2070,6 +2070,52 @@ do_wayland() {
   fi
 }
 
+do_netconf() {
+  if [ "$INTERACTIVE" = True ]; then
+    systemctl status NetworkManager > /dev/null
+    NMSTAT=$?
+    systemctl status dhcpcd > /dev/null
+    DHSTAT=$?
+    DEFAULT=1
+    if [ $NMSTAT = 0 ] ; then
+      DEFAULT=2
+    fi
+    if [ $DHSTAT -lt 4 ] ; then
+      set "1" "dhcpcd"
+    fi
+    if [ $NMSTAT -lt 4 ] ; then
+    set $@ "2" "Network Manager"
+    fi
+    NMOPT=$(whiptail --menu "Select the network configuration to use" 20 60 10 "$@" --default-item $DEFAULT 3>&1 1>&2 2>&3)
+    RET=$?
+  else
+    NMOPT=$1
+    RET=0
+  fi
+  if [ $RET -eq 0 ] ; then
+    if [ $NMOPT -eq 2 ] ; then
+      NETCON="Network Manager"
+      if [ $NMOPT -ne $DEFAULT ] ; then
+        systemctl disable dhcpcd &&
+        systemctl stop dhcpcd &&
+        systemctl enable NetworkManager &&
+        systemctl start NetworkManager
+      fi
+    else
+      NETCON="dhcpcd"
+      if [ $NMOPT -ne $DEFAULT ] ; then
+        systemctl disable NetworkManager &&
+        systemctl stop NetworkManager &&
+        systemctl enable dhcpcd &&
+        systemctl start dhcpcd
+      fi
+    fi
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "$NETCON is active" 20 60 1
+    fi
+  fi
+}
+
 get_net_names() {
   if grep -q "net.ifnames=0" $CMDLINE || \
     ( [ "$(readlink -f /etc/systemd/network/99-default.link)" = "/dev/null" ] && \
@@ -3075,6 +3121,7 @@ do_advanced_menu() {
       "A6 Boot Order" "Choose network or USB device boot" \
       "A7 Bootloader Version" "Select latest or default boot ROM software" \
       "A9 Wayland" "Enable experimental Wayland backend" \
+      "AA Network Config" "Set network configuration tool" \
       3>&1 1>&2 2>&3)
   elif is_pi ; then
     if is_kms; then
@@ -3086,6 +3133,7 @@ do_advanced_menu() {
       "A5 Network Proxy Settings" "Configure network proxy settings" \
       "A8 Glamor" "Enable/disable glamor graphics acceleration" \
       "A9 Wayland" "Enable experimental Wayland backend" \
+      "AA Network Config" "Set network configuration tool" \
       3>&1 1>&2 2>&3)
     else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -3094,12 +3142,14 @@ do_advanced_menu() {
       "A4 Network Interface Names" "Enable/disable predictable network i/f names" \
       "A5 Network Proxy Settings" "Configure network proxy settings" \
       "A8 Glamor" "Enable/disable glamor graphics acceleration" \
+      "AA Network Config" "Set network configuration tool" \
       3>&1 1>&2 2>&3)
     fi
   else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "A4 Network Interface Names" "Enable/disable predictable network i/f names" \
       "A5 Network Proxy Settings" "Configure network proxy settings" \
+      "AA Network Config" "Set network configuration tool" \
       3>&1 1>&2 2>&3)
   fi
   RET=$?
@@ -3116,6 +3166,7 @@ do_advanced_menu() {
       A7\ *) do_boot_rom ;;
       A8\ *) do_glamor ;;
       A9\ *) do_wayland ;;
+      AA\ *) do_netconf ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
