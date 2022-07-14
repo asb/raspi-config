@@ -2094,21 +2094,17 @@ do_netconf() {
   fi
   if [ $RET -eq 0 ] ; then
     if [ $NMOPT -eq 2 ] ; then
+      systemctl disable dhcpcd &&
+      systemctl stop dhcpcd &&
+      systemctl enable NetworkManager &&
+      systemctl start NetworkManager
       NETCON="Network Manager"
-      if [ $NMOPT -ne $DEFAULT ] ; then
-        systemctl disable dhcpcd &&
-        systemctl stop dhcpcd &&
-        systemctl enable NetworkManager &&
-        systemctl start NetworkManager
-      fi
     else
+      systemctl disable NetworkManager &&
+      systemctl stop NetworkManager &&
+      systemctl enable dhcpcd &&
+      systemctl start dhcpcd
       NETCON="dhcpcd"
-      if [ $NMOPT -ne $DEFAULT ] ; then
-        systemctl disable NetworkManager &&
-        systemctl stop NetworkManager &&
-        systemctl enable dhcpcd &&
-        systemctl start dhcpcd
-      fi
     fi
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "$NETCON is active" 20 60 1
