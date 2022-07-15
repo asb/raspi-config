@@ -2094,16 +2094,28 @@ do_netconf() {
   fi
   if [ $RET -eq 0 ] ; then
     if [ $NMOPT -eq 2 ] ; then
-      systemctl disable dhcpcd &&
-      systemctl stop dhcpcd &&
-      systemctl enable NetworkManager &&
-      systemctl start NetworkManager
+      if [ $DHSTAT = 0 ] ; then
+        systemctl disable dhcpcd
+        systemctl stop dhcpcd
+        ASK_TO_REBOOT=1
+      fi
+      if [ $NMSTAT -ne 0 ] ; then
+        systemctl enable NetworkManager
+        systemctl start NetworkManager
+        ASK_TO_REBOOT=1
+      fi
       NETCON="Network Manager"
     else
-      systemctl disable NetworkManager &&
-      systemctl stop NetworkManager &&
-      systemctl enable dhcpcd &&
-      systemctl start dhcpcd
+      if [ $NMSTAT = 0 ] ; then
+        systemctl disable NetworkManager
+        systemctl stop NetworkManager
+        ASK_TO_REBOOT=1
+      fi
+      if [ $DHSTAT -ne 0 ] ; then
+        systemctl enable dhcpcd
+        systemctl start dhcpcd
+        ASK_TO_REBOOT=1
+      fi
       NETCON="dhcpcd"
     fi
     if [ "$INTERACTIVE" = True ]; then
