@@ -2059,57 +2059,50 @@ do_wayland() {
 }
 
 do_netconf() {
+  systemctl status NetworkManager > /dev/null 2>&1
+  NMSTAT=$?
+  systemctl status dhcpcd > /dev/null 2>&1
+  DHSTAT=$?
   if [ "$INTERACTIVE" = True ]; then
-    systemctl status NetworkManager > /dev/null
-    NMSTAT=$?
-    systemctl status dhcpcd > /dev/null
-    DHSTAT=$?
     DEFAULT=1
-    if [ $NMSTAT = 0 ] ; then
+    if [ "$NMSTAT" = 0 ] ; then # NetworkManager is active
       DEFAULT=2
     fi
-    array=""
-    if [ $DHSTAT -lt 4 ] ; then
-      array="1/dhcpcd"
+    if [ "$DHSTAT" -lt 4 ] ; then # dhcpcd is available
+      OPTIONS="1 dhcpcd"
     fi
-    if [ $NMSTAT -lt 4 ] ; then
-      if [ -z $array ] ; then
-        array="2/Network Manager"
-      else
-        array=$array"/2/Network Manager"
-      fi
+    if [ "$NMSTAT" -lt 4 ] ; then # NetworkManager is available
+      OPTIONS="$OPTIONS 2 NetworkManager"
     fi
-    oIFS="$IFS"
-    IFS="/"
-    NMOPT=$(whiptail --menu "Select the network configuration to use" 20 60 10 ${array} --default-item $DEFAULT 3>&1 1>&2 2>&3)
-    RET=$?
-    IFS="$oIFS"
+    #shellcheck disable=2086
+    NMOPT=$(whiptail --menu "Select the network configuration to use" 20 60 10 $OPTIONS --default-item "$DEFAULT" 3>&1 1>&2 2>&3)
+    RET="$?"
   else
-    NMOPT=$1
+    NMOPT="$1"
     RET=0
   fi
-  if [ $RET -eq 0 ] ; then
-    if [ $NMOPT -eq 2 ] ; then
-      if [ $DHSTAT = 0 ] ; then
-        systemctl disable dhcpcd
+  if [ "$RET" -eq 0 ] ; then
+    if [ "$NMOPT" -eq 2 ] ; then # NetworkManager selected
+      if [ "$DHSTAT" -eq 0 ]; then  # dhcpcd is active
+        systemctl -q disable dhcpcd
         systemctl stop dhcpcd
         ASK_TO_REBOOT=1
       fi
-      if [ $NMSTAT -ne 0 ] ; then
-        systemctl enable NetworkManager
-        systemctl start NetworkManager
+      if [ "$NMSTAT" -ne 0 ] ; then # NetworkManager is not active
+        systemctl -q enable NetworkManager
+        systemctl --no-block start NetworkManager
         ASK_TO_REBOOT=1
       fi
-      NETCON="Network Manager"
-    else
-      if [ $NMSTAT = 0 ] ; then
-        systemctl disable NetworkManager
+      NETCON="NetworkManager"
+    else # dhcpcd selected
+      if [ "$NMSTAT" -eq 0 ] || systemctl -q is-enabled NetworkManager; then # NetworkManager is active or enabled
+        systemctl -q disable NetworkManager
         systemctl stop NetworkManager
         ASK_TO_REBOOT=1
       fi
-      if [ $DHSTAT -ne 0 ] ; then
-        systemctl enable dhcpcd
-        systemctl start dhcpcd
+      if [ "$DHSTAT" -ne 0 ] ; then # dhcpcd is not active
+        systemctl -q enable dhcpcd
+        systemctl --no-block start dhcpcd
         ASK_TO_REBOOT=1
       fi
       NETCON="dhcpcd"
