@@ -2212,27 +2212,30 @@ do_audio() {
     else
       ASPATH=$(getent passwd $USER | cut -d : -f 6)/.asoundrc
       if [ "$INTERACTIVE" = True ]; then
-        CARD0=$(LC_ALL=C aplay -l | grep bcm2835 | grep "card 0" | cut -d [ -f 3 | cut -d ] -f 1 | cut -d ' ' -f 2-)
-        CARD1=$(LC_ALL=C aplay -l | grep bcm2835 | grep "card 1" | cut -d [ -f 3 | cut -d ] -f 1 | cut -d ' ' -f 2-)
-        CARD2=$(LC_ALL=C aplay -l | grep bcm2835 | grep "card 2" | cut -d [ -f 3 | cut -d ] -f 1 | cut -d ' ' -f 2-)
-        if ! [ -z "$CARD2" ]; then
-          AUDIO_OUT=$(whiptail --menu "Choose the audio output" 20 60 10 \
-            "0" "$CARD0" \
-            "1" "$CARD1" \
-            "2" "$CARD2" \
-            3>&1 1>&2 2>&3)
-        elif ! [ -z "$CARD1" ]; then
-          AUDIO_OUT=$(whiptail --menu "Choose the audio output" 20 60 10 \
-            "0" "$CARD0" \
-            "1" "$CARD1" \
-            3>&1 1>&2 2>&3)
-        elif ! [ -z "$CARD0" ]; then
-          AUDIO_OUT=$(whiptail --menu "Choose the audio output" 20 60 10 \
-            "0" "$CARD0" \
-            3>&1 1>&2 2>&3)
-        else
-          whiptail --msgbox "No internal audio devices found" 20 60 1
+        n=0
+        array=""
+        while [ $n -le 9 ]]
+        do
+          CARD=$(LC_ALL=C aplay -l | grep "card $n" | cut -d [ -f 2 | cut -d ] -f 1)
+          if [ -z "$CARD" ] ; then
+            break
+          else
+            if [ -z "$array" ] ; then
+              array=$n"/"$CARD
+            else
+              array=$array"/"$n"/"$CARD
+            fi
+          fi
+          n=$(( n+1 ))
+        done
+        if [ $n -eq 0 ] ; then
+          whiptail --msgbox "No audio devices found" 20 60 1
           false
+        else
+          oIFS="$IFS"
+          IFS="/"
+          AUDIO_OUT=$(whiptail --menu "Choose the audio output" 20 60 10 ${array} 3>&1 1>&2 2>&3)
+          IFS=$oIFS
         fi
       else
         AUDIO_OUT=$1
