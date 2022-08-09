@@ -1,3 +1,16 @@
+raspi-config (20220809) bullseye; urgency=medium
+
+  [ Simon Long ]
+  * Modify ALSA switching to work with non-BCM devices
+
+  [ Serge Schneider ]
+  * Make WLAN settings work with NetworkManager
+  * Migrate to crda-based regulatory domain management on upgrade
+  * do_wifi_ssid_passphrase: add flag to allow hashed passphrase input
+  * Switch to dhcpcd here if Imager < v1.7.3 was used to generate firstrun.sh
+
+ -- Serge Schneider <serge@raspberrypi.com>  Tue, 09 Aug 2022 12:05:54 +0100
+
 raspi-config (20220705) bullseye; urgency=medium
 
   * Add network config switching
