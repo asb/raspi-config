@@ -2440,6 +2440,7 @@ do_wifi_ssid_passphrase() {
          -e 's;";\\\\\";g')"
 
   HIDDEN=${3:-0}
+  PLAIN=${4:-1}
 
   if systemctl -q is-active dhcpcd; then
     wpa_cli -i "$IFACE" list_networks \
@@ -2456,7 +2457,10 @@ do_wifi_ssid_passphrase() {
       wpa_cli -i "$IFACE" set_network "$ID" key_mgmt NONE 2>&1 | grep -q "OK"
       RET=$((RET + $?))
     else
-      wpa_cli -i "$IFACE" set_network "$ID" psk "\"$PASSPHRASE\"" 2>&1 | grep -q "OK"
+      if [ "$PLAIN" = 1 ]; then
+        PASSPHRASE="\"$PASSPHRASE\""
+      fi
+      wpa_cli -i "$IFACE" set_network "$ID" psk "$PASSPHRASE" 2>&1 | grep -q "OK"
       RET=$((RET + $?))
     fi
 
