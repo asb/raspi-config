@@ -1,3 +1,10 @@
+raspi-config (20220901) bullseye; urgency=medium
+
+  * Rework do_netconf
+  * Silence options used by firstboot
+
+ -- Serge Schneider <serge@raspberrypi.com>  Thu, 01 Sep 2022 12:35:47 +0100
+
 raspi-config (20220809) bullseye; urgency=medium
 
   [ Simon Long ]

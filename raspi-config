@@ -9,6 +9,7 @@ BLACKLIST=/etc/modprobe.d/raspi-blacklist.conf
 CONFIG=/boot/config.txt
 
 USER=${SUDO_USER:-$(who -m | awk '{ print $1 }')}
+INIT="$(ps --no-headers -o comm 1)"
 
 is_pi () {
   ARCH=$(dpkg --print-architecture)
@@ -536,7 +537,9 @@ do_configure_keyboard() {
     sed -i /etc/default/keyboard -e "s/^XKBLAYOUT.*/XKBLAYOUT=\"$KEYMAP\"/"
     dpkg-reconfigure -f noninteractive keyboard-configuration
   fi
-  invoke-rc.d keyboard-setup start
+  if [ "$INIT" = "systemd" ]; then
+    systemctl restart keyboard-setup
+  fi
   setsid sh -c 'exec setupcon -k --force <> /dev/tty1 >&0 2>&1'
   udevadm trigger --subsystem-match=input --action=change
   return 0
@@ -571,7 +574,7 @@ do_change_timezone() {
     fi
     rm /etc/localtime
     echo "$TIMEZONE" > /etc/timezone
-    dpkg-reconfigure -f noninteractive tzdata
+    dpkg-reconfigure -f noninteractive tzdata 2> /dev/null
   fi
 }
 
@@ -615,12 +618,12 @@ do_wifi_country() {
     sed -i "s/^REGDOMAIN=.*$/REGDOMAIN=$REGDOMAIN/"  /etc/default/crda
     iw reg set "$REGDOMAIN"
   fi
-  if systemctl -q is-active dhcpcd; then
+  if [ "$INIT" = "systemd" ] && systemctl -q is-active dhcpcd; then
     wpa_cli set country "$REGDOMAIN" > /dev/null 2>&1
     wpa_cli save_config > /dev/null 2>&1
   fi
 
-  if systemctl -q is-active NetworkManager; then
+  if [ "$INIT" = "systemd" ] && systemctl -q is-active NetworkManager; then
     nmcli radio wifi on
   elif hash rfkill 2> /dev/null; then
     rfkill unblock wifi
@@ -657,7 +660,9 @@ No other symbols, punctuation characters, or blank spaces are permitted.\
     true
   fi
   if [ "$?" -eq 0 ]; then
-    hostnamectl set-hostname "$NEW_HOSTNAME"
+    if [ "$INIT" = "systemd" ]; then
+      hostnamectl set-hostname "$NEW_HOSTNAME"
+    fi
     sed -i "s/127\.0\.1\.1.*$CURRENT_HOSTNAME/127.0.1.1\t$NEW_HOSTNAME/g" /etc/hosts
     ASK_TO_REBOOT=1
   fi
@@ -1434,7 +1439,9 @@ EOF
         return 1
         ;;
     esac
-    systemctl daemon-reload
+    if [ "$INIT" = "systemd" ]; then
+      systemctl daemon-reload
+    fi
     ASK_TO_REBOOT=1
   fi
 }
@@ -2059,19 +2066,19 @@ do_wayland() {
 }
 
 do_netconf() {
-  systemctl status NetworkManager > /dev/null 2>&1
-  NMSTAT=$?
-  systemctl status dhcpcd > /dev/null 2>&1
-  DHSTAT=$?
+  systemctl -q is-enabled NetworkManager 2> /dev/null
+  NMENABLED=$?
+  systemctl -q is-enabled dhcpcd >2 /dev/null 2>&1
+  DHENABLED=$?
   if [ "$INTERACTIVE" = True ]; then
     DEFAULT=1
-    if [ "$NMSTAT" = 0 ] ; then # NetworkManager is active
+    if [ "$NMENABLED" = 0 ] ; then
       DEFAULT=2
     fi
-    if [ "$DHSTAT" -lt 4 ] ; then # dhcpcd is available
+    if is_installed dhcpcd5 ; then
       OPTIONS="1 dhcpcd"
     fi
-    if [ "$NMSTAT" -lt 4 ] ; then # NetworkManager is available
+    if is_installed network-manager ; then
       OPTIONS="$OPTIONS 2 NetworkManager"
     fi
     #shellcheck disable=2086
@@ -2081,35 +2088,29 @@ do_netconf() {
     NMOPT="$1"
     RET=0
   fi
-  if [ "$RET" -eq 0 ] ; then
-    if [ "$NMOPT" -eq 2 ] ; then # NetworkManager selected
-      if [ "$DHSTAT" -eq 0 ]; then  # dhcpcd is active
-        systemctl -q disable dhcpcd
-        systemctl stop dhcpcd
-        ASK_TO_REBOOT=1
-      fi
-      if [ "$NMSTAT" -ne 0 ] ; then # NetworkManager is not active
-        systemctl -q enable NetworkManager
-        systemctl --no-block start NetworkManager
-        ASK_TO_REBOOT=1
-      fi
-      NETCON="NetworkManager"
-    else # dhcpcd selected
-      if [ "$NMSTAT" -eq 0 ] || systemctl -q is-enabled NetworkManager; then # NetworkManager is active or enabled
-        systemctl -q disable NetworkManager
-        systemctl stop NetworkManager
-        ASK_TO_REBOOT=1
-      fi
-      if [ "$DHSTAT" -ne 0 ] ; then # dhcpcd is not active
-        systemctl -q enable dhcpcd
-        systemctl --no-block start dhcpcd
-        ASK_TO_REBOOT=1
-      fi
-      NETCON="dhcpcd"
-    fi
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "$NETCON is active" 20 60 1
-    fi
+  if [ "$RET" -ne 0 ] ; then
+    return
+  fi
+
+  if [ "$NMOPT" -eq 2 ] ; then # NetworkManager selected
+    ENABLE_SERVICE=NetworkManager
+    DISABLE_SERVICE=dhcpcd
+    NETCON="NetworkManager"
+  else # dhcpcd selected
+    ENABLE_SERVICE=dhcpcd
+    DISABLE_SERVICE=NetworkManager
+    NETCON="dhcpcd"
+  fi
+
+  systemctl -q disable "$DISABLE_SERVICE" 2> /dev/null
+  systemctl -q enable "$ENABLE_SERVICE"
+  if [ "$INIT" = "systemd" ]; then
+    systemctl -q stop "$DISABLE_SERVICE" 2> /dev/null
+    systemctl -q --no-block start "$ENABLE_SERVICE"
+  fi
+  ASK_TO_REBOOT=1
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "$NETCON is active" 20 60 1
   fi
 }
 
