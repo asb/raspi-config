@@ -1,3 +1,9 @@
+raspi-config (20220907+1) bullseye; urgency=medium
+
+  * Remove /2, which was created by the typo in 20220901
+
+ -- Serge Schneider <serge@raspberrypi.com>  Wed, 07 Sep 2022 17:04:52 +0100
+
 raspi-config (20220907) bullseye; urgency=medium
 
   * do_netconf: fix typo

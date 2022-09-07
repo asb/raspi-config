@@ -23,4 +23,11 @@ if dpkg --compare-versions "${2}" lt-nl "20220804"; then
   fi
 fi
 
+if dpkg --compare-versions "${2}" lt-nl "20220907+1"; then
+  IMG_VER="$(grep -s -m1 -o '[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}' /etc/rpi-issue)"
+  if [ "$IMG_VER" = "2022-09-06" ] && [ -f /2 ]; then
+    rm -f /2
+  fi
+fi
+
 #DEBHELPER#
