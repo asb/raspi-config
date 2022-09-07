@@ -1,3 +1,9 @@
+raspi-config (20220907) bullseye; urgency=medium
+
+  * do_netconf: fix typo
+
+ -- Serge Schneider <serge@raspberrypi.com>  Wed, 07 Sep 2022 10:04:56 +0100
+
 raspi-config (20220901) bullseye; urgency=medium
 
   * Rework do_netconf

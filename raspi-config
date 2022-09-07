@@ -2066,9 +2066,9 @@ do_wayland() {
 }
 
 do_netconf() {
-  systemctl -q is-enabled NetworkManager 2> /dev/null
+  systemctl -q is-enabled NetworkManager 2> /dev/null 2>&1
   NMENABLED=$?
-  systemctl -q is-enabled dhcpcd >2 /dev/null 2>&1
+  systemctl -q is-enabled dhcpcd 2> /dev/null 2>&1
   DHENABLED=$?
   if [ "$INTERACTIVE" = True ]; then
     DEFAULT=1
