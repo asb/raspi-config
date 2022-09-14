@@ -1,3 +1,9 @@
+raspi-config (20220914) bullseye; urgency=medium
+
+  * Make get_boot_cli work when systemd is not running
+
+ -- Serge Schneider <serge@raspberrypi.com>  Wed, 14 Sep 2022 16:45:35 +0100
+
 raspi-config (20220907+1) bullseye; urgency=medium
 
   * Remove /2, which was created by the typo in 20220901

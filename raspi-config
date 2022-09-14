@@ -1089,7 +1089,8 @@ disable_raspi_config_at_boot() {
 }
 
 get_boot_cli() {
-  if [ "$(systemctl get-default)" = graphical.target ] && systemctl is-enabled lightdm > /dev/null 2>&1; then
+  if [ "$(basename $(readlink -f /etc/systemd/system/default.target))" = graphical.target ] \
+     && systemctl is-enabled lightdm > /dev/null 2>&1; then
     echo 1
   else
     echo 0
