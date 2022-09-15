@@ -660,7 +660,7 @@ No other symbols, punctuation characters, or blank spaces are permitted.\
     true
   fi
   if [ "$?" -eq 0 ]; then
-    if [ "$INIT" = "systemd" ]; then
+    if [ "$INIT" = "systemd" ] && systemctl -q is-active dbus; then
       hostnamectl set-hostname "$NEW_HOSTNAME"
     fi
     sed -i "s/127\.0\.1\.1.*$CURRENT_HOSTNAME/127.0.1.1\t$NEW_HOSTNAME/g" /etc/hosts

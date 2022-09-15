@@ -1,3 +1,9 @@
+raspi-config (20220915) bullseye; urgency=medium
+
+  * Don't attempt to run hostnamectl if dbus is not active
+
+ -- Serge Schneider <serge@raspberrypi.com>  Thu, 15 Sep 2022 12:25:36 +0100
+
 raspi-config (20220914) bullseye; urgency=medium
 
   * Make get_boot_cli work when systemd is not running
