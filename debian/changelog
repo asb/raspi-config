@@ -1,3 +1,9 @@
+raspi-config (20220920) bullseye; urgency=medium
+
+  * Add pipewire switching
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 20 Sep 2022 12:03:21 +0100
+
 raspi-config (20220915) bullseye; urgency=medium
 
   * Don't attempt to run hostnamectl if dbus is not active

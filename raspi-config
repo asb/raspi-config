@@ -2115,6 +2115,72 @@ do_netconf() {
   fi
 }
 
+do_audioconf() {
+  sudo -u $SUDO_USER XDG_RUNTIME_DIR=/run/user/$SUDO_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$SUDO_UID/bus systemctl --user -q is-enabled pipewire-pulse 2>&1 > /dev/null
+  PPENABLED=$?
+  sudo -u $SUDO_USER XDG_RUNTIME_DIR=/run/user/$SUDO_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$SUDO_UID/bus systemctl --user -q is-enabled pulseaudio 2>&1 > /dev/null
+  PAENABLED=$?
+  if [ "$INTERACTIVE" = True ]; then
+    DEFAULT=1
+    if [ "$PPENABLED" = 0 ] ; then
+      DEFAULT=2
+    fi
+    if is_installed pulseaudio ; then
+      OPTIONS="1 pulseaudio"
+    fi
+    if is_installed pipewire-pulse ; then
+      OPTIONS="$OPTIONS 2 pipewire"
+    fi
+    #shellcheck disable=2086
+    PPOPT=$(whiptail --menu "Select the audio configuration to use" 20 60 10 $OPTIONS --default-item "$DEFAULT" 3>&1 1>&2 2>&3)
+    RET="$?"
+  else
+    PPOPT="$1"
+    RET=0
+  fi
+  if [ "$RET" -ne 0 ] ; then
+    return
+  fi
+
+  if [ "$PPOPT" -eq 2 ] ; then # pipewire selected
+    systemctl --global -q disable pulseaudio
+    systemctl --global -q enable pipewire-pulse
+    systemctl --global -q enable wireplumber
+    if [ "$INIT" = "systemd" ]; then
+      sudo -u $SUDO_USER XDG_RUNTIME_DIR=/run/user/$SUDO_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$SUDO_UID/bus systemctl --user -q stop pulseaudio
+      sudo -u $SUDO_USER XDG_RUNTIME_DIR=/run/user/$SUDO_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$SUDO_UID/bus systemctl --user -q --no-block start pipewire-pulse
+      sudo -u $SUDO_USER XDG_RUNTIME_DIR=/run/user/$SUDO_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$SUDO_UID/bus systemctl --user -q --no-block start wireplumber
+    fi
+    if [ -e /usr/share/doc/pipewire/examples/alsa.conf.d/99-pipewire-default.conf ] ; then
+      cp /usr/share/doc/pipewire/examples/alsa.conf.d/99-pipewire-default.conf /etc/alsa/conf.d/
+    fi
+    AUDCON="pipewire"
+    if [ "$PAENABLED" = 0 ] ; then
+      ASK_TO_REBOOT=1
+    fi
+  else # pulse selected
+    systemctl --global -q disable pipewire-pulse
+    systemctl --global -q disable wireplumber
+    systemctl --global -q enable pulseaudio
+    if [ "$INIT" = "systemd" ]; then
+      sudo -u $SUDO_USER XDG_RUNTIME_DIR=/run/user/$SUDO_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$SUDO_UID/bus systemctl --user -q stop pipewire-pulse
+      sudo -u $SUDO_USER XDG_RUNTIME_DIR=/run/user/$SUDO_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$SUDO_UID/bus systemctl --user -q stop wireplumber
+      sudo -u $SUDO_USER XDG_RUNTIME_DIR=/run/user/$SUDO_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$SUDO_UID/bus systemctl --user -q --no-block start pulseaudio
+    fi
+    if [ -e /etc/alsa/conf.d/99-pipewire-default.conf ] ; then
+      rm /etc/alsa/conf.d/99-pipewire-default.conf
+    fi
+    AUDCON="pulseaudio"
+    if [ "$PPENABLED" = 0 ] ; then
+      ASK_TO_REBOOT=1
+    fi
+  fi
+
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "$AUDCON is active" 20 60 1
+  fi
+}
+
 get_net_names() {
   if grep -q "net.ifnames=0" $CMDLINE || \
     ( [ "$(readlink -f /etc/systemd/network/99-default.link)" = "/dev/null" ] && \
@@ -3142,6 +3208,7 @@ do_advanced_menu() {
       "A7 Bootloader Version" "Select latest or default boot ROM software" \
       "A9 Wayland" "Enable experimental Wayland backend" \
       "AA Network Config" "Set network configuration tool" \
+      "AB Audio Config" "Set audio control system" \
       3>&1 1>&2 2>&3)
   elif is_pi ; then
     if is_kms; then
@@ -3154,6 +3221,7 @@ do_advanced_menu() {
       "A8 Glamor" "Enable/disable glamor graphics acceleration" \
       "A9 Wayland" "Enable experimental Wayland backend" \
       "AA Network Config" "Set network configuration tool" \
+      "AB Audio Config" "Set audio control system" \
       3>&1 1>&2 2>&3)
     else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -3163,6 +3231,7 @@ do_advanced_menu() {
       "A5 Network Proxy Settings" "Configure network proxy settings" \
       "A8 Glamor" "Enable/disable glamor graphics acceleration" \
       "AA Network Config" "Set network configuration tool" \
+      "AB Audio Config" "Set audio control system" \
       3>&1 1>&2 2>&3)
     fi
   else
@@ -3170,6 +3239,7 @@ do_advanced_menu() {
       "A4 Network Interface Names" "Enable/disable predictable network i/f names" \
       "A5 Network Proxy Settings" "Configure network proxy settings" \
       "AA Network Config" "Set network configuration tool" \
+      "AB Audio Config" "Set audio control system" \
       3>&1 1>&2 2>&3)
   fi
   RET=$?
@@ -3187,6 +3257,7 @@ do_advanced_menu() {
       A8\ *) do_glamor ;;
       A9\ *) do_wayland ;;
       AA\ *) do_netconf ;;
+      AB\ *) do_audioconf ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
