@@ -1,3 +1,9 @@
+raspi-config (20220921) bullseye; urgency=medium
+
+  * Add pipewire switching
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 21 Sep 2022 12:49:20 +0100
+
 raspi-config (20220920) bullseye; urgency=medium
 
   * Fix keymap setup
