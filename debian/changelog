@@ -1,3 +1,9 @@
+raspi-config (20220920) bullseye; urgency=medium
+
+  * Fix keymap setup
+
+ -- Serge Schneider <serge@raspberrypi.com>  Tue, 20 Sep 2022 12:45:40 +0100
+
 raspi-config (20220915) bullseye; urgency=medium
 
   * Don't attempt to run hostnamectl if dbus is not active
