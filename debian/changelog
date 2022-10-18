@@ -1,3 +1,9 @@
+raspi-config (20221018) bullseye; urgency=medium
+
+  * do_hostname: add fallback for cases when hostnamectl isn't suitable
+
+ -- Serge Schneider <serge@raspberrypi.com>  Tue, 18 Oct 2022 12:28:15 +0100
+
 raspi-config (20220920) bullseye; urgency=medium
 
   * Fix keymap setup
