@@ -179,15 +179,8 @@ do_expand_rootfs() {
 
   PART_NUM="$(echo "$ROOT_PART" | grep -o "[[:digit:]]*$")"
 
-  # NOTE: the NOOBS partition layout confuses parted. For now, let's only 
-  # agree to work with a sufficiently simple partition layout
-  if [ "$PART_NUM" -ne 2 ]; then
-    whiptail --msgbox "Your partition layout is not currently supported by this tool. You are probably using NOOBS, in which case your root filesystem is already expanded anyway." 20 60 2
-    return 0
-  fi
-
   LAST_PART_NUM=$(parted "$ROOT_DEV" -ms unit s p | tail -n 1 | cut -f 1 -d:)
-  if [ $LAST_PART_NUM -ne $PART_NUM ]; then
+  if [ "$LAST_PART_NUM" -ne "$PART_NUM" ]; then
     whiptail --msgbox "$ROOT_PART is not the last partition. Don't know how to expand" 20 60 2
     return 0
   fi
