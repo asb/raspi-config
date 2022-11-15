@@ -21,7 +21,8 @@ is_pi () {
 }
 
 if is_pi ; then
-  CMDLINE=/boot/cmdline.txt
+  PREFIX=`cat /proc/device-tree/chosen/os_prefix`
+  CMDLINE=/boot/"$PREFIX"cmdline.txt
 else
   CMDLINE=/proc/cmdline
 fi
@@ -2581,7 +2582,7 @@ get_overlay_now() {
 }
 
 get_overlay_conf() {
-  grep -q "boot=overlay" /boot/cmdline.txt
+  grep -q "boot=overlay" $CMDLINE
   echo $?
 }
 
@@ -2687,8 +2688,8 @@ EOF
   echo initramfs "$INITRD" >> /boot/config.txt
 
   # modify command line
-  if ! grep -q "boot=overlay" /boot/cmdline.txt ; then
-    sed -i /boot/cmdline.txt -e "s/^/boot=overlay /"
+  if ! grep -q "boot=overlay" $CMDLINE ; then
+    sed -i $CMDLINE -e "s/^/boot=overlay /"
   fi
 
   if [ "$BOOTRO" = "yes" ] ; then
@@ -2716,7 +2717,7 @@ disable_overlayfs() {
   update-initramfs -d -k "${KERN}-overlay"
 
   # modify command line
-  sed -i /boot/cmdline.txt -e "s/\(.*\)boot=overlay \(.*\)/\1\2/"
+  sed -i $CMDLINE -e "s/\(.*\)boot=overlay \(.*\)/\1\2/"
 
   if [ "$BOOTRO" = "yes" ] ; then
     if ! mount -o remount,ro /boot 2>/dev/null ; then

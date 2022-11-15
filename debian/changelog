@@ -1,3 +1,9 @@
+raspi-config (20221115) bullseye; urgency=medium
+
+  * Check os_prefix when determining location of cmdline.txt
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 15 Nov 2022 14:17:58 +0000
+
 raspi-config (20221018) bullseye; urgency=medium
 
   * do_hostname: add fallback for cases when hostnamectl isn't suitable
