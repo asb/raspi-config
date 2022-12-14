@@ -613,7 +613,9 @@ do_wifi_country() {
   fi
   if [ -e /etc/default/crda ]; then
     sed -i "s/^REGDOMAIN=.*$/REGDOMAIN=$REGDOMAIN/"  /etc/default/crda
-    iw reg set "$REGDOMAIN"
+    if ! ischroot; then
+      iw reg set "$REGDOMAIN"
+    fi
   fi
 
   IFACE="$(list_wlan_interfaces | head -n 1)"
@@ -622,13 +624,16 @@ do_wifi_country() {
     wpa_cli -i "$IFACE" save_config > /dev/null 2>&1
   fi
 
-  if [ "$INIT" = "systemd" ] && systemctl -q is-active NetworkManager; then
+  if [ "$INIT" = "systemd" ] && ! ischroot && systemctl -q is-active NetworkManager; then
     nmcli radio wifi on
   elif hash rfkill 2> /dev/null; then
     rfkill unblock wifi
   fi
   if is_pi; then
     for filename in /var/lib/systemd/rfkill/*:wlan ; do
+      if ! [ -e "$filename" ]; then
+        continue
+      fi
       echo 0 > "$filename"
     done
   fi
