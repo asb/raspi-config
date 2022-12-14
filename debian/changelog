@@ -1,8 +1,24 @@
-raspi-config (20221115) bullseye; urgency=medium
+raspi-config (20221214) bullseye; urgency=medium
 
-  * Check os_prefix when determining location of cmdline.txt
+  [ Viacheslav Vasilyev ]
+  * Allow to change cpu governor settings by using default file (#203)
 
- -- Simon Long <simon@raspberrypi.com>  Tue, 15 Nov 2022 14:17:58 +0000
+  [ Jorge Capona ]
+  * Filter wlan interfaces before using wpa_cli (#162)
+  * Specify wlan interface when setting wifi country (#205)
+
+  [ platinum95 ]
+  * Add unit to fan temperature selection text (#201)
+
+  [ Simon Long ]
+  * Check os_prefix when locating cmdline.txt
+
+  [ Serge Schneider ]
+  * do_expand_rootfs: remove partition number check
+  * Avoid spam if os_prefix is not found
+  * Avoid raspi-config erroring out when setting wifi country in chroot
+
+ -- Serge Schneider <serge@raspberrypi.com>  Wed, 14 Dec 2022 16:57:10 +0000
 
 raspi-config (20221018) bullseye; urgency=medium
 
