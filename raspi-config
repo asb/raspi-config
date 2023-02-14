@@ -2474,7 +2474,10 @@ do_wifi_ssid_passphrase() {
       wpa_cli -i "$IFACE" set_network "$ID" psk "$PASSPHRASE" 2>&1 | grep -q "OK"
       RET=$((RET + $?))
     fi
-
+    if [ "$HIDDEN" -ne 0 ]; then
+      wpa_cli -i "$IFACE" set_network "$ID" scan_ssid 1 2>&1 | grep -q "OK"
+      RET=$((RET + $?))
+    fi
     if [ $RET -eq 0 ]; then
       wpa_cli -i "$IFACE" enable_network "$ID" > /dev/null 2>&1
     else
