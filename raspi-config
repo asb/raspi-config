@@ -1485,7 +1485,7 @@ do_boot_order() {
       return 1
     fi
     EECFG=$(mktemp)
-    vcgencmd bootloader_config > $EECFG
+    rpi-eeprom-config > $EECFG
     sed $EECFG -i -e "/SD_BOOT_MAX_RETRIES/d"
     sed $EECFG -i -e "/NET_BOOT_MAX_RETRIES/d"
     case "$BOOTOPT" in
@@ -1518,9 +1518,7 @@ do_boot_order() {
         return 1
         ;;
     esac
-    EEBIN=$(mktemp)
-    rpi-eeprom-config --config $EECFG --out $EEBIN $FILNAME
-    rpi-eeprom-update -d -f $EEBIN
+    rpi-eeprom-config --apply $EECFG $FILNAME
     ASK_TO_REBOOT=1
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "$STATUS is default boot device" 20 60 1
