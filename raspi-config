@@ -1467,10 +1467,10 @@ do_boot_order() {
   if [ $? -eq 0 ]; then
     CURDATE=$(date -d "`vcgencmd bootloader_version |  head -n 1`" +%Y%m%d)
     FILNAME="none"
-    if grep -q "stable" /etc/default/rpi-eeprom-update ; then
-      EEPATH="/lib/firmware/raspberrypi/bootloader/stable/pieeprom*.bin"
+    if grep FIRMWARE_RELEASE_STATUS /etc/default/rpi-eeprom-update | grep -q "latest"; then
+      EEPATH="/lib/firmware/raspberrypi/bootloader/latest/pieeprom*.bin"
     else
-      EEPATH="/lib/firmware/raspberrypi/bootloader/critical/pieeprom*.bin"
+      EEPATH="/lib/firmware/raspberrypi/bootloader/default/pieeprom*.bin"
     fi
     for filename in $EEPATH ; do
       FILDATE=$(date -d "`echo $filename | cut -d - -f 2- | cut -d . -f 1`" +%Y%m%d)
@@ -1485,7 +1485,7 @@ do_boot_order() {
       return 1
     fi
     EECFG=$(mktemp)
-    vcgencmd bootloader_config > $EECFG
+    rpi-eeprom-config > $EECFG
     sed $EECFG -i -e "/SD_BOOT_MAX_RETRIES/d"
     sed $EECFG -i -e "/NET_BOOT_MAX_RETRIES/d"
     case "$BOOTOPT" in
@@ -1518,9 +1518,7 @@ do_boot_order() {
         return 1
         ;;
     esac
-    EEBIN=$(mktemp)
-    rpi-eeprom-config --config $EECFG --out $EEBIN $FILNAME
-    rpi-eeprom-update -d -f $EEBIN
+    rpi-eeprom-config --apply $EECFG $FILNAME
     ASK_TO_REBOOT=1
     if [ "$INTERACTIVE" = True ]; then
       whiptail --msgbox "$STATUS is default boot device" 20 60 1
@@ -1542,11 +1540,11 @@ do_boot_rom() {
   if [ $? -eq 0 ]; then
     case "$BOOTOPT" in
       E1*)
-        sed /etc/default/rpi-eeprom-update -i -e "s/^FIRMWARE_RELEASE_STATUS.*/FIRMWARE_RELEASE_STATUS=\"stable\"/"
+        sed /etc/default/rpi-eeprom-update -i -e "s/^FIRMWARE_RELEASE_STATUS.*/FIRMWARE_RELEASE_STATUS=\"latest\"/"
         EETYPE="Latest version"
         ;;
       E2*)
-        sed /etc/default/rpi-eeprom-update -i -e "s/^FIRMWARE_RELEASE_STATUS.*/FIRMWARE_RELEASE_STATUS=\"critical\"/"
+        sed /etc/default/rpi-eeprom-update -i -e "s/^FIRMWARE_RELEASE_STATUS.*/FIRMWARE_RELEASE_STATUS=\"default\"/"
         EETYPE="Factory default"
         ;;
       *)
@@ -1561,10 +1559,10 @@ do_boot_rom() {
       DEFAULTS=$2
     fi
     if [ "$DEFAULTS" -eq 0 ]; then # yes
-      if grep -q "stable" /etc/default/rpi-eeprom-update ; then
-        EEPATH="/lib/firmware/raspberrypi/bootloader/stable/"
+      if grep FIRMWARE_RELEASE_STATUS /etc/default/rpi-eeprom-update | grep -q "latest"; then
+        EEPATH="/lib/firmware/raspberrypi/bootloader/latest/"
       else
-        EEPATH="/lib/firmware/raspberrypi/bootloader/critical/"
+        EEPATH="/lib/firmware/raspberrypi/bootloader/default/"
       fi
       MATCH=".*/pieeprom-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].bin"
       FILNAME="$(find "${EEPATH}" -maxdepth 1 -type f -size 524288c -regex "${MATCH}" | sort -r | head -n1)"
